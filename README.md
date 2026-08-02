@@ -1,17 +1,17 @@
-# Market — marketplace local de vehículos ligeros
+# Market — local marketplace for light vehicles
 
-Monorepo Flutter de referencia: un marketplace donde la misma persona compra y
-vende (carros, motos, patinetas, bicicletas y camionetas). **Sin backend**: todo
-vive en SQLite local y sobrevive al cierre de la app en Android, iOS y Web.
+A reference Flutter monorepo: a marketplace where the same person buys and sells
+(cars, motorcycles, scooters, bicycles and trucks). **No backend**: everything
+lives in local SQLite and survives app restarts on Android, iOS and Web.
 
-El repositorio es la entrega: micro-features desacoplados, dirección de
-dependencias estricta, estado inmutable, inyección por overrides, i18n completo
-y linting agresivo. Agregar un feature nuevo debería ser copiar la estructura de
-uno existente.
+The repository *is* the deliverable: decoupled micro-features, a strict
+dependency direction, immutable state, dependency injection by provider
+overrides, complete i18n and aggressive linting. Adding a new feature should be
+a matter of copying the structure of an existing one.
 
 ---
 
-## Arranque rápido
+## Quick start
 
 ```bash
 dart pub global activate melos 7.3.0
@@ -26,52 +26,52 @@ flutter run -d android
 flutter run -d ios
 ```
 
-Usuarios de demostración (contraseña `Demo1234`):
+Demo users (password `Demo1234`):
 
-| Correo | Rol en el seed |
+| Email | Role in the seed |
 |---|---|
-| `ana@market.demo` | 5 publicaciones, 2 direcciones, 1 orden entregada |
-| `bruno@market.demo` | 10 publicaciones |
+| `ana@market.demo` | 5 publications, 2 addresses, 1 delivered order |
+| `bruno@market.demo` | 10 publications |
 
 ---
 
 ## Stack
 
-| Herramienta | Versión |
+| Tool | Version |
 |---|---|
 | Flutter | `3.41.9` (stable) |
 | Dart SDK | `^3.11.5` |
 | Melos | `7.3.0` |
 
-Todas las dependencias de terceros están **fijadas sin caret** en cada
-`pubspec.yaml` (reproducibilidad total). Las tres que el prompt dejó abiertas se
-resolvieron con `flutter pub add` y quedaron fijadas así:
+Every third-party dependency is **pinned without a caret** in each
+`pubspec.yaml` (full reproducibility). The three the spec left open were
+resolved with `flutter pub add` and pinned as follows:
 
-| Paquete | Versión | Nota |
+| Package | Version | Note |
 |---|---|---|
-| `easy_localization` | `3.0.8` | última estable de la línea 3.x |
-| `go_router` | `17.3.0` | última estable compatible |
-| `sqflite_common_ffi_web` | `1.1.1` | la 1.1.2 exige Flutter 3.44+, incompatible con 3.41.9 |
+| `easy_localization` | `3.0.8` | latest stable of the 3.x line |
+| `go_router` | `17.3.0` | latest compatible stable |
+| `sqflite_common_ffi_web` | `1.1.1` | 1.1.2 requires Flutter 3.44+, incompatible with 3.41.9 |
 
-Única dependencia añadida fuera de la lista: **`flutter_web_plugins`** (SDK de
-Flutter, no es un tercero) para activar rutas reales en web —
-ver [Deep links](#deep-links).
+Only one dependency was added outside the list: **`flutter_web_plugins`** (a
+Flutter SDK package, not a third party) to enable real paths on the web — see
+[Deep links](#deep-links).
 
 ---
 
-## Mapa de paquetes
+## Package map
 
 ```
 packages/
-├── apps/market_app/                 shell: wiring (router, DI, i18n, arranque)
-├── development/lint/                analysis_options compartido
-├── shared/                          lógica pura, CERO widgets
-│   ├── typing/                      ViewModel base, Clock, IdGenerator, ViewStatus
-│   ├── database/                    conexión, esquema, migraciones, seed, DAO base
+├── apps/market_app/                 shell: wiring only (router, DI, i18n, bootstrap)
+├── development/lint/                shared analysis_options
+├── shared/                          pure logic, ZERO widgets
+│   ├── typing/                      base ViewModel, Clock, IdGenerator, ViewStatus
+│   ├── database/                    connection, schema, migrations, seed, base DAO
 │   ├── navigator/                   AppRoute, NavigationManager, BootstrapGate, deep links
 │   └── utilities/                   formatters, validators, logger, guards, ImageStorage
 ├── ui/
-│   ├── design_system/               tokens + temas claro/oscuro + primitivos
+│   ├── design_system/               tokens + light/dark themes + primitives
 │   └── components/packages/         product_card, quantity_stepper, rating_stars,
 │                                    price_tag, filter_chip_bar, status_badge,
 │                                    stepper_header, empty_state
@@ -80,15 +80,15 @@ packages/
     └── core/                        catalog, cart, orders
 ```
 
-Cada feature son tres paquetes:
+Every feature is three packages:
 
-| Sub-paquete | Contenido | Depende de |
+| Sub-package | Contents | Depends on |
 |---|---|---|
-| `constants` | keys de widget, rutas, límites | nada |
-| `typing` | contrato público: modelos, enums, interfaces, providers sin implementar | `constants` |
-| `module` | implementación privada: DAO, service, estado, UI | `constants`, `typing` |
+| `constants` | widget keys, routes, limits | nothing |
+| `typing` | public contract: models, enums, interfaces, unimplemented providers | `constants` |
+| `module` | private implementation: DAO, service, state, UI | `constants`, `typing` |
 
-### Dirección de dependencias
+### Dependency direction
 
 ```
 apps  →  features  →  shared
@@ -97,20 +97,20 @@ apps  →  features  →  shared
  └──────────────────────┘
 ```
 
-- `features/` importa de `shared/`, `ui/` y del **`typing/` de otros features**,
-  nunca de su `module/`.
-- `shared/` y `ui/` no importan jamás de `features/` ni de `apps/`.
-- `design_system` no depende de ningún paquete interno.
-- La navegación entre features usa rutas (strings) o el `typing/` ajeno, nunca
-  el módulo del otro feature.
+- `features/` imports from `shared/`, `ui/` and from the **`typing/` of other
+  features** — never from their `module/`.
+- `shared/` and `ui/` never import from `features/` or `apps/`.
+- `design_system` depends on no internal package.
+- Cross-feature navigation uses routes (strings) or the other feature's
+  `typing/`, never its module.
 
 ---
 
-## Arquitectura
+## Architecture
 
-### Estado (Riverpod 2.6.1)
+### State (Riverpod 2.6.1)
 
-Cada sub-estado es **una sola librería** con `part`s en orden alfabético:
+Each sub-state is **a single library** with its `part`s in alphabetical order:
 
 ```dart
 library com.demo.market.catalog.core.state.list;
@@ -119,68 +119,69 @@ part 'provider.dart';
 part 'state.dart';
 ```
 
-El estado es una clase plana inmutable (`copyWith`, `==`, `hashCode`,
-`toString`), escrita a mano: sin `freezed`, para que el ejemplo se lea sin
-codegen. Nunca se muta en sitio; siempre `state = state.copyWith(...)`.
+State is a flat immutable class (`copyWith`, `==`, `hashCode`, `toString`)
+written by hand: no `freezed`, so the example reads without codegen. It is never
+mutated in place; always `state = state.copyWith(...)`.
 
-Los controllers extienden `ViewModel<T>` (en `shared/typing`), que aporta:
+Controllers extend `ViewModel<T>` (in `shared/typing`), which provides:
 
-- `postInit()` — **síncrono**, resuelve dependencias (`service`,
-  `navigatorNotifier`) antes de que nadie pueda llamar al controller.
-- `runPostBuild(action)` — lanza la carga inicial en el microtask siguiente.
-  Riverpod prohíbe escribir `state` mientras `build()` corre, y llamar la carga
-  en línea dejaría los campos `late` sin asignar si la vista invoca un método de
-  inmediato (bug real que apareció al abrir un deep link).
-- `mountedKey` — token que se captura antes de un `await` para detectar
-  disposición a mitad de vuelo.
+- `postInit()` — **synchronous**, resolves dependencies (`service`,
+  `navigatorNotifier`) before anyone can call the controller.
+- `runPostBuild(action)` — kicks off the initial load on the next microtask.
+  Riverpod forbids writing `state` while `build()` is running, and calling the
+  load inline would leave `late` fields unassigned if a view invokes a method
+  immediately (a real bug that surfaced when opening a deep link).
+- `mountedKey` — a token captured before an `await` to detect mid-flight
+  disposal.
 
-### Inyección de dependencias
+### Dependency injection
 
-El provider del servicio se **declara** en `typing/` lanzando
-`UnimplementedError` y se **sobreescribe** en `module/core/service/provider.dart`.
-El shell junta todos los overrides en `lib/di/app_overrides.dart`; es el único
-lugar donde infraestructura y features se conocen.
+The service provider is **declared** in `typing/` throwing
+`UnimplementedError` and **overridden** in `module/core/service/provider.dart`.
+The shell collects every override in `lib/di/app_overrides.dart`; that is the
+only place where infrastructure and features know about each other.
 
-### Datos
+### Data
 
-`DAO → Service → Controller → Vista`. El DAO habla SQL crudo y devuelve
-`Map<String, Object?>`; el service convierte filas ↔ modelos y aplica reglas de
-negocio; el controller orquesta y maneja errores. **Ninguna vista ejecuta SQL.**
+`DAO → Service → Controller → View`. The DAO speaks raw SQL and returns
+`Map<String, Object?>`; the service converts rows ↔ models and applies business
+rules; the controller orchestrates and handles errors. **No view runs SQL.**
 
-Toda escritura multi-tabla va en `transaction`. Los dos casos críticos:
+Every multi-table write happens inside a `transaction`. The two critical cases:
 
-- **Checkout**: crea `orders` + `order_items` (con snapshot de nombre y precio),
-  descuenta stock, vacía el carrito y genera la notificación — todo o nada.
-- **Cancelar orden**: cambia estado, restituye stock y notifica, en una sola
-  transacción.
+- **Checkout**: creates `orders` + `order_items` (with a name and price
+  snapshot), decrements stock, empties the cart and writes the notification —
+  all or nothing.
+- **Cancel order**: changes the status, restores stock and notifies, in a single
+  transaction.
 
-Las contraseñas se guardan como `sha256(salt + password)` con salt por usuario.
-En producción sería un KDF con costo (bcrypt/argon2) y almacenamiento seguro;
-está comentado en `PasswordHasher`.
+Passwords are stored as `sha256(salt + password)` with a per-user salt. In
+production this would be a cost-based KDF (bcrypt/argon2) plus secure storage;
+that caveat is documented in `PasswordHasher`.
 
-Los textos de `notifications` se guardan como **claves i18n** con sus argumentos
-en el `payload` JSON, nunca como texto ya traducido.
+The text of `notifications` is stored as **i18n keys** with their arguments in
+the JSON `payload`, never as already-translated text.
 
 ---
 
-## Multiplataforma
+## Cross-platform
 
-Las diferencias nativas se resuelven detrás de una abstracción y se documentan
-en un único archivo por tema:
+Native differences are resolved behind an abstraction and documented in a single
+file per topic:
 
-| Tema | Archivo | Android / iOS | Web |
+| Topic | File | Android / iOS | Web |
 |---|---|---|---|
-| Base de datos | `shared/database/.../database_factory_resolver.dart` | `sqflite` + `getDatabasesPath()` | `sqflite_common_ffi_web` (wasm + IndexedDB) |
-| Imágenes | `shared/utilities/.../image_storage.dart` | archivo copiado al directorio de la app, se guarda la ruta | data URI base64 en la propia fila |
-| URLs | `shared/utilities/.../url_strategy.dart` | no aplica (scheme `market://`) | `usePathUrlStrategy()` para rutas reales |
+| Database | `shared/database/.../database_factory_resolver.dart` | `sqflite` + `getDatabasesPath()` | `sqflite_common_ffi_web` (wasm + IndexedDB) |
+| Images | `shared/utilities/.../image_storage.dart` | file copied into the app directory, the path is stored | base64 data URI in the row itself |
+| URLs | `shared/utilities/.../url_strategy.dart` | not applicable (`market://` scheme) | `usePathUrlStrategy()` for real paths |
 | Guards | `shared/utilities/.../platform_guard.dart` | — | — |
 
-`dart:io` solo aparece detrás de un import condicional; ningún feature lo toca.
+`dart:io` only appears behind a conditional import; no feature touches it.
 
-Configuración de plataforma: Android `minSdk 23` e intent-filter para `market://`;
-iOS deployment target `13.0`, `CFBundleURLTypes` y permisos de galería/cámara con
-textos en español. Los assets wasm de web (`sqlite3.wasm`, `sqflite_sw.js`) se
-generan con:
+Platform configuration: Android `minSdk 23` and an intent-filter for `market://`;
+iOS deployment target `13.0`, `CFBundleURLTypes` and gallery/camera permissions
+with Spanish copy. The web wasm assets (`sqlite3.wasm`, `sqflite_sw.js`) are
+generated with:
 
 ```bash
 dart run sqflite_common_ffi_web:setup
@@ -188,20 +189,20 @@ dart run sqflite_common_ffi_web:setup
 
 ### Layout
 
-Un mismo controller sirve mobile y web; solo cambia la presentación.
-`AppScaffold` aporta SafeArea, padding y ancho máximo de 1200 px. El shell de
-navegación usa barra inferior por debajo de 768 px y rail lateral por encima,
-preservando el estado de cada pestaña con `StatefulShellRoute.indexedStack`.
+The same controller serves mobile and web; only the presentation layer changes.
+`AppScaffold` provides SafeArea, padding and a 1200 px max width. The navigation
+shell uses a bottom bar below 768 px and a side rail above it, preserving each
+tab's state with `StatefulShellRoute.indexedStack`.
 
 ---
 
 ## Deep links
 
-El scheme es `market://` y las rutas son nombradas, con parámetros de path
-(nunca datos de negocio en query strings).
+The scheme is `market://` and routes are named, with path parameters (never
+business data in query strings).
 
 ```bash
-# Web (requiere que el host sirva index.html en rutas desconocidas)
+# Web (the host must serve index.html for unknown routes)
 open http://localhost:8080/catalog/detail/product_car_001
 
 # Android
@@ -212,93 +213,92 @@ adb shell am start -a android.intent.action.VIEW \
 xcrun simctl openurl booted "market://catalog/detail/product_car_001"
 ```
 
-Dos piezas lo hacen funcionar:
+Two pieces make this work:
 
-1. **`usePathUrlStrategy()`** en web. Por defecto Flutter usa URLs con hash
-   (`/#/catalog`), así que la ruta del path nunca llegaba al router.
-2. **`BootstrapGate`** (`shared/navigator`). En arranque en frío el router se
-   evalúa antes de que existan la base de datos y la sesión, así que el redirect
-   de sesión se llevaría el deep link a login y lo perdería. La compuerta aparca
-   la ubicación pedida, manda al splash, y el splash (o el login que le sigue)
-   la retoma al terminar el bootstrap.
+1. **`usePathUrlStrategy()`** on the web. Flutter defaults to hash URLs
+   (`/#/catalog`), so the path never reached the router.
+2. **`BootstrapGate`** (`shared/navigator`). On a cold start the router is
+   evaluated before the database and the session exist, so the session redirect
+   would take the deep link to login and lose it. The gate parks the requested
+   location, sends the user through the splash, and the splash (or the login
+   that follows it) resumes it once bootstrap finishes.
 
-Una ruta a un recurso inexistente muestra la vista de "no encontrado"
-(`shell_not_found_view`) o el estado `empty` de la vista, nunca una pantalla en
-blanco.
+A route to a nonexistent resource shows the not-found view
+(`shell_not_found_view`) or the view's `empty` state — never a blank screen.
 
 ---
 
-## Flags de arranque
+## Boot flags
 
 ```bash
 flutter run -d chrome --dart-define=SEED_MODE=empty
 flutter run -d chrome --dart-define=FAST_ANIMATIONS=true
 ```
 
-| Flag | Valores | Efecto |
+| Flag | Values | Effect |
 |---|---|---|
-| `SEED_MODE` | `demo` (default) / `empty` | BD con datos semilla deterministas o BD vacía para recorrer los estados sin datos |
-| `FAST_ANIMATIONS` | `true` / ausente | todas las duraciones de `AppDurations` pasan a `Duration.zero` |
+| `SEED_MODE` | `demo` (default) / `empty` | database with deterministic seed data, or an empty database to walk through every empty state |
+| `FAST_ANIMATIONS` | `true` / absent | every `AppDurations` value collapses to `Duration.zero` |
 
-Se leen en un único archivo (`lib/config/app_config.dart`) y se propagan por
-overrides.
-
----
-
-## Determinismo
-
-1. **Semilla fija**: ids literales (`user_demo_001`, `cat_car`,
-   `product_car_001`…), precios y fechas constantes. 2 usuarios, 5 categorías,
-   15 productos, 3 cupones (`DEMO10` válido, `PAST20` vencido, `FROZEN15`
-   inactivo), 2 direcciones y 1 orden histórica entregada.
-2. **Reloj inyectado**: `Clock` + `clockProvider`. `DateTime.now()` solo se
-   nombra dentro de ese provider.
-3. **Ids inyectados**: `IdGenerator` detrás de provider (`UuidIdGenerator` por
-   defecto), sustituible por uno secuencial.
-4. **Orden estable**: todo `SELECT` que alimente una lista lleva `ORDER BY`
-   explícito con desempate por `id`.
-5. **Sin trabajo oculto**: ningún timer periódico ni animación infinita; los
-   shimmer solo existen mientras la vista está en estado `loading`.
-6. **Reset desde la app**: Ajustes ofrece "restablecer datos de demostración"
-   (`resetToSeed`) y "borrar todos mis datos" (`wipe`), ambos con confirmación.
+They are read in a single file (`lib/config/app_config.dart`) and propagated
+through overrides.
 
 ---
 
-## Identificadores de widget
+## Determinism
 
-Las keys son **contrato, no etiqueta**: no dependen del idioma, del tema ni de
-la plataforma, y no cambian cuando cambia el copy. Se declaran en el
-`constants/` de cada feature y las vistas las referencian por constante.
+1. **Fixed seed**: literal ids (`user_demo_001`, `cat_car`,
+   `product_car_001`…), constant prices and dates. 2 users, 5 categories,
+   15 products, 3 coupons (`DEMO10` valid, `PAST20` expired, `FROZEN15`
+   inactive), 2 addresses and 1 historical delivered order.
+2. **Injected clock**: `Clock` + `clockProvider`. `DateTime.now()` is only named
+   inside that provider.
+3. **Injected ids**: `IdGenerator` behind a provider (`UuidIdGenerator` by
+   default), replaceable with a sequential one.
+4. **Stable ordering**: every `SELECT` feeding a list carries an explicit
+   `ORDER BY` with an `id` tie-breaker.
+5. **No hidden work**: no periodic timers or infinite animations; shimmers only
+   exist while a view is in its `loading` state.
+6. **Reset from the app**: Settings offers "reset demo data" (`resetToSeed`) and
+   "delete all my data" (`wipe`), both behind a confirmation.
+
+---
+
+## Widget identifiers
+
+Keys are **contract, not label**: they do not depend on language, theme or
+platform, and they do not change when the copy changes. They are declared in
+each feature's `constants/` and views reference them by constant.
 
 ```
-<feature>_<vista>_view       raíz de la vista
-<elemento>_<tipo>            elemento concreto
-<elemento>_item_<id>         ítem dinámico (id de entidad, nunca el índice)
-<vista>_state_<estado>       raíz de loading / data / empty / error
+<feature>_<view>_view        root of the view
+<element>_<type>             concrete element
+<element>_item_<id>          dynamic item (entity id, never the list index)
+<view>_state_<state>         root of loading / data / empty / error
 ```
 
-Los elementos con significado para el usuario llevan además `Semantics(label:)`
-traducido.
+Elements that carry meaning for the user also get a translated
+`Semantics(label:)`.
 
 ---
 
-## Internacionalización
+## Internationalization
 
-`easy_localization` con `es` (default) y `en`, ambos completos. Cada feature
-declara su mapa en `module/lib/ui/languages.dart` y el shell los fusiona en
-`MarketTranslationsLoader` — las traducciones viven en código, no en assets
-JSON. Convención de claves: `feature.pantalla.elemento`, mínimo tres niveles.
+`easy_localization` with `es` (default) and `en`, both complete. Each feature
+declares its map in `module/lib/ui/languages.dart` and the shell merges them in
+`MarketTranslationsLoader` — translations live in code, not in JSON assets. Key
+convention: `feature.screen.element`, at least three levels.
 
-Cambiar el idioma en Ajustes actualiza toda la app sin reiniciar y no altera
-ningún `Key`.
+Switching the language in Settings updates the whole app without a restart and
+does not alter any `Key`.
 
 ---
 
-## Comandos de Melos
+## Melos commands
 
 ```bash
 melos bs                    # bootstrap
-melos clean && melos bs     # arranque limpio
+melos clean && melos bs     # clean start
 melos run lint              # flutter analyze --no-fatal-infos
 melos run dartFormat        # dart format . --line-length 80
 melos run dartFix           # dart fix --apply
@@ -307,60 +307,64 @@ melos run rmlock
 melos run rmOverrides
 ```
 
----
-
-## Flujos implementados
-
-Los 16 flujos del catálogo están implementados: F01 splash · F02 onboarding ·
-F03 registro · F04 login y sesión · F05 recuperación de contraseña ·
-F06 dashboard · F07 catálogo con búsqueda, filtros y scroll infinito ·
-F08 detalle de producto · F09 publicar producto · F10 mis publicaciones ·
-F11 carrito con cupones · F12 checkout multipaso · F13 órdenes con línea de
-tiempo, cancelación y recompra · F14 favoritos · F15 reseñas · F16 perfil,
-direcciones, notificaciones y ajustes.
+> Melos 7 reads its configuration from the workspace root `pubspec.yaml`; the
+> standalone `melos.yaml` of earlier versions is no longer picked up.
 
 ---
 
-## Decisiones técnicas
+## Implemented flows
 
-- **Sin `freezed` ni `json_serializable`.** Los modelos se escriben a mano para
-  que el ejemplo sea autoexplicativo y no dependa de codegen.
-- **`ViewStatus` en vez de banderas sueltas.** Un enum con getters booleanos
-  (`isLoading`, `isData`, `isEmpty`, `isError`) permite que la vista resuelva sus
-  cuatro estados con un `switch` exhaustivo y que el analizador detecte los
-  casos faltantes.
-- **`runPostBuild` en el `ViewModel` base.** Ver [Estado](#estado-riverpod-261).
-- **Borrado lógico de publicaciones.** `status = DELETED` las saca del catálogo
-  pero conserva los snapshots en las órdenes históricas.
-- **Moneda de visualización con factor fijo.** Cambiar a USD solo cambia el
-  render; los precios se almacenan siempre en COP y la conversión es una
-  constante (no hay fuente de tasas en una app offline).
-- **El código de recuperación es determinista**, derivado del correo, y se
-  muestra en un banner de demo. En producción sería aleatorio, con expiración y
-  enviado por correo.
-- **Los datos de tarjeta nunca se persisten**: se validan en el paso 2 del
-  checkout y solo el método elegido llega a la base de datos.
+All 16 catalogued flows are implemented: F01 splash · F02 onboarding ·
+F03 sign-up · F04 login and session · F05 password recovery · F06 dashboard ·
+F07 catalog with search, filters and infinite scroll · F08 product detail ·
+F09 publish product · F10 my publications · F11 cart with coupons ·
+F12 multi-step checkout · F13 orders with status timeline, cancellation and
+re-order · F14 favorites · F15 reviews · F16 profile, addresses, notifications
+and settings.
 
-## Limitaciones conocidas
+> The app's UI ships in Spanish by default (with a complete English
+> translation), so the screenshots and demo copy you will see are in Spanish.
 
-- **Verificación por plataforma.**
-  - **Web**: recorrido completo — login, dashboard, catálogo, detalle, carrito
-    con cupones (válido, vencido), checkout de tres pasos, orden creada con
-    descuento de stock y deep links en arranque en frío.
-  - **Android**: verificado en un dispositivo físico (Samsung SM-A315G,
-    Android 12): splash, onboarding, registro, login, dashboard con barra
-    inferior, detalle de producto y el deep link
+---
+
+## Technical decisions
+
+- **No `freezed`, no `json_serializable`.** Models are written by hand so the
+  example is self-explanatory and free of codegen.
+- **`ViewStatus` instead of loose flags.** An enum with boolean getters
+  (`isLoading`, `isData`, `isEmpty`, `isError`) lets a view resolve its four
+  states with an exhaustive `switch`, and lets the analyzer catch missing cases.
+- **`runPostBuild` in the base `ViewModel`.** See [State](#state-riverpod-261).
+- **Logical deletion of publications.** `status = DELETED` removes them from the
+  catalog while keeping the snapshots in historical orders.
+- **Display currency with a fixed factor.** Switching to USD only changes
+  rendering; prices are always stored in COP and the conversion is a constant
+  (an offline app has no exchange-rate source).
+- **The recovery code is deterministic**, derived from the email, and shown in a
+  demo banner. In production it would be random, expiring and emailed.
+- **Card data is never persisted**: it is validated in checkout step 2 and only
+  the chosen payment method reaches the database.
+
+## Known limitations
+
+- **Per-platform verification.**
+  - **Web**: full walkthrough — login, dashboard, catalog, detail, cart with
+    coupons (valid and expired), three-step checkout, order created with stock
+    decrement, and cold-start deep links.
+  - **Android**: verified on a physical device (Samsung SM-A315G, Android 12):
+    splash, onboarding, sign-up, login, dashboard with the bottom bar, product
+    detail and the deep link
     `adb shell am start -d "market://catalog/detail/product_car_001"`.
-  - **iOS**: verificado en el simulador de iPhone 17 (Xcode 26.6): onboarding,
-    login, dashboard con barra inferior, detalle de producto, el deep link
-    `xcrun simctl openurl booted "market://catalog/detail/product_car_001"` y
-    **persistencia** — un favorito marcado antes de reiniciar la app seguía ahí
-    después. El simulador corre en apariencia clara, así que esta pasada validó
-    además el tema claro (Android y Web se recorrieron en oscuro).
-- **Deep links en web** requieren que el host sirva `index.html` para rutas
-  desconocidas (fallback SPA). Sin eso, un `F5` sobre `/catalog/detail/x`
-  devuelve 404 del servidor, no de la app.
-- **Sin pruebas automatizadas**: el alcance pedido excluye explícitamente tests.
-  El determinismo y las keys estables quedan disponibles para agregarlas.
-- **Las imágenes en web viven en la fila** como data URI; con muchas imágenes
-  grandes conviene mover a IndexedDB por separado.
+  - **iOS**: verified on the iPhone 17 simulator (Xcode 26.6): onboarding,
+    login, dashboard with the bottom bar, product detail, the deep link
+    `xcrun simctl openurl booted "market://catalog/detail/product_car_001"` and
+    **persistence** — a favorite marked before restarting the app was still
+    there afterwards. The simulator runs in light appearance, so this pass also
+    validated the light theme (Android and Web were walked in dark).
+- **Web deep links** require the host to serve `index.html` for unknown routes
+  (SPA fallback). Without it, an `F5` on `/catalog/detail/x` returns a 404 from
+  the server, not from the app.
+- **No automated tests**: the requested scope explicitly excludes them. The
+  determinism and the stable keys are in place for whoever adds them.
+- **Web images live in the row** as data URIs; with many large images it is
+  worth moving them to IndexedDB separately.
