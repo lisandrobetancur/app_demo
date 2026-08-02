@@ -1,0 +1,21 @@
+name: product_card
+description: "Reusable product card widget for the market workspace."
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.11.5
+
+resolution: workspace
+
+dependencies:
+  design_system: 0.1.0
+  flutter:
+    sdk: flutter
+  price_tag: 0.1.0
+  rating_stars: 0.1.0
+  status_badge: 0.1.0
+  utilities: 0.1.0
+
+dev_dependencies:
+  lint: 0.1.0

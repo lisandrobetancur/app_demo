@@ -1,0 +1,17 @@
+name: typing
+description: "Pure contracts shared across the market workspace: base ViewModel, Clock, IdGenerator and cross-cutting enums."
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.11.5
+
+resolution: workspace
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_riverpod: 2.6.1
+
+dev_dependencies:
+  lint: 0.1.0

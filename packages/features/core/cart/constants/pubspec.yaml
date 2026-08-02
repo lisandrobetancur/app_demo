@@ -1,0 +1,16 @@
+name: cart_constants
+description: "Pure constants for the cart feature: widget keys, limits and routes."
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.11.5
+
+resolution: workspace
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  lint: 0.1.0

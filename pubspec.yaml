@@ -1,0 +1,65 @@
+name: market_workspace
+description: "Workspace root of the market monorepo: a local, offline-first vehicle marketplace demo."
+publish_to: none
+
+environment:
+  sdk: ^3.11.5
+
+workspace:
+  - packages/apps/market_app
+  - packages/development/lint
+  - packages/features/core/cart/constants
+  - packages/features/core/cart/module
+  - packages/features/core/cart/typing
+  - packages/features/core/catalog/constants
+  - packages/features/core/catalog/module
+  - packages/features/core/catalog/typing
+  - packages/features/core/orders/constants
+  - packages/features/core/orders/module
+  - packages/features/core/orders/typing
+  - packages/features/generic/app_cross/constants
+  - packages/features/generic/app_cross/module
+  - packages/features/generic/app_cross/typing
+  - packages/features/generic/authentication/constants
+  - packages/features/generic/authentication/module
+  - packages/features/generic/authentication/typing
+  - packages/features/generic/dashboard/constants
+  - packages/features/generic/dashboard/module
+  - packages/features/generic/dashboard/typing
+  - packages/features/generic/profile/constants
+  - packages/features/generic/profile/module
+  - packages/features/generic/profile/typing
+  - packages/shared/database
+  - packages/shared/navigator
+  - packages/shared/typing
+  - packages/shared/utilities
+  - packages/ui/components/packages/empty_state
+  - packages/ui/components/packages/filter_chip_bar
+  - packages/ui/components/packages/price_tag
+  - packages/ui/components/packages/product_card
+  - packages/ui/components/packages/quantity_stepper
+  - packages/ui/components/packages/rating_stars
+  - packages/ui/components/packages/status_badge
+  - packages/ui/components/packages/stepper_header
+  - packages/ui/design_system
+
+dev_dependencies:
+  melos: 7.3.0
+  yaml: 3.1.3
+
+# Melos 7 reads its configuration from the workspace root pubspec.yaml
+# (the standalone melos.yaml of earlier versions is no longer picked up).
+melos:
+  name: market
+
+  command:
+    bootstrap:
+      enforceLockfile: false
+
+  scripts:
+    lint: flutter analyze --no-fatal-infos
+    dartFormat: melos exec -c 1 -- dart format . --line-length 80
+    dartFix: melos exec -c 1 -- dart fix --apply
+    rmlock: melos exec -c 1 -- rm -f pubspec.lock
+    rmOverrides: melos exec -c 1 -- rm -f pubspec_overrides.yaml
+    pubGet: melos exec -c 1 -- flutter pub get

@@ -1,0 +1,108 @@
+/// Translations of the orders feature.
+class OrdersLanguages {
+  const OrdersLanguages._();
+
+  static const Map<String, dynamic> es = <String, dynamic>{
+    'orders': <String, dynamic>{
+      'statuses': <String, dynamic>{
+        'created': 'Creada',
+        'paid': 'Pagada',
+        'shipped': 'Enviada',
+        'delivered': 'Entregada',
+        'cancelled': 'Cancelada',
+      },
+      'list': <String, dynamic>{
+        'title': 'Mis órdenes',
+        'search_hint': 'Buscar por número de orden…',
+        'filter_all': 'Todas',
+        'empty_title': 'Aún no tienes órdenes',
+        'empty_message': 'Cuando completes una compra aparecerá aquí.',
+        'error_title': 'No pudimos cargar tus órdenes',
+        'retry_button': 'Reintentar',
+        'items_count': '{count} productos',
+      },
+      'detail': <String, dynamic>{
+        'title': 'Detalle de la orden',
+        'order_number': 'Orden {number}',
+        'items_title': 'Productos',
+        'address_title': 'Dirección de entrega',
+        'payment_title': 'Método de pago',
+        'totals_title': 'Totales',
+        'timeline_title': 'Estado de la orden',
+        'subtotal_label': 'Subtotal',
+        'discount_label': 'Descuento',
+        'tax_label': 'IVA (19%)',
+        'total_label': 'Total',
+        'cancel_button': 'Cancelar orden',
+        'cancel_title': 'Cancelar orden',
+        'cancel_message':
+            'Se cancelará la orden y el stock volverá a los productos.',
+        'confirm': 'Cancelar orden',
+        'keep': 'Mantener',
+        'cancelled_message': 'Orden cancelada y stock restituido',
+        'cancel_error': 'No se pudo cancelar la orden',
+        'reorder_button': 'Volver a comprar',
+        'reorder_done': '{count} productos agregados al carrito',
+        'reorder_partial': 'Algunos productos ya no están disponibles: {names}',
+        'reorder_error': 'No se pudo repetir la compra',
+        'go_to_cart_button': 'Ir al carrito',
+        'not_found_title': 'Orden no encontrada',
+        'not_found_message': 'La orden no existe o fue eliminada.',
+        'error_title': 'No pudimos cargar la orden',
+        'retry_button': 'Reintentar',
+      },
+    },
+  };
+
+  static const Map<String, dynamic> en = <String, dynamic>{
+    'orders': <String, dynamic>{
+      'statuses': <String, dynamic>{
+        'created': 'Created',
+        'paid': 'Paid',
+        'shipped': 'Shipped',
+        'delivered': 'Delivered',
+        'cancelled': 'Cancelled',
+      },
+      'list': <String, dynamic>{
+        'title': 'My orders',
+        'search_hint': 'Search by order number…',
+        'filter_all': 'All',
+        'empty_title': 'No orders yet',
+        'empty_message': 'Complete a purchase and it will show up here.',
+        'error_title': 'We could not load your orders',
+        'retry_button': 'Retry',
+        'items_count': '{count} items',
+      },
+      'detail': <String, dynamic>{
+        'title': 'Order detail',
+        'order_number': 'Order {number}',
+        'items_title': 'Items',
+        'address_title': 'Delivery address',
+        'payment_title': 'Payment method',
+        'totals_title': 'Totals',
+        'timeline_title': 'Order status',
+        'subtotal_label': 'Subtotal',
+        'discount_label': 'Discount',
+        'tax_label': 'VAT (19%)',
+        'total_label': 'Total',
+        'cancel_button': 'Cancel order',
+        'cancel_title': 'Cancel order',
+        'cancel_message':
+            'The order will be cancelled and stock restored to products.',
+        'confirm': 'Cancel order',
+        'keep': 'Keep it',
+        'cancelled_message': 'Order cancelled and stock restored',
+        'cancel_error': 'The order could not be cancelled',
+        'reorder_button': 'Buy again',
+        'reorder_done': '{count} items added to the cart',
+        'reorder_partial': 'Some products are no longer available: {names}',
+        'reorder_error': 'The purchase could not be repeated',
+        'go_to_cart_button': 'Go to cart',
+        'not_found_title': 'Order not found',
+        'not_found_message': 'The order does not exist or was removed.',
+        'error_title': 'We could not load the order',
+        'retry_button': 'Retry',
+      },
+    },
+  };
+}

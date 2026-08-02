@@ -1,0 +1,25 @@
+# Dart / Flutter
+.dart_tool/
+.packages
+build/
+pubspec.lock
+pubspec_overrides.yaml
+*.iml
+.idea/
+
+# Android
+packages/apps/market_app/android/.gradle/
+packages/apps/market_app/android/local.properties
+packages/apps/market_app/android/app/debug/
+packages/apps/market_app/android/app/profile/
+packages/apps/market_app/android/app/release/
+
+# iOS
+packages/apps/market_app/ios/Pods/
+packages/apps/market_app/ios/.symlinks/
+packages/apps/market_app/ios/Flutter/Flutter.framework
+packages/apps/market_app/ios/Flutter/Generated.xcconfig
+packages/apps/market_app/ios/Flutter/flutter_export_environment.sh
+
+# macOS
+.DS_Store

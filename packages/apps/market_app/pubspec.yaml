@@ -1,0 +1,50 @@
+name: market_app
+description: "Market application shell: wiring only (routing, DI overrides, bootstrap)."
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.11.5
+
+resolution: workspace
+
+dependencies:
+  app_cross: 0.1.0
+  app_cross_constants: 0.1.0
+  app_cross_typing: 0.1.0
+  authentication: 0.1.0
+  authentication_constants: 0.1.0
+  authentication_typing: 0.1.0
+  cart: 0.1.0
+  cart_constants: 0.1.0
+  cart_typing: 0.1.0
+  catalog: 0.1.0
+  catalog_constants: 0.1.0
+  catalog_typing: 0.1.0
+  cupertino_icons: 1.0.8
+  dashboard: 0.1.0
+  dashboard_constants: 0.1.0
+  dashboard_typing: 0.1.0
+  database: 0.1.0
+  design_system: 0.1.0
+  easy_localization: 3.0.8
+  flutter:
+    sdk: flutter
+  flutter_riverpod: 2.6.1
+  go_router: 17.3.0
+  navigator: 0.1.0
+  orders: 0.1.0
+  orders_constants: 0.1.0
+  orders_typing: 0.1.0
+  profile: 0.1.0
+  profile_constants: 0.1.0
+  profile_typing: 0.1.0
+  shared_preferences: 2.5.3
+  typing: 0.1.0
+  utilities: 0.1.0
+
+dev_dependencies:
+  lint: 0.1.0
+
+flutter:
+  uses-material-design: true

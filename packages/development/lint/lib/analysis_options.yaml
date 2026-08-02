@@ -1,0 +1,39 @@
+analyzer:
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+  errors:
+    deprecated_member_use: error
+    deprecated_member_use_from_same_package: error
+
+linter:
+  rules:
+    - always_declare_return_types
+    - always_put_required_named_parameters_first
+    - always_specify_types
+    - annotate_overrides
+    - avoid_print
+    - avoid_relative_lib_imports
+    - cascade_invocations
+    - directives_ordering
+    - eol_at_end_of_file
+    - file_names
+    - prefer_const_constructors
+    - prefer_const_literals_to_create_immutables
+    - prefer_expression_function_bodies
+    - prefer_final_fields
+    - prefer_relative_imports
+    - prefer_single_quotes
+    - require_trailing_commas
+    - sized_box_for_whitespace
+    - sort_child_properties_last
+    - sort_constructors_first
+    - sort_pub_dependencies
+    - type_annotate_public_apis
+    - unawaited_futures
+    - unnecessary_parenthesis
+    - use_build_context_synchronously
+    - use_colored_box
+    - use_decorated_box
+    - use_key_in_widget_constructors

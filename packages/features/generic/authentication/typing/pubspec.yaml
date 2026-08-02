@@ -1,0 +1,20 @@
+name: authentication_typing
+description: "Public contract of the authentication feature: models, enums, service interfaces and providers."
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.11.5
+
+resolution: workspace
+
+dependencies:
+  authentication_constants: 0.1.0
+  equatable: 2.0.7
+  flutter:
+    sdk: flutter
+  flutter_riverpod: 2.6.1
+  typing: 0.1.0
+
+dev_dependencies:
+  lint: 0.1.0

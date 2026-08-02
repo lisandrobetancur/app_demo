@@ -1,0 +1,25 @@
+name: utilities
+description: "Pure helpers for the market workspace: formatters, validators, logger, platform guards and image storage."
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.11.5
+
+resolution: workspace
+
+dependencies:
+  crypto: 3.0.7
+  flutter:
+    sdk: flutter
+  flutter_web_plugins:
+    sdk: flutter
+  intl: 0.20.2
+  logger: 2.6.2
+  path: 1.9.1
+  path_provider: 2.1.5
+  typing: 0.1.0
+  uuid: 4.5.2
+
+dev_dependencies:
+  lint: 0.1.0

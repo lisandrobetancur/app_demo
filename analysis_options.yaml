@@ -1,0 +1,4 @@
+# Root options. Every package also carries its own analysis_options.yaml
+# including the same shared config, so the analyzer applies it whether it is
+# invoked at the root (`melos run lint`) or inside a single package.
+include: packages/development/lint/lib/analysis_options.yaml

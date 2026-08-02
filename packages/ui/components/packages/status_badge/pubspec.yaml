@@ -1,0 +1,17 @@
+name: status_badge
+description: "Reusable status badge widget for the market workspace."
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.11.5
+
+resolution: workspace
+
+dependencies:
+  design_system: 0.1.0
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  lint: 0.1.0

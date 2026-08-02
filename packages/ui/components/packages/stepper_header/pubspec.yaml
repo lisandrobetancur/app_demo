@@ -1,0 +1,17 @@
+name: stepper_header
+description: "Reusable multi-step progress header widget for the market workspace."
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.11.5
+
+resolution: workspace
+
+dependencies:
+  design_system: 0.1.0
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  lint: 0.1.0

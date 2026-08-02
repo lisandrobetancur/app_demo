@@ -1,0 +1,9 @@
+name: lint
+description: "Shared analyzer configuration for every package in the market workspace."
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.11.5
+
+resolution: workspace

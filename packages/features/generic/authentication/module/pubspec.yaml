@@ -1,0 +1,29 @@
+name: authentication
+description: "Private implementation of the authentication feature: services, state and UI."
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.11.5
+
+resolution: workspace
+
+dependencies:
+  app_cross_typing: 0.1.0
+  authentication_constants: 0.1.0
+  authentication_typing: 0.1.0
+  database: 0.1.0
+  design_system: 0.1.0
+  easy_localization: 3.0.8
+  flutter:
+    sdk: flutter
+  flutter_riverpod: 2.6.1
+  navigator: 0.1.0
+  shared_preferences: 2.5.3
+  sqflite: 2.4.2
+  stepper_header: 0.1.0
+  typing: 0.1.0
+  utilities: 0.1.0
+
+dev_dependencies:
+  lint: 0.1.0
