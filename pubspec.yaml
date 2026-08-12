@@ -64,9 +64,19 @@ melos:
     rmOverrides: melos exec -c 1 -- rm -f pubspec_overrides.yaml
     pubGet: melos exec -c 1 -- flutter pub get
 
-    # End-to-end suite on the web, emitting the Playwright JSON the Allure
-    # converter reads. `json` is one of the few reporters Patrol accepts.
-    e2eWeb: cd packages/apps/market_app && patrol test --device chrome --web-headless=true --web-reporter='["list","json"]'
+    # End-to-end suite on the web.
+    #
+    # Three reporters, each for a different reader: `list` for the terminal,
+    # `json` for the Allure converter, and `junit` for CI — GitLab, Jenkins
+    # and Azure read results.xml natively and turn it into a test tab, which
+    # a static Allure site cannot do. Patrol only accepts this whitelist, so
+    # no third-party reporter can be plugged in here.
+    #
+    # Video is kept on failures only: it costs nothing on a green run and
+    # gives a recording of whatever broke. The converter attaches it.
+    e2eWeb: cd packages/apps/market_app && patrol test --device chrome --web-headless=true --web-reporter='["list","json","junit"]' --web-video=retain-on-failure
+    # Same suite, recording every test — useful for a demo or a review.
+    e2eWebVideo: cd packages/apps/market_app && patrol test --device chrome --web-headless=true --web-reporter='["list","json","junit"]' --web-video=on
     # Converts the last run into allure-results/ and builds allure-report/.
     # The output directory is removed first: Allure 3 has no `--clean` and
     # nests a second build under `awesome/` instead of replacing the old one,

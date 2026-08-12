@@ -305,6 +305,10 @@ melos run dartFix           # dart fix --apply
 melos run pubGet
 melos run rmlock
 melos run rmOverrides
+melos run e2eWeb            # end-to-end suite (video on failure)
+melos run e2eWebVideo       # same suite, recording every test
+melos run allureReport      # convert the last run and build the report
+melos run allureServe       # open it
 ```
 
 > Melos 7 reads its configuration from the workspace root `pubspec.yaml`; the
@@ -343,8 +347,27 @@ dart pub global activate patrol_cli 4.4.0
 melos run e2eWeb
 ```
 
-That is the whole suite, headless, emitting the JSON the Allure converter
-reads. To watch it in a real browser, or to run a single file:
+That runs the whole suite headless with three reporters, each for a different
+reader:
+
+| Reporter | For whom | Output |
+|---|---|---|
+| `list` | the terminal | live progress |
+| `json` | the Allure converter | `playwright-report/results.json` |
+| `junit` | CI | `playwright-report/results.xml` — GitLab, Jenkins and Azure turn it into a test tab, which a static Allure site cannot do |
+
+Patrol only accepts that whitelist, so no third-party reporter can be plugged
+in — which is why Allure is fed by a converter instead.
+
+It also records **video on failure** (`--web-video=retain-on-failure`): free on
+a green run, and the converter attaches the recording to the failing test. To
+record every test:
+
+```bash
+melos run e2eWebVideo
+```
+
+To watch it in a real browser, or to run a single file:
 
 ```bash
 cd packages/apps/market_app && patrol test --device chrome
@@ -435,6 +458,39 @@ Two traps worth knowing: Allure 3's CLI has no `--clean`, and generating into
 a directory that already holds a report **nests the new one under `awesome/`**
 instead of replacing it — so the scripts delete the output first, otherwise you
 end up reading a stale report.
+
+### What carries over to mobile
+
+The suite is written against Flutter, not against a browser, so most of it is
+platform-agnostic — but the *reporting pipeline* is not, and it is worth being
+precise about where the line falls.
+
+| Piece | Android / iOS | Why |
+|---|---|---|
+| Tests, steps, pages | reused as-is | plain Dart on top of widget `Key`s |
+| `takeScreenshot` | works | `RepaintBoundary.toImage()` is Flutter, not `dart:html` |
+| `PATROL_STEP` / `PATROL_SHOT` markers | emitted | they are Dart prints; they surface through logcat and `os_log` |
+| Allure report format | same | Allure does not care what produced the results |
+| **The converter's input** | **missing** | its source is `playwright-report/results.json`, and there is no Playwright on mobile |
+| `--web-video`, `--web-reporter`, `--web-*` | not available | every one of those flags is consumed by the Playwright config |
+
+What `patrol test` leaves behind instead is platform-native: Gradle's HTML and
+JUnit report under `build/app/reports/androidTests/connected/` on Android, and
+an `.xcresult` bundle under `build/` on iOS. Neither carries our business steps
+or screenshots.
+
+The reusable part is bigger than it looks, though. `patrol_cli` reads the same
+`PATROL_LOG` protocol on all three platforms — `PatrolLogReader` just has a
+different line parser for Flutter-on-Android, Flutter-on-iOS, release-mode iOS
+and Playwright. So extending this pipeline to mobile means writing a **second
+input adapter** that parses `patrol test`'s stdout directly instead of
+Playwright's JSON; `stepsFrom()` — the part that actually builds the step tree,
+reassembles the screenshots and decides what is `broken` — is already
+platform-neutral and would be reused unchanged.
+
+Video on mobile would not come from Patrol either: it is
+`adb shell screenrecord` on Android and `xcrun simctl io recordVideo` on iOS,
+recorded around the run and attached as a file.
 
 ### A screenshot per business step
 
