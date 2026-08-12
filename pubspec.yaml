@@ -72,11 +72,14 @@ melos:
     # a static Allure site cannot do. Patrol only accepts this whitelist, so
     # no third-party reporter can be plugged in here.
     #
-    # Video is kept on failures only: it costs nothing on a green run and
-    # gives a recording of whatever broke. The converter attaches it.
-    e2eWeb: cd packages/apps/market_app && patrol test --device chrome --web-headless=true --web-reporter='["list","json","junit"]' --web-video=retain-on-failure
-    # Same suite, recording every test — useful for a demo or a review.
-    e2eWebVideo: cd packages/apps/market_app && patrol test --device chrome --web-headless=true --web-reporter='["list","json","junit"]' --web-video=on
+    # `json` is not optional: Playwright's per-test stdout capture is the only
+    # channel that carries the screenshot markers out of the browser. The CLI's
+    # own stdout drops them.
+    #
+    # There is deliberately no video: the evidence model is one screenshot per
+    # business step, which is the only one that works identically on web,
+    # Android and iOS.
+    e2eWeb: cd packages/apps/market_app && patrol test --device chrome --web-headless=true --web-reporter='["list","json","junit"]'
     # Converts the last run into allure-results/ and builds allure-report/.
     # The output directory is removed first: Allure 3 has no `--clean` and
     # nests a second build under `awesome/` instead of replacing the old one,

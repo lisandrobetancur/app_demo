@@ -17,8 +17,8 @@
  */
 
 import { createHash, randomUUID } from "node:crypto";
-import { existsSync, mkdirSync, copyFileSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { basename, extname, resolve } from "node:path";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { hostname } from "node:os";
 
 const REPO_ROOT = resolve(import.meta.dirname, "../..");
@@ -199,22 +199,6 @@ function statusDetailsFrom(result) {
   };
 }
 
-/** Copies Playwright attachments (videos, traces) next to the results. */
-function attachmentsFrom(result, outputDir) {
-  const attachments = [];
-  for (const attachment of result.attachments ?? []) {
-    if (!attachment.path || !existsSync(attachment.path)) continue;
-    const source = `${randomUUID()}-attachment${extname(attachment.path)}`;
-    copyFileSync(attachment.path, resolve(outputDir, source));
-    attachments.push({
-      name: attachment.name ?? basename(attachment.path),
-      source,
-      type: attachment.contentType ?? "application/octet-stream",
-    });
-  }
-  return attachments;
-}
-
 function convert({ input, output }) {
   if (!existsSync(input)) {
     console.error(
@@ -253,7 +237,7 @@ function convert({ input, output }) {
             steps,
             // Screenshots taken before the first interaction (or after the
             // last one) have no step to hang from, so they stay on the test.
-            attachments: [...orphanShots, ...attachmentsFrom(result, output)],
+            attachments: orphanShots,
             parameters: result.retry > 0 ? [{ name: "retry", value: String(result.retry) }] : [],
             labels: [
               { name: "parentSuite", value: "Patrol web E2E" },
