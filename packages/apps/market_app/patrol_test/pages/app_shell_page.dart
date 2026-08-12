@@ -24,14 +24,13 @@ class AppShellPage extends BasePage {
 
   PatrolFinder get profileTab => $(ShellKeys.tabProfile);
 
-  Future<void> openDashboard() =>
-      act('tab_dashboard', () => dashboardTab.tap());
+  Future<void> openDashboard() => dashboardTab.tap();
 
-  Future<void> openCatalog() => act('tab_catalog', () => catalogTab.tap());
+  Future<void> openCatalog() => catalogTab.tap();
 
-  Future<void> openCart() => act('tab_cart', () => cartTab.tap());
+  Future<void> openCart() => cartTab.tap();
 
-  Future<void> openOrders() => act('tab_orders', () => ordersTab.tap());
+  Future<void> openOrders() => ordersTab.tap();
 
-  Future<void> openProfile() => act('tab_profile', () => profileTab.tap());
+  Future<void> openProfile() => profileTab.tap();
 }

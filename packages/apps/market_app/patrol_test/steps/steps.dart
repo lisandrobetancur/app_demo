@@ -5,6 +5,7 @@ import 'cart_steps.dart';
 import 'catalog_steps.dart';
 
 export 'auth_steps.dart';
+export 'base_steps.dart';
 export 'cart_steps.dart';
 export 'catalog_steps.dart';
 

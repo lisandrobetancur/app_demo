@@ -49,20 +49,15 @@ class CartPage extends BasePage {
   PatrolFinder removeItemButton(String cartItemId) =>
       $(CartKeys.removeItemButton(cartItemId));
 
-  Future<void> enterCoupon(String code) =>
-      act('coupon_typed_$code', () => couponInput.enterText(code));
+  Future<void> enterCoupon(String code) => couponInput.enterText(code);
 
-  Future<void> applyCoupon() =>
-      act('coupon_applied', () => applyCouponButton.tap());
+  Future<void> applyCoupon() => applyCouponButton.tap();
 
-  Future<void> removeCoupon() =>
-      act('coupon_removed', () => removeCouponButton.tap());
+  Future<void> removeCoupon() => removeCouponButton.tap();
 
-  Future<void> goToCheckout() =>
-      act('checkout_opened', () => checkoutButton.tap());
+  Future<void> goToCheckout() => checkoutButton.tap();
 
-  Future<void> undoRemove() =>
-      act('remove_undone', () => undoRemoveButton.tap());
+  Future<void> undoRemove() => undoRemoveButton.tap();
 
   /// Disabled while a line is unavailable or the cart is empty.
   bool get isCheckoutEnabled =>

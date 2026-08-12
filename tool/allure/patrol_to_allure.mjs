@@ -66,27 +66,68 @@ function stdoutOf(result) {
  * so entries are paired by nesting order: every `status: "start"` opens a
  * step and the next terminal entry closes the most recent open one.
  */
+/**
+ * Rebuilds the step tree from the interleaved markers in a test's stdout.
+ *
+ * Three streams arrive mixed together, and the nesting is what makes the
+ * report readable:
+ *
+ *  * `PATROL_STEP` — the *business* steps this suite declares ("Log in as the
+ *    demo user"). They become the top-level steps and can nest.
+ *  * `PATROL_LOG` — Patrol's own interactions (tap, enterText, …). They hang
+ *    under whichever business step was open when they happened.
+ *  * `PATROL_SHOT` — a screenshot, taken when a business step closes, so it
+ *    is attached to that step rather than to an individual tap.
+ */
 function stepsFrom(stdout, outputDir) {
-  const steps = [];
-  const open = [];
+  const root = [];
+  const businessStack = []; // business steps currently open
+  const interactionStack = []; // patrol interactions currently open
   const shots = new Map(); // name -> { total, chunks: Map<index, string> }
-  let lastClosed = null;
   const orphanShots = [];
+  let lastClosedBusiness = null;
+
+  /** Where a new child belongs right now. */
+  const currentChildren = () =>
+    businessStack.length > 0 ? businessStack[businessStack.length - 1].steps : root;
 
   for (const line of stripAnsi(stdout).split("\n")) {
-    const shot = line.indexOf("PATROL_SHOT|");
-    if (shot >= 0) {
-      const attachment = collectScreenshot(line.slice(shot), shots, outputDir);
-      if (attachment) (lastClosed?.attachments ?? orphanShots).push(attachment);
+    const shotAt = line.indexOf("PATROL_SHOT|");
+    if (shotAt >= 0) {
+      const attachment = collectScreenshot(line.slice(shotAt), shots, outputDir);
+      if (attachment) {
+        // The capture happens inside the step it belongs to, but its last
+        // chunk can land just after the step closed.
+        const owner = businessStack[businessStack.length - 1] ?? lastClosedBusiness;
+        (owner?.attachments ?? orphanShots).push(attachment);
+      }
       continue;
     }
 
-    const marker = line.indexOf("PATROL_LOG ");
-    if (marker < 0) continue;
+    const stepAt = line.indexOf("PATROL_STEP|");
+    if (stepAt >= 0) {
+      const [, phase, , payload] = line.slice(stepAt).split("|", 4);
+      if (phase === "begin") {
+        const step = { name: payload, status: "passed", start: Date.now(), stop: Date.now(), steps: [], parameters: [], attachments: [] };
+        currentChildren().push(step);
+        businessStack.push(step);
+      } else {
+        const step = businessStack.pop();
+        if (step) {
+          step.stop = Date.now();
+          step.status = payload === "failed" ? "failed" : "passed";
+          lastClosedBusiness = step;
+        }
+      }
+      continue;
+    }
+
+    const logAt = line.indexOf("PATROL_LOG ");
+    if (logAt < 0) continue;
 
     let entry;
     try {
-      entry = JSON.parse(line.slice(marker + "PATROL_LOG ".length));
+      entry = JSON.parse(line.slice(logAt + "PATROL_LOG ".length));
     } catch {
       continue; // a truncated line is not worth failing the whole report over
     }
@@ -95,24 +136,25 @@ function stepsFrom(stdout, outputDir) {
     const at = Date.parse(entry.timestamp);
     if (entry.status === "start") {
       const step = { name: stripAnsi(entry.action ?? "step"), status: "passed", start: at, stop: at, steps: [], parameters: [], attachments: [] };
-      open.push(step);
-      steps.push(step);
+      const parent = interactionStack[interactionStack.length - 1];
+      (parent ? parent.steps : currentChildren()).push(step);
+      interactionStack.push(step);
       continue;
     }
 
-    const step = open.pop();
+    const step = interactionStack.pop();
     if (!step) continue;
     step.stop = at;
     step.status = entry.status === "success" ? "passed" : "failed";
     if (entry.data) {
       step.parameters.push({ name: "data", value: String(entry.data) });
     }
-    lastClosed = step;
   }
 
-  // A step still open when the test died is what actually broke.
-  for (const step of open) step.status = "broken";
-  return { steps, orphanShots };
+  // Anything still open when the test died is what actually broke.
+  for (const step of interactionStack) step.status = "broken";
+  for (const step of businessStack) step.status = "broken";
+  return { steps: root, orphanShots };
 }
 
 /**

@@ -416,16 +416,39 @@ a directory that already holds a report **nests the new one under `awesome/`**
 instead of replacing it — so the scripts delete the output first, otherwise you
 end up reading a stale report.
 
-### A screenshot per interaction
+### A screenshot per business step
 
-Every interaction produces an image, attached to the step that caused it.
+The report is organised the way the suite is: **business steps at the top,
+Patrol's raw interactions nested underneath, and one screenshot per step.**
 
-Patrol exposes no screenshot action on the web — its native action list covers
-taps, text, cookies and dialogs, but not captures. So the app rasterises its
-own frame: the launcher wraps the widget tree in a `RepaintBoundary`, and
-`captureScreenshot` encodes it as PNG and prints it to the browser console,
-which the Playwright bridge forwards into the test's stdout, where the
-converter reassembles it.
+```
+1  Log in as the demo user                              [image]
+   1  Submit credentials for ana@market.demo            [image]
+      1  waitUntilVisible widgets with key ['login_view']
+      2  enterText widgets with key ['email_input']
+      …
+2  Open the catalog                                     [image]
+   1  tap widgets with key ['go_to_catalog_button']
+   …
+```
+
+A step is the unit a reader cares about, so it is the unit worth a picture —
+a screenshot of every individual tap is noise.
+
+#### `takeScreenshot`, which Patrol does not ship
+
+Patrol's web automation exposes taps, text, cookies, dialogs and window
+control, but **no capture**, and its Dart API has no `takeScreenshot`. So the
+suite adds one as an extension on `PatrolIntegrationTester`:
+
+```dart
+await $.takeScreenshot('cart_with_coupon');
+```
+
+The frame is rasterised inside the app from a `RepaintBoundary` the launcher
+wraps around the widget tree, encoded as PNG and printed to the browser
+console, which the Playwright bridge forwards into the test's stdout, where
+the converter reassembles it.
 
 Two details make that work:
 
@@ -435,12 +458,23 @@ Two details make that work:
   the image travels in 800-character pieces and only becomes an attachment
   once all of them arrive.
 
-Captures go through `BasePage.act`, so a page gets them for free by describing
-what an interaction leaves on screen:
+#### Declaring a step
+
+`BaseSteps.step` names a step, captures the screen it left behind and reports
+its outcome — a failing step still emits its image, so the report shows what
+the screen looked like when it broke:
 
 ```dart
-Future<void> submit() => act('login_submitted', () => submitButton.tap());
+Future<void> loginAsDemoUser() =>
+    step('Log in as the demo user', () async {
+      await submitCredentials(...);
+      await _dashboard.waitUntilVisible();
+      expect(_dashboard.greetingText, contains(TestData.demoFullName));
+    });
 ```
+
+Page objects stay free of reporting: they know how to touch a widget, not what
+the touch was for.
 
 Each capture costs roughly 150 ms. To run without them:
 
