@@ -80,9 +80,18 @@ melos:
     # business step, which is the only one that works identically on web,
     # Android and iOS.
     e2eWeb: cd packages/apps/market_app && patrol test --device chrome --web-headless=true --web-reporter='["list","json","junit"]'
-    # Converts the last run into allure-results/ and builds allure-report/.
+    # Runs the suite on a connected Android device, capturing logcat — the
+    # only channel carrying the step and screenshot markers on mobile.
+    e2eAndroid: bash tool/e2e/run_android.sh
+
+    # One report per platform, each self-contained. They are kept apart on
+    # purpose: a web run and a device run are different environments, and
+    # merging them would average away the differences worth seeing.
+    #
     # The output directory is removed first: Allure 3 has no `--clean` and
     # nests a second build under `awesome/` instead of replacing the old one,
     # which silently leaves you reading a stale report.
-    allureReport: rm -rf allure-report && node tool/allure/patrol_to_allure.mjs && npx --prefix tool/allure allure generate allure-results --output allure-report --report-name "Market E2E"
-    allureServe: npx --prefix tool/allure allure serve allure-report
+    allureWeb: rm -rf allure-report-web && node tool/allure/patrol_to_allure.mjs --output allure-results-web --platform web && npx --prefix tool/allure allure generate allure-results-web --output allure-report-web --report-name "Market E2E · Web"
+    allureAndroid: rm -rf allure-report-android && node tool/allure/patrol_to_allure.mjs --input build/e2e/android_run.log --output allure-results-android --platform android && npx --prefix tool/allure allure generate allure-results-android --output allure-report-android --report-name "Market E2E · Android"
+    allureServeWeb: npx --prefix tool/allure allure serve allure-results-web
+    allureServeAndroid: npx --prefix tool/allure allure serve allure-results-android

@@ -460,44 +460,63 @@ a directory that already holds a report **nests the new one under `awesome/`**
 instead of replacing it — so the scripts delete the output first, otherwise you
 end up reading a stale report.
 
-### What carries over to mobile
+### Running on Android
 
-The suite is written against Flutter, not against a browser, so most of it is
-platform-agnostic — but the *reporting pipeline* is not, and it is worth being
-precise about where the line falls.
+The same suite runs on a physical device, and produces its own Allure report:
 
-| Piece | Android / iOS | Why |
+```bash
+melos run e2eAndroid
+```
+
+```bash
+melos run allureAndroid
+```
+
+Everything above the transport is shared — the tests, the steps, the pages and
+`takeScreenshot` are plain Flutter and move across untouched. What differs is
+how the results get out, and that is where the work was:
+
+| Piece | Web | Android |
 |---|---|---|
-| Tests, steps, pages | reused as-is | plain Dart on top of widget `Key`s |
-| `takeScreenshot` | works | `RepaintBoundary.toImage()` is Flutter, not `dart:html` |
-| `PATROL_STEP` / `PATROL_SHOT` markers | emitted | they are Dart prints; they surface through logcat and `os_log` |
-| Allure report format | same | Allure does not care what produced the results |
-| **The converter's input** | **missing** | its source is `playwright-report/results.json`, and there is no Playwright on mobile |
-| `--web-reporter`, `--web-*` | not available | every one of those flags is consumed by the Playwright config |
+| Runner | Playwright + Chromium | native instrumentation (`PatrolJUnitRunner`) |
+| Marker transport | Playwright's per-test stdout capture | `adb logcat` |
+| Converter input | `playwright-report/results.json` | `build/e2e/android_run.log` |
+| Report | `allure-report-web` | `allure-report-android` |
 
-What `patrol test` leaves behind instead is platform-native: Gradle's HTML and
-JUnit report under `build/app/reports/androidTests/connected/` on Android, and
-an `.xcresult` bundle under `build/` on iOS. Neither carries our business steps
-or screenshots.
+The converter has one adapter per transport (`fromPlaywright`, `fromPatrolLog`)
+feeding a single renderer, because the payload is identical: Patrol emits the
+same `PATROL_LOG` protocol on every platform, and a `TestEntry` carries the
+name, status, both timestamps and the error message — every field the web path
+takes from Playwright. `stepsFrom()`, which builds the step tree and reassembles
+the screenshots, is shared verbatim.
 
-The reusable part is bigger than it looks, though. `patrol_cli` reads the same
-`PATROL_LOG` protocol on all three platforms — `PatrolLogReader` just has a
-different line parser for Flutter-on-Android, Flutter-on-iOS, release-mode iOS
-and Playwright. And a `TestEntry` carries a test's name, status, start and end
-timestamps and error message: every field the converter takes from Playwright
-today. So extending this pipeline to mobile means writing a **second input
-adapter** over that stream; `stepsFrom()` — the part that builds the step tree,
-reassembles the screenshots and decides what is `broken` — is already
-platform-neutral and would be reused unchanged.
+Three things are worth knowing before running this on another machine.
 
-The trap to know before attempting it: the markers must be read from the
-device log (`adb logcat`, `os_log`), **not** from `patrol test`'s stdout. The
-CLI consumes `PATROL_LOG` and reprints it formatted, and silently drops every
-other line — including ours. On web they survive only because Playwright
-captures the browser console per test. Android's logcat is also a ring buffer
-that drops lines under load, so a run there wants `adb logcat -G 16M`; the
-converter already skips a screenshot whose chunks are incomplete rather than
-failing the report.
+**The markers come from the device log, not from the CLI.** `patrol_cli` parses
+`PATROL_LOG` to pretty-print it and silently drops every other line, so its
+stdout carries none of the step or screenshot markers. `tool/e2e/run_android.sh`
+therefore reads logcat in parallel with the run. Logcat is also a ring buffer
+that drops lines under load, so the script raises it to 16 MB before starting;
+the converter skips a screenshot whose chunks are incomplete rather than failing
+the report.
+
+**The AndroidX test orchestrator is required**, and not for the usual reason. It
+is normally described as the way to get `clearPackageData` between tests, which
+this suite does not need — `app_launcher.dart` already resets its own state in
+Dart. What it actually provides is a *fresh process per test case*, and Patrol
+needs that: it enumerates the Dart tests and asks the native side for one at a
+time, but a Dart test bundle runs every test as soon as it starts. Without the
+orchestrator the first request executes the whole bundle and the remaining cases
+find nothing left to run — 1 passed, 5 failed.
+
+**Installing the orchestrator can time out** on a mid-range device, surfacing as
+`ShellCommandUnresponsiveException` and `Failed to install split APK(s)` rather
+than as a timeout. `installation { timeOutInMs }` in `android/app/build.gradle.kts`
+raises the limit; pre-installing it once with `adb install` also works.
+
+Last verified run: **6 passed, 0 failed in 2 m 50 s** on a Samsung SM-A315G
+(Android 12), 33 screenshots in the report — the same six tests and the same
+count as the web run.
 
 ### A screenshot per business step
 

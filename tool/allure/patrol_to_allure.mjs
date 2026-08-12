@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Turns Patrol's web results into Allure results.
+ * Turns a Patrol run into Allure results, on web or on a mobile device.
  *
  * Why a converter instead of an Allure reporter: Patrol owns the Playwright
  * config that runs the web suite, and its `mapReporters` only accepts a
@@ -13,7 +13,21 @@
  * steps, so the report shows "tap login_submit_button" instead of a single
  * opaque test row.
  *
- *   node patrol_to_allure.mjs [--input <results.json>] [--output <dir>]
+ * There are two input adapters over one renderer, because the *transport*
+ * differs per platform while the payload does not:
+ *
+ *  * `playwright` — web. Playwright captures the browser console per test,
+ *    and its JSON report is the only place those lines survive.
+ *  * `patrol-log` — Android and iOS. The same markers arrive through the
+ *    device log (`adb logcat`, `os_log`), so the adapter has to find the test
+ *    boundaries itself, from the `type: "test"` entries in the stream.
+ *
+ * Everything downstream — the step tree, the screenshots, the report — is
+ * identical on both paths.
+ *
+ *   node patrol_to_allure.mjs [--input <file>] [--output <dir>]
+ *                             [--format playwright|patrol-log]
+ *                             [--platform web|android|ios]
  */
 
 import { createHash, randomUUID } from "node:crypto";
@@ -36,13 +50,26 @@ const STATUS = {
   skipped: "skipped",
 };
 
+/** `PATROL_LOG` test status -> Allure status. */
+const TEST_STATUS = {
+  success: "passed",
+  failure: "failed",
+  skip: "skipped",
+};
+
 function parseArgs(argv) {
   const args = { ...DEFAULTS };
   for (let i = 0; i < argv.length; i += 2) {
     const [flag, value] = [argv[i], argv[i + 1]];
     if (flag === "--input" && value) args.input = resolve(value);
     else if (flag === "--output" && value) args.output = resolve(value);
+    else if (flag === "--format" && value) args.format = value;
+    else if (flag === "--platform" && value) args.platform = value;
   }
+  // A Playwright report is JSON; a device log is not. Guessing from the
+  // extension keeps the common cases flag-free.
+  args.format ??= args.input.endsWith(".json") ? "playwright" : "patrol-log";
+  args.platform ??= args.format === "playwright" ? "web" : "android";
   return args;
 }
 
@@ -199,12 +226,110 @@ function statusDetailsFrom(result) {
   };
 }
 
-function convert({ input, output }) {
+/**
+ * Web adapter: one run per Playwright result.
+ *
+ * Playwright already separates the tests for us and hands each one its own
+ * captured stdout, so this is mostly a field rename.
+ */
+function fromPlaywright(input) {
+  const report = JSON.parse(readFileSync(input, "utf8"));
+  const runs = [];
+  for (const suite of report.suites ?? []) {
+    for (const spec of suite.specs ?? []) {
+      for (const test of spec.tests ?? []) {
+        for (const result of test.results ?? []) {
+          const { suite: suiteName, name } = splitTitle(spec.title);
+          const start = Date.parse(result.startTime);
+          runs.push({
+            suite: suiteName,
+            name,
+            status: STATUS[result.status] ?? "unknown",
+            statusDetails: statusDetailsFrom(result),
+            start,
+            stop: start + Math.round(result.duration ?? 0),
+            stdout: stdoutOf(result),
+            thread: `worker-${result.workerIndex ?? 0}`,
+            retry: result.retry ?? 0,
+          });
+        }
+      }
+    }
+  }
+  return { runs, startedAt: report.stats?.startTime, workers: report.config?.workers ?? 1 };
+}
+
+/**
+ * Mobile adapter: one run per `type: "test"` pair in the device log.
+ *
+ * Nothing separates the tests here, so the adapter does it: a `start` entry
+ * opens a run and the next terminal entry closes it, with every line in
+ * between belonging to that test. A `TestEntry` carries the name, the status,
+ * both timestamps and the error message — every field the web path takes from
+ * Playwright.
+ *
+ * The lines must come from the device log (`adb logcat`, `os_log`), not from
+ * `patrol test`'s stdout: the CLI consumes `PATROL_LOG` to pretty-print it and
+ * silently drops everything else, including our own markers.
+ */
+function fromPatrolLog(input) {
+  const runs = [];
+  let current = null;
+
+  for (const line of readFileSync(input, "utf8").split("\n")) {
+    const at = line.indexOf("PATROL_LOG ");
+    if (at >= 0) {
+      let entry;
+      try {
+        entry = JSON.parse(stripAnsi(line.slice(at + "PATROL_LOG ".length)));
+      } catch {
+        entry = null;
+      }
+      if (entry?.type === "test") {
+        const when = Date.parse(entry.timestamp);
+        if (entry.status === "start") {
+          current = { ...splitTitle(stripAnsi(entry.name)), start: when, lines: [] };
+        } else if (current) {
+          current.stop = when;
+          current.status = TEST_STATUS[entry.status] ?? "unknown";
+          if (entry.error) {
+            const message = stripAnsi(entry.error);
+            current.statusDetails = {
+              message: message.split("\n").slice(0, 4).join("\n").trim(),
+              trace: message.trim(),
+            };
+          }
+          runs.push(current);
+          current = null;
+        }
+        continue;
+      }
+    }
+    // Steps and screenshots belong to whichever test is open; anything
+    // printed between tests is noise from the device and is dropped.
+    if (current) current.lines.push(line);
+  }
+
+  // A run still open at the end means the process died mid-test.
+  if (current) {
+    runs.push({ ...current, stop: current.start, status: "broken" });
+  }
+
+  return {
+    runs: runs.map(run => ({ ...run, stdout: run.lines.join("\n"), thread: "device" })),
+    startedAt: runs.length > 0 ? new Date(runs[0].start).toISOString() : undefined,
+    workers: 1,
+  };
+}
+
+function convert({ input, output, format, platform }) {
   if (!existsSync(input)) {
     console.error(
-      `No Playwright results at ${input}\n` +
+      `No ${format === "playwright" ? "Playwright results" : "device log"} at ${input}\n` +
         "Run the suite first:\n" +
-        "  cd packages/apps/market_app && patrol test --device chrome --web-reporter='[\"list\",\"json\"]'",
+        (format === "playwright"
+          ? "  melos run e2eWeb"
+          : "  melos run e2eAndroid"),
     );
     process.exit(1);
   }
@@ -212,72 +337,72 @@ function convert({ input, output }) {
   rmSync(output, { recursive: true, force: true });
   mkdirSync(output, { recursive: true });
 
-  const report = JSON.parse(readFileSync(input, "utf8"));
+  const { runs, startedAt, workers } =
+    format === "playwright" ? fromPlaywright(input) : fromPatrolLog(input);
   let written = 0;
 
-  for (const suite of report.suites ?? []) {
-    for (const spec of suite.specs ?? []) {
-      for (const test of spec.tests ?? []) {
-        for (const result of test.results ?? []) {
-          const { suite: suiteName, name } = splitTitle(spec.title);
-          const start = Date.parse(result.startTime);
+  for (const run of runs) {
+          const suiteName = run.suite;
+          const name = run.name;
           const fullName = `${suiteName}#${name}`;
-          const { steps, orphanShots } = stepsFrom(stdoutOf(result), output);
+          const { steps, orphanShots } = stepsFrom(run.stdout, output);
 
           const testResult = {
             uuid: randomUUID(),
-            historyId: createHash("md5").update(fullName).digest("hex"),
+            // Scoped by platform so a web and a mobile run of the same test
+            // keep separate history instead of overwriting each other.
+            historyId: createHash("md5").update(`${platform}#${fullName}`).digest("hex"),
             name,
             fullName,
-            status: STATUS[result.status] ?? "unknown",
-            statusDetails: statusDetailsFrom(result),
+            status: run.status,
+            statusDetails: run.statusDetails,
             stage: "finished",
-            start,
-            stop: start + Math.round(result.duration ?? 0),
+            start: run.start,
+            stop: run.stop,
             steps,
             // Screenshots taken before the first interaction (or after the
             // last one) have no step to hang from, so they stay on the test.
             attachments: orphanShots,
-            parameters: result.retry > 0 ? [{ name: "retry", value: String(result.retry) }] : [],
+            parameters: run.retry > 0 ? [{ name: "retry", value: String(run.retry) }] : [],
             labels: [
-              { name: "parentSuite", value: "Patrol web E2E" },
+              { name: "parentSuite", value: `Patrol ${platform} E2E` },
               { name: "suite", value: suiteName },
               { name: "framework", value: "patrol" },
               { name: "language", value: "dart" },
               { name: "layer", value: "e2e" },
+              { name: "platform", value: platform },
               { name: "host", value: hostname() },
-              { name: "thread", value: `worker-${result.workerIndex ?? 0}` },
+              { name: "thread", value: run.thread },
             ],
           };
 
-          writeFileSync(
-            resolve(output, `${testResult.uuid}-result.json`),
-            JSON.stringify(testResult, null, 2),
-          );
-          written += 1;
-        }
-      }
-    }
+    writeFileSync(
+      resolve(output, `${testResult.uuid}-result.json`),
+      JSON.stringify(testResult, null, 2),
+    );
+    written += 1;
   }
 
-  writeMetadata(output, report);
-  console.log(`Wrote ${written} Allure result(s) to ${output}`);
+  writeMetadata(output, { platform, startedAt, workers });
+  console.log(`Wrote ${written} Allure result(s) to ${output} (${platform})`);
   if (written === 0) process.exitCode = 1;
 }
 
 /** Environment and categories shown in the report's sidebar. */
-function writeMetadata(output, report) {
-  const stats = report.stats ?? {};
+function writeMetadata(output, { platform, startedAt, workers }) {
   writeFileSync(
     resolve(output, "environment.properties"),
     [
       "app=Market",
       "layer=end-to-end",
-      "runner=Patrol (web) + Playwright",
-      "browser=Chromium",
-      `workers=${report.config?.workers ?? 1}`,
+      `platform=${platform}`,
+      platform === "web"
+        ? "runner=Patrol (web) + Playwright"
+        : `runner=Patrol (${platform}) + native instrumentation`,
+      platform === "web" ? "browser=Chromium" : `device=${process.env.PATROL_DEVICE ?? "connected"}`,
+      `workers=${workers}`,
       `seed_mode=demo`,
-      `started=${stats.startTime ?? ""}`,
+      `started=${startedAt ?? ""}`,
       "",
     ].join("\n"),
   );
