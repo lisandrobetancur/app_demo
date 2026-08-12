@@ -29,3 +29,8 @@ packages/apps/market_app/playwright-report/
 packages/apps/market_app/test-results/
 packages/apps/market_app/node_modules/
 packages/apps/market_app/test_bundle.dart
+
+# Allure
+allure-results/
+allure-report/
+tool/allure/node_modules/

@@ -63,3 +63,10 @@ melos:
     rmlock: melos exec -c 1 -- rm -f pubspec.lock
     rmOverrides: melos exec -c 1 -- rm -f pubspec_overrides.yaml
     pubGet: melos exec -c 1 -- flutter pub get
+
+    # End-to-end suite on the web, emitting the Playwright JSON the Allure
+    # converter reads. `json` is one of the few reporters Patrol accepts.
+    e2eWeb: cd packages/apps/market_app && patrol test --device chrome --web-headless=true --web-reporter='["list","json"]'
+    # Converts the last run into allure-results/ and builds allure-report/.
+    allureReport: node tool/allure/patrol_to_allure.mjs && npx --prefix tool/allure allure generate allure-results --output allure-report --report-name "Market E2E"
+    allureServe: npx --prefix tool/allure allure serve allure-report

@@ -381,6 +381,36 @@ workspace mandates. `patrol_cli` must match — the CLI refuses to run on a
 mismatch — so use **4.4.0**, per the
 [compatibility table](https://patrol.leancode.co/documentation/compatibility-table).
 
+### Allure report
+
+```bash
+melos run e2eWeb        # runs the suite, emitting Playwright JSON
+```
+
+```bash
+melos run allureReport  # converts that JSON and builds allure-report/
+```
+
+```bash
+melos run allureServe   # opens the report in a browser
+```
+
+Why a converter (`tool/allure/patrol_to_allure.mjs`) instead of the usual
+`allure-playwright` reporter: Patrol owns the Playwright config that runs the
+web suite, and its `mapReporters` accepts only a whitelist — `html`, `json`,
+`junit`, `list`, `dot`, `line`, `github`, `null` — and throws on anything else.
+So the pipeline uses the supported `json` reporter and translates it.
+
+The translation is not a straight copy. Patrol prints a structured
+`PATROL_LOG {…}` line for every interaction, so each `tap`, `enterText` and
+`waitUntilVisible` becomes a real Allure **step** with its own duration, and a
+step still open when a test dies is marked `broken` — which is usually the one
+that actually failed. Tests are grouped by the Dart file they came from
+(`login_test`, `purchase_flow_test`) under a `Patrol web E2E` parent suite.
+
+Allure 3 is used through its npm package, so **no Java is required**. The
+converter has no dependencies beyond Node itself.
+
 ---
 
 ## Technical decisions

@@ -1,0 +1,16 @@
+{
+  "name": "market-allure",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Turns Patrol web results into an Allure report.",
+  "scripts": {
+    "convert": "node patrol_to_allure.mjs",
+    "generate": "allure generate ../../allure-results --output ../../allure-report --report-name \"Market E2E\"",
+    "serve": "allure serve ../../allure-report",
+    "report": "npm run convert && npm run generate"
+  },
+  "devDependencies": {
+    "allure": "3.14.3"
+  }
+}
