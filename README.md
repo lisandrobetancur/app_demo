@@ -327,6 +327,62 @@ and settings.
 
 ---
 
+## End-to-end tests (Patrol, web)
+
+[Patrol](https://patrol.leancode.co) drives the real app. On the web it does
+not use UIAutomator/XCUITest as on mobile: it serves the app with
+`flutter run -d web-server` and drives Chromium through **Playwright**, so
+Node.js is required (the first run installs Playwright and its browsers
+automatically).
+
+```bash
+dart pub global activate patrol_cli 4.4.0
+```
+
+```bash
+cd packages/apps/market_app && patrol test --device chrome
+```
+
+```bash
+cd packages/apps/market_app && patrol test --device chrome --target patrol_test/login_test.dart --web-headless=true
+```
+
+### Three layers
+
+```
+patrol_test/
+├── support/     app launcher + fixed test data mirroring the seed
+├── pages/       Page Objects: locators and atomic interactions
+├── steps/       business language composing pages, with its assertions
+└── *_test.dart  specs that read as sentences
+```
+
+The rule that keeps the layers honest: **a page knows where things are, a step
+knows what a person does, a test knows what the product promises.** A locator
+never leaves `pages/`, and a page never asserts a business rule.
+
+Locators are not string literals: they are the very `Key` constants the app
+declares in each feature's `constants/` package, so renaming a key breaks the
+tests at compile time instead of at run time.
+
+### Determinism
+
+`launchMarketApp()` mirrors `lib/main.dart` but forces the three things a
+repeatable test needs: its own database file (reset to the seed before the
+first frame — IndexedDB survives between runs on the web), cleared preferences
+(no remembered session), and `AppDurations.fastMode`, so `pumpAndSettle` never
+waits on a shimmer.
+
+### Version pinning
+
+`patrol` is pinned to **4.6.1**, not the latest 4.9.0: from 4.7.0 onwards it
+requires `equatable ^2.1.0`, which would break the `equatable: 2.0.7` pin this
+workspace mandates. `patrol_cli` must match — the CLI refuses to run on a
+mismatch — so use **4.4.0**, per the
+[compatibility table](https://patrol.leancode.co/documentation/compatibility-table).
+
+---
+
 ## Technical decisions
 
 - **No `freezed`, no `json_serializable`.** Models are written by hand so the
