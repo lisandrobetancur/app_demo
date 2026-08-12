@@ -1,5 +1,7 @@
 import 'package:patrol/patrol.dart';
 
+import '../support/screenshot.dart';
+
 /// Base of every Page Object.
 ///
 /// The contract of this layer, deliberately narrow:
@@ -23,4 +25,15 @@ abstract class BasePage {
 
   /// Waits until the view is on screen; fails the test on timeout.
   Future<void> waitUntilVisible() => root.waitUntilVisible();
+
+  /// Runs an interaction and captures the frame it produced.
+  ///
+  /// Every interaction in this layer goes through here, so the Allure report
+  /// gets one screenshot per action without each page having to remember to
+  /// ask for it. [label] is what the image is called in the report, so it
+  /// should describe the resulting state, not the widget.
+  Future<void> act(String label, Future<void> Function() interaction) async {
+    await interaction();
+    await captureScreenshot($, label);
+  }
 }

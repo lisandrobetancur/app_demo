@@ -27,20 +27,27 @@ class LoginPage extends BasePage {
   PatrolFinder get goToRecoverPasswordButton =>
       $(LoginKeys.goToRecoverPasswordButton);
 
-  Future<void> enterEmail(String email) => emailInput.enterText(email);
+  Future<void> enterEmail(String email) =>
+      act('login_email_filled', () => emailInput.enterText(email));
 
   Future<void> enterPassword(String password) =>
-      passwordInput.enterText(password);
+      act('login_password_filled', () => passwordInput.enterText(password));
 
-  Future<void> toggleRememberMe() => rememberMeCheckbox.tap();
+  Future<void> toggleRememberMe() =>
+      act('login_remember_me_toggled', () => rememberMeCheckbox.tap());
 
-  Future<void> togglePasswordVisibility() => togglePasswordButton.tap();
+  Future<void> togglePasswordVisibility() => act(
+    'login_password_visibility_toggled',
+    () => togglePasswordButton.tap(),
+  );
 
-  Future<void> submit() => submitButton.tap();
+  Future<void> submit() => act('login_submitted', () => submitButton.tap());
 
-  Future<void> openRegister() => goToRegisterButton.tap();
+  Future<void> openRegister() =>
+      act('register_opened', () => goToRegisterButton.tap());
 
-  Future<void> openPasswordRecovery() => goToRecoverPasswordButton.tap();
+  Future<void> openPasswordRecovery() =>
+      act('password_recovery_opened', () => goToRecoverPasswordButton.tap());
 
   /// False while live validation still blocks submission.
   bool get isSubmitEnabled =>

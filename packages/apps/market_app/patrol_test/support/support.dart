@@ -2,4 +2,5 @@
 library;
 
 export 'app_launcher.dart';
+export 'screenshot.dart';
 export 'test_data.dart';

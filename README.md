@@ -411,6 +411,43 @@ that actually failed. Tests are grouped by the Dart file they came from
 Allure 3 is used through its npm package, so **no Java is required**. The
 converter has no dependencies beyond Node itself.
 
+Two traps worth knowing: Allure 3's CLI has no `--clean`, and generating into
+a directory that already holds a report **nests the new one under `awesome/`**
+instead of replacing it — so the scripts delete the output first, otherwise you
+end up reading a stale report.
+
+### A screenshot per interaction
+
+Every interaction produces an image, attached to the step that caused it.
+
+Patrol exposes no screenshot action on the web — its native action list covers
+taps, text, cookies and dialogs, but not captures. So the app rasterises its
+own frame: the launcher wraps the widget tree in a `RepaintBoundary`, and
+`captureScreenshot` encodes it as PNG and prints it to the browser console,
+which the Playwright bridge forwards into the test's stdout, where the
+converter reassembles it.
+
+Two details make that work:
+
+- **`debugPrintSynchronously`, not `debugPrint`.** The latter throttles to
+  about 1 KB/s and silently drops the rest, which shredded every payload.
+- **Chunked base64.** A single very long line gets mangled on the way out, so
+  the image travels in 800-character pieces and only becomes an attachment
+  once all of them arrive.
+
+Captures go through `BasePage.act`, so a page gets them for free by describing
+what an interaction leaves on screen:
+
+```dart
+Future<void> submit() => act('login_submitted', () => submitButton.tap());
+```
+
+Each capture costs roughly 150 ms. To run without them:
+
+```bash
+cd packages/apps/market_app && patrol test --device chrome --dart-define=E2E_SCREENSHOTS=false
+```
+
 ---
 
 ## Technical decisions

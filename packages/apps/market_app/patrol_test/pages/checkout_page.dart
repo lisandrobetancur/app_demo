@@ -47,29 +47,32 @@ class CheckoutPage extends BasePage {
       $(CheckoutKeys.paymentMethod(value));
 
   Future<void> selectAddress(String addressId) =>
-      addressOption(addressId).tap();
+      act('address_selected', () => addressOption(addressId).tap());
 
-  Future<void> selectPaymentMethod(String value) => paymentMethod(value).tap();
+  Future<void> selectPaymentMethod(String value) =>
+      act('payment_method_$value', () => paymentMethod(value).tap());
 
   Future<void> fillCard({
     required String number,
     required String holder,
     required String expiry,
     required String cvv,
-  }) async {
+  }) => act('card_filled', () async {
     await cardNumberInput.enterText(number);
     await cardHolderInput.enterText(holder);
     await cardExpiryInput.enterText(expiry);
     await cardCvvInput.enterText(cvv);
-  }
+  });
 
-  Future<void> goNext() => nextButton.tap();
+  Future<void> goNext() => act('checkout_next_step', () => nextButton.tap());
 
-  Future<void> goBack() => backButton.tap();
+  Future<void> goBack() =>
+      act('checkout_previous_step', () => backButton.tap());
 
-  Future<void> confirm() => confirmButton.tap();
+  Future<void> confirm() =>
+      act('purchase_confirmed', () => confirmButton.tap());
 
-  Future<void> openOrder() => goToOrderButton.tap();
+  Future<void> openOrder() => act('order_opened', () => goToOrderButton.tap());
 
   /// Disabled until the current step is valid.
   bool get isNextEnabled =>

@@ -41,17 +41,23 @@ class DashboardPage extends BasePage {
   PatrolFinder summaryCard(String metric) =>
       $(DashboardKeys.summaryCard(metric));
 
-  Future<void> openCatalog() => goToCatalogButton.tap();
+  Future<void> openCatalog() =>
+      act('dashboard_to_catalog', () => goToCatalogButton.tap());
 
-  Future<void> openCart() => goToCartButton.tap();
+  Future<void> openCart() =>
+      act('dashboard_to_cart', () => goToCartButton.tap());
 
-  Future<void> openFavorites() => goToFavoritesButton.tap();
+  Future<void> openFavorites() =>
+      act('dashboard_to_favorites', () => goToFavoritesButton.tap());
 
-  Future<void> openMyProducts() => goToMyProductsButton.tap();
+  Future<void> openMyProducts() =>
+      act('dashboard_to_my_products', () => goToMyProductsButton.tap());
 
-  Future<void> openCreateProduct() => goToCreateProductButton.tap();
+  Future<void> openCreateProduct() =>
+      act('dashboard_to_create_product', () => goToCreateProductButton.tap());
 
-  Future<void> openNotifications() => notificationsButton.tap();
+  Future<void> openNotifications() =>
+      act('notifications_opened', () => notificationsButton.tap());
 
-  Future<void> tapLogout() => logoutButton.tap();
+  Future<void> tapLogout() => act('logout_tapped', () => logoutButton.tap());
 }

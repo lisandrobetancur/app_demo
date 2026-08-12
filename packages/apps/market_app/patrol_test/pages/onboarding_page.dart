@@ -19,9 +19,9 @@ class OnboardingPage extends BasePage {
   /// Slide `n`, 1-based.
   PatrolFinder slide(int n) => $(AppCrossKeys.onboardingPage(n));
 
-  Future<void> skip() => skipButton.tap();
+  Future<void> skip() => act('onboarding_skipped', () => skipButton.tap());
 
-  Future<void> next() => nextButton.tap();
+  Future<void> next() => act('onboarding_next_slide', () => nextButton.tap());
 
-  Future<void> start() => startButton.tap();
+  Future<void> start() => act('onboarding_started', () => startButton.tap());
 }

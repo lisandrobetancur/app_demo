@@ -39,22 +39,28 @@ class CatalogPage extends BasePage {
   PatrolFinder conditionFilter(String value) =>
       $(CatalogListKeys.conditionFilter(value));
 
-  Future<void> search(String term) => searchInput.enterText(term);
+  Future<void> search(String term) =>
+      act('catalog_searched', () => searchInput.enterText(term));
 
-  Future<void> openFilters() => filterButton.tap();
+  Future<void> openFilters() =>
+      act('catalog_filters_opened', () => filterButton.tap());
 
-  Future<void> toggleCategory(String code) => categoryFilter(code).tap();
+  Future<void> toggleCategory(String code) =>
+      act('catalog_category_$code', () => categoryFilter(code).tap());
 
-  Future<void> toggleCondition(String value) => conditionFilter(value).tap();
+  Future<void> toggleCondition(String value) =>
+      act('catalog_condition_$value', () => conditionFilter(value).tap());
 
-  Future<void> clearFilters() => clearFiltersButton.tap();
+  Future<void> clearFilters() =>
+      act('catalog_filters_cleared', () => clearFiltersButton.tap());
 
   /// Scrolls the (virtualized) list until the row is built and taps it.
   ///
   /// The seed has 15 products ordered by recency, so most rows are off-screen
   /// and would not exist in the widget tree without scrolling first.
-  Future<void> openProduct(String productId) async {
-    await productItem(productId).scrollTo(view: productsList.finder);
-    await productItem(productId).tap();
-  }
+  Future<void> openProduct(String productId) =>
+      act('product_opened_$productId', () async {
+        await productItem(productId).scrollTo(view: productsList.finder);
+        await productItem(productId).tap();
+      });
 }

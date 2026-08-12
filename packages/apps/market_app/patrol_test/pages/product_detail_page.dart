@@ -44,15 +44,18 @@ class ProductDetailPage extends BasePage {
   /// the English "Back" tooltip and this app runs in Spanish by default.
   PatrolFinder get backButton => $(BackButton);
 
-  Future<void> goBack() => backButton.tap();
+  Future<void> goBack() => act('product_detail_closed', () => backButton.tap());
 
-  Future<void> increaseQuantity() => increaseQuantityButton.tap();
+  Future<void> increaseQuantity() =>
+      act('quantity_increased', () => increaseQuantityButton.tap());
 
-  Future<void> decreaseQuantity() => decreaseQuantityButton.tap();
+  Future<void> decreaseQuantity() =>
+      act('quantity_decreased', () => decreaseQuantityButton.tap());
 
-  Future<void> addToCart() => addToCartButton.tap();
+  Future<void> addToCart() => act('added_to_cart', () => addToCartButton.tap());
 
-  Future<void> toggleFavorite() => favoriteToggleButton.tap();
+  Future<void> toggleFavorite() =>
+      act('favorite_toggled', () => favoriteToggleButton.tap());
 
   /// False when the product is out of stock: the CTA stays disabled.
   bool get isAddToCartEnabled =>

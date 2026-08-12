@@ -68,5 +68,8 @@ melos:
     # converter reads. `json` is one of the few reporters Patrol accepts.
     e2eWeb: cd packages/apps/market_app && patrol test --device chrome --web-headless=true --web-reporter='["list","json"]'
     # Converts the last run into allure-results/ and builds allure-report/.
-    allureReport: node tool/allure/patrol_to_allure.mjs && npx --prefix tool/allure allure generate allure-results --output allure-report --report-name "Market E2E"
+    # The output directory is removed first: Allure 3 has no `--clean` and
+    # nests a second build under `awesome/` instead of replacing the old one,
+    # which silently leaves you reading a stale report.
+    allureReport: rm -rf allure-report && node tool/allure/patrol_to_allure.mjs && npx --prefix tool/allure allure generate allure-results --output allure-report --report-name "Market E2E"
     allureServe: npx --prefix tool/allure allure serve allure-report

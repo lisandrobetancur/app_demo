@@ -66,11 +66,21 @@ function stdoutOf(result) {
  * so entries are paired by nesting order: every `status: "start"` opens a
  * step and the next terminal entry closes the most recent open one.
  */
-function stepsFrom(stdout) {
+function stepsFrom(stdout, outputDir) {
   const steps = [];
   const open = [];
+  const shots = new Map(); // name -> { total, chunks: Map<index, string> }
+  let lastClosed = null;
+  const orphanShots = [];
 
   for (const line of stripAnsi(stdout).split("\n")) {
+    const shot = line.indexOf("PATROL_SHOT|");
+    if (shot >= 0) {
+      const attachment = collectScreenshot(line.slice(shot), shots, outputDir);
+      if (attachment) (lastClosed?.attachments ?? orphanShots).push(attachment);
+      continue;
+    }
+
     const marker = line.indexOf("PATROL_LOG ");
     if (marker < 0) continue;
 
@@ -97,11 +107,36 @@ function stepsFrom(stdout) {
     if (entry.data) {
       step.parameters.push({ name: "data", value: String(entry.data) });
     }
+    lastClosed = step;
   }
 
   // A step still open when the test died is what actually broke.
   for (const step of open) step.status = "broken";
-  return steps;
+  return { steps, orphanShots };
+}
+
+/**
+ * Reassembles one screenshot from the chunked `PATROL_SHOT` lines.
+ *
+ * The app streams base64 in 800-character pieces because a single line that
+ * long gets mangled on the way out of the browser. A screenshot only becomes
+ * an attachment once every piece has arrived.
+ */
+function collectScreenshot(line, shots, outputDir) {
+  const [, name, indexRaw, totalRaw, data] = line.split("|", 5);
+  if (name === "ERROR" || data === undefined) return null;
+
+  const total = Number(totalRaw);
+  const entry = shots.get(name) ?? { total, chunks: new Map() };
+  entry.chunks.set(Number(indexRaw), data);
+  shots.set(name, entry);
+  if (entry.chunks.size !== entry.total) return null;
+
+  const base64 = Array.from({ length: entry.total }, (_, i) => entry.chunks.get(i)).join("");
+  const source = `${randomUUID()}-attachment.png`;
+  writeFileSync(resolve(outputDir, source), Buffer.from(base64, "base64"));
+  shots.delete(name);
+  return { name, source, type: "image/png" };
 }
 
 /**
@@ -161,6 +196,7 @@ function convert({ input, output }) {
           const { suite: suiteName, name } = splitTitle(spec.title);
           const start = Date.parse(result.startTime);
           const fullName = `${suiteName}#${name}`;
+          const { steps, orphanShots } = stepsFrom(stdoutOf(result), output);
 
           const testResult = {
             uuid: randomUUID(),
@@ -172,8 +208,10 @@ function convert({ input, output }) {
             stage: "finished",
             start,
             stop: start + Math.round(result.duration ?? 0),
-            steps: stepsFrom(stdoutOf(result)),
-            attachments: attachmentsFrom(result, output),
+            steps,
+            // Screenshots taken before the first interaction (or after the
+            // last one) have no step to hang from, so they stay on the test.
+            attachments: [...orphanShots, ...attachmentsFrom(result, output)],
             parameters: result.retry > 0 ? [{ name: "retry", value: String(result.retry) }] : [],
             labels: [
               { name: "parentSuite", value: "Patrol web E2E" },
