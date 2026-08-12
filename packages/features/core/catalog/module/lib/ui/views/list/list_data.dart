@@ -11,6 +11,7 @@ class _ListData extends ConsumerWidget {
     final DisplayCurrency currency = ref.watch(displayCurrencyProvider);
     final String locale = context.locale.toString();
     return NotificationListener<ScrollNotification>(
+      key: CatalogListKeys.state('data'),
       onNotification: (ScrollNotification notification) {
         if (notification.metrics.extentAfter < 300) {
           viewModel.loadMore();

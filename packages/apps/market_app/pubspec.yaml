@@ -44,7 +44,20 @@ dependencies:
   utilities: 0.1.0
 
 dev_dependencies:
+  flutter_test:
+    sdk: flutter
   lint: 0.1.0
+  patrol: 4.6.1
 
 flutter:
   uses-material-design: true
+
+# End-to-end tests. `app_name` and the platform ids are required by the CLI
+# even for web runs, where Patrol drives Chromium through Playwright.
+patrol:
+  app_name: Market
+  test_directory: patrol_test
+  android:
+    package_name: com.demo.market_app
+  ios:
+    bundle_id: com.demo.marketApp

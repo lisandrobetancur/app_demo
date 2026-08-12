@@ -9,6 +9,7 @@ class _CartData extends ConsumerWidget {
     final CartState state = ref.watch(cartViewModelProvider);
     final CartViewModel viewModel = ref.read(cartViewModelProvider.notifier);
     return Column(
+      key: CartKeys.state('data'),
       children: <Widget>[
         Expanded(
           child: ListView.separated(
