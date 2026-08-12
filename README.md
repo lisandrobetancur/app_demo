@@ -340,6 +340,13 @@ dart pub global activate patrol_cli 4.4.0
 ```
 
 ```bash
+melos run e2eWeb
+```
+
+That is the whole suite, headless, emitting the JSON the Allure converter
+reads. To watch it in a real browser, or to run a single file:
+
+```bash
 cd packages/apps/market_app && patrol test --device chrome
 ```
 
@@ -347,11 +354,24 @@ cd packages/apps/market_app && patrol test --device chrome
 cd packages/apps/market_app && patrol test --device chrome --target patrol_test/login_test.dart --web-headless=true
 ```
 
+### What the suite covers
+
+| Test | What it proves |
+|---|---|
+| `login_test` · signs in with the seeded demo account | the session reaches the dashboard and it greets the right user |
+| `login_test` · rejects wrong credentials | the error is the generic one — the app never reveals whether an email exists |
+| `login_test` · keeps submission blocked | live validation disables the CTA until the form is valid |
+| `purchase_flow_test` · buys and confirms an order | the critical path end to end: catalog → detail → cart → coupon → three-step checkout → order |
+| `purchase_flow_test` · own publication | a product you own offers seller actions instead of the purchase CTA |
+| `purchase_flow_test` · expired coupon | the coupon error is the specific one, not a generic failure |
+
+Last verified run: **6 passed, 0 failed, 0 flaky in 55 s** on Chromium.
+
 ### Three layers
 
 ```
 patrol_test/
-├── support/     app launcher + fixed test data mirroring the seed
+├── support/     app launcher, fixed data mirroring the seed, takeScreenshot
 ├── pages/       Page Objects: locators and atomic interactions
 ├── steps/       business language composing pages, with its assertions
 └── *_test.dart  specs that read as sentences
