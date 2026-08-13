@@ -6,25 +6,14 @@ on:
   pull_request:
   workflow_dispatch:
 
-# The report is published to Pages, which needs these two beyond the default
-# read access. They are declared once here rather than per job so the deploy
-# job inherits them.
 permissions:
   contents: read
-  pages: write
-  id-token: write
   # Turning the JUnit results into annotations writes a check run.
   checks: write
 
-# Two runs deploying Pages at once would race. Queue them instead of
-# cancelling: a deploy that is already halfway is worth finishing.
-concurrency:
-  group: pages
-  cancel-in-progress: false
-
 jobs:
-  test:
-    name: Run the suite and build the report
+  web:
+    name: Web suite
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -76,7 +65,6 @@ jobs:
       - name: Install Playwright and its system dependencies
         run: |
           RUNNER_DIR="$(find "$HOME/.pub-cache/hosted/pub.dev" -maxdepth 1 -type d -name 'patrol-*' | head -1)/web_runner"
-          echo "web_runner: $RUNNER_DIR"
           cd "$RUNNER_DIR"
           npm install
           npx playwright install --with-deps chromium
@@ -84,9 +72,7 @@ jobs:
       - name: Analyze
         run: melos run lint
 
-      # Headless, and the same three reporters as locally: `json` is what the
-      # converter reads, `junit` is what the summary below reads.
-      - name: Run the E2E suite
+      - name: Run the suite
         run: melos run e2eWeb
 
       # The CLI hides Playwright's stderr, so a failure that is not a failing
@@ -105,7 +91,7 @@ jobs:
 
       # Runs even on failure: a red run is exactly when the report matters,
       # and `melos run e2eWeb` exits non-zero when a test fails.
-      - name: Build the Allure report
+      - name: Build the report
         if: always()
         run: melos run allureWeb
 
@@ -114,32 +100,13 @@ jobs:
         uses: mikepenz/action-junit-report@v6
         with:
           report_paths: packages/apps/market_app/playwright-report/results.xml
+          check_name: JUnit — web
           fail_on_failure: false
 
-      # Downloadable from the run itself, which is the only way to see the
-      # report of a pull request — Pages only ever holds main.
-      - name: Upload the report as an artifact
+      - name: Upload the report
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: allure-web-report
+          name: report-web
           path: allure/web/report
           retention-days: 14
-
-      - name: Upload the report for Pages
-        if: always() && github.ref == 'refs/heads/main'
-        uses: actions/upload-pages-artifact@v5
-        with:
-          path: allure/web/report
-
-  deploy:
-    name: Publish the report to Pages
-    needs: test
-    if: always() && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v5

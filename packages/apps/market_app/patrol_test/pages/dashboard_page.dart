@@ -41,17 +41,29 @@ class DashboardPage extends BasePage {
   PatrolFinder summaryCard(String metric) =>
       $(DashboardKeys.summaryCard(metric));
 
-  Future<void> openCatalog() => goToCatalogButton.tap();
+  /// The quick actions sit below the summary, the categories and the recent
+  /// products, so on a shorter screen they start off-screen — and far enough
+  /// down that Flutter has not built them, which a finder reports as "Found 0
+  /// widgets" rather than as something invisible. Scrolling first makes these
+  /// independent of how tall the device happens to be: the same tap worked on
+  /// a 411x914 phone and failed on a 394x804 emulator.
+  Future<void> openCatalog() => _tapQuickAction(goToCatalogButton);
 
-  Future<void> openCart() => goToCartButton.tap();
+  Future<void> openCart() => _tapQuickAction(goToCartButton);
 
-  Future<void> openFavorites() => goToFavoritesButton.tap();
+  Future<void> openFavorites() => _tapQuickAction(goToFavoritesButton);
 
-  Future<void> openMyProducts() => goToMyProductsButton.tap();
+  Future<void> openMyProducts() => _tapQuickAction(goToMyProductsButton);
 
   Future<void> openCreateProduct() => goToCreateProductButton.tap();
 
   Future<void> openNotifications() => notificationsButton.tap();
 
   Future<void> tapLogout() => logoutButton.tap();
+
+  Future<void> _tapQuickAction(PatrolFinder action) async {
+    await action.scrollTo();
+    await action.tap();
+  }
+
 }
