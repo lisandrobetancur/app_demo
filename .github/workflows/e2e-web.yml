@@ -1,0 +1,115 @@
+name: E2E web
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# The report is published to Pages, which needs these two beyond the default
+# read access. They are declared once here rather than per job so the deploy
+# job inherits them.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Two runs deploying Pages at once would race. Queue them instead of
+# cancelling: a deploy that is already halfway is worth finishing.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: Run the suite and build the report
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.41.9
+          channel: stable
+          cache: true
+
+      # Patrol drives the web suite through Playwright, so the runner needs
+      # Node: `patrol test` shells out to `npm install` and
+      # `npx playwright install` inside the patrol package.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Chromium is a ~130 MB download on every cold run. The pub cache holds
+      # the activated CLIs and the web runner's node_modules, which live inside
+      # the patrol package rather than in the repo.
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('**/pubspec.yaml') }}
+          restore-keys: playwright-${{ runner.os }}-
+
+      - name: Cache pub
+        uses: actions/cache@v4
+        with:
+          path: ~/.pub-cache
+          key: pub-${{ runner.os }}-${{ hashFiles('**/pubspec.yaml') }}
+          restore-keys: pub-${{ runner.os }}-
+
+      - name: Install tooling
+        run: |
+          dart pub global activate melos 7.3.0
+          dart pub global activate patrol_cli 4.4.0
+          echo "$HOME/.pub-cache/bin" >> "$GITHUB_PATH"
+
+      - run: melos bs
+
+      - name: Analyze
+        run: melos run lint
+
+      # Headless, and the same three reporters as locally: `json` is what the
+      # converter reads, `junit` is what the summary below reads.
+      - name: Run the E2E suite
+        run: melos run e2eWeb
+
+      # Runs even on failure: a red run is exactly when the report matters,
+      # and `melos run e2eWeb` exits non-zero when a test fails.
+      - name: Build the Allure report
+        if: always()
+        run: melos run allureWeb
+
+      - name: Publish the JUnit results as a check
+        if: always()
+        uses: mikepenz/action-junit-report@v4
+        with:
+          report_paths: packages/apps/market_app/playwright-report/results.xml
+          fail_on_failure: false
+
+      # Downloadable from the run itself, which is the only way to see the
+      # report of a pull request — Pages only ever holds main.
+      - name: Upload the report as an artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-web-report
+          path: allure/web/report
+          retention-days: 14
+
+      - name: Upload the report for Pages
+        if: always() && github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: allure/web/report
+
+  deploy:
+    name: Publish the report to Pages
+    needs: test
+    if: always() && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
