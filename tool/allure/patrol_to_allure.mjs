@@ -31,7 +31,7 @@
  */
 
 import { createHash, randomUUID } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { hostname } from "node:os";
 
@@ -42,6 +42,9 @@ const ALLURE_ROOT = resolve(REPO_ROOT, "allure");
 const DEFAULTS = {
   input: resolve(REPO_ROOT, "packages/apps/market_app/playwright-report/results.json"),
 };
+
+/** How old an input may be before the report is probably describing an old run. */
+const STALE_INPUT_MINUTES = 10;
 
 /** Playwright status -> Allure status. */
 const STATUS = {
@@ -364,6 +367,18 @@ function convert({ input, output, format, platform }) {
 
   rmSync(output, { recursive: true, force: true });
   mkdirSync(output, { recursive: true });
+
+  // A report is only as fresh as the run it was built from, and nothing else
+  // makes that visible: the generated page is stamped with the time it was
+  // generated, not the time the tests ran. Say how old the input is, and warn
+  // when it is old enough that it probably belongs to an earlier run.
+  const ageMinutes = Math.round((Date.now() - statSync(input).mtimeMs) / 60000);
+  if (ageMinutes >= STALE_INPUT_MINUTES) {
+    console.warn(
+      `WARNING: ${input} is ${ageMinutes} minutes old — this report will ` +
+        "describe that run, not a newer one. Re-run the suite first.",
+    );
+  }
 
   const { runs, startedAt, workers } =
     format === "playwright" ? fromPlaywright(input) : fromPatrolLog(input);

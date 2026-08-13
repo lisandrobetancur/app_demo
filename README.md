@@ -509,6 +509,28 @@ a directory that already holds a report **nests the new one under `awesome/`**
 instead of replacing it — so the scripts delete the output first, otherwise you
 end up reading a stale report.
 
+### Every run starts from nothing
+
+A report describes the run that produced it, and nothing else. Three things
+enforce that, because deleting the report alone is not enough:
+
+- `allureWeb` / `allureAndroid` delete `allure/<platform>/` before rebuilding
+  it, results and report alike.
+- `e2eWeb` deletes `playwright-report/` before starting. Patrol overwrites it
+  on success anyway, but a run that dies early would leave the previous
+  `results.json` in place — and the next report would be built from it without
+  a word, stamped with today's date. `run_android.sh` truncates its log the
+  same way.
+- The converter prints the age of its input and warns past ten minutes, since
+  the generated page carries the time it was *generated*, never the time the
+  tests ran.
+
+No history is kept either. Allure can accumulate one with `--history-path`,
+which is what fills *Status dynamics*, *Status transitions* and *Durations
+dynamics* — those charts show a single point here. That is deliberate: history
+is state surviving between runs, and it would be the one thing a rebuild does
+not clear.
+
 ### Running on Android
 
 The same suite runs on a physical device, and produces its own Allure report:
