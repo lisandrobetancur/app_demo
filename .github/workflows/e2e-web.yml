@@ -1,0 +1,112 @@
+name: E2E web
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  # Turning the JUnit results into annotations writes a check run.
+  checks: write
+
+jobs:
+  web:
+    name: Web suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.41.9
+          channel: stable
+          cache: true
+
+      # Patrol drives the web suite through Playwright, so the runner needs
+      # Node: `patrol test` shells out to `npm install` and
+      # `npx playwright install` inside the patrol package.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      # Chromium is a ~130 MB download on every cold run. The pub cache holds
+      # the activated CLIs and the web runner's node_modules, which live inside
+      # the patrol package rather than in the repo.
+      - name: Cache Playwright browsers
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('**/pubspec.yaml') }}
+          restore-keys: playwright-${{ runner.os }}-
+
+      - name: Cache pub
+        uses: actions/cache@v6
+        with:
+          path: ~/.pub-cache
+          key: pub-${{ runner.os }}-${{ hashFiles('**/pubspec.yaml') }}
+          restore-keys: pub-${{ runner.os }}-
+
+      - name: Install tooling
+        run: |
+          dart pub global activate melos 7.3.0
+          dart pub global activate patrol_cli 4.4.0
+          echo "$HOME/.pub-cache/bin" >> "$GITHUB_PATH"
+
+      - run: melos bs
+
+      # `patrol test` runs `npx playwright install` itself, but without
+      # `--with-deps` — and a Chromium missing its system libraries dies before
+      # the first test with its stderr swallowed by the CLI, which surfaces
+      # only as "Playwright process exited unexpectedly with code 1". Doing the
+      # install here makes both the dependencies and any error visible; the
+      # install Patrol runs later then finds everything in place.
+      - name: Install Playwright and its system dependencies
+        run: |
+          RUNNER_DIR="$(find "$HOME/.pub-cache/hosted/pub.dev" -maxdepth 1 -type d -name 'patrol-*' | head -1)/web_runner"
+          cd "$RUNNER_DIR"
+          npm install
+          npx playwright install --with-deps chromium
+
+      - name: Analyze
+        run: melos run lint
+
+      - name: Run the suite
+        run: melos run e2eWeb
+
+      # The CLI hides Playwright's stderr, so a failure that is not a failing
+      # test — a browser that will not launch, a config that will not load —
+      # arrives as a bare exit code. This re-runs it verbose to get the reason.
+      - name: Diagnose a suite failure
+        if: failure()
+        run: |
+          cd packages/apps/market_app
+          patrol test --device chrome --web-headless=true --verbose > /tmp/patrol.log 2>&1 || true
+          echo "===== first lines the browser wrote (the message, not the stack) ====="
+          grep -n "Playwright stderr" /tmp/patrol.log | head -40 | cut -c1-300
+          echo "===== anything that reads like a Dart failure ====="
+          grep -nE "Unsupported|Unhandled|Unexpected|Failed assertion|MissingPlugin|NoSuchMethod|TypeError|Uncaught|Exception|Error:" /tmp/patrol.log \
+            | grep -v "dart_sdk.js" | head -25 | cut -c1-300
+
+      # Runs even on failure: a red run is exactly when the report matters,
+      # and `melos run e2eWeb` exits non-zero when a test fails.
+      - name: Build the report
+        if: always()
+        run: melos run allureWeb
+
+      - name: Publish the JUnit results as a check
+        if: always()
+        uses: mikepenz/action-junit-report@v6
+        with:
+          report_paths: packages/apps/market_app/playwright-report/results.xml
+          check_name: JUnit — web
+          fail_on_failure: false
+
+      - name: Upload the report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: report-web
+          path: allure/web/report
+          retention-days: 14
