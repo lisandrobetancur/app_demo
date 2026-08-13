@@ -1,0 +1,270 @@
+name: E2E
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+  # Turning the JUnit results into annotations writes a check run.
+  checks: write
+
+# Two runs deploying Pages at once would race. Queue them instead of
+# cancelling: a deploy that is already halfway is worth finishing.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  web:
+    name: Web suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.41.9
+          channel: stable
+          cache: true
+
+      # Patrol drives the web suite through Playwright, so the runner needs
+      # Node: `patrol test` shells out to `npm install` and
+      # `npx playwright install` inside the patrol package.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      # Chromium is a ~130 MB download on every cold run. The pub cache holds
+      # the activated CLIs and the web runner's node_modules, which live inside
+      # the patrol package rather than in the repo.
+      - name: Cache Playwright browsers
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('**/pubspec.yaml') }}
+          restore-keys: playwright-${{ runner.os }}-
+
+      - name: Cache pub
+        uses: actions/cache@v6
+        with:
+          path: ~/.pub-cache
+          key: pub-${{ runner.os }}-${{ hashFiles('**/pubspec.yaml') }}
+          restore-keys: pub-${{ runner.os }}-
+
+      - name: Install tooling
+        run: |
+          dart pub global activate melos 7.3.0
+          dart pub global activate patrol_cli 4.4.0
+          echo "$HOME/.pub-cache/bin" >> "$GITHUB_PATH"
+
+      - run: melos bs
+
+      # `patrol test` runs `npx playwright install` itself, but without
+      # `--with-deps` — and a Chromium missing its system libraries dies before
+      # the first test with its stderr swallowed by the CLI, which surfaces
+      # only as "Playwright process exited unexpectedly with code 1". Doing the
+      # install here makes both the dependencies and any error visible; the
+      # install Patrol runs later then finds everything in place.
+      - name: Install Playwright and its system dependencies
+        run: |
+          RUNNER_DIR="$(find "$HOME/.pub-cache/hosted/pub.dev" -maxdepth 1 -type d -name 'patrol-*' | head -1)/web_runner"
+          cd "$RUNNER_DIR"
+          npm install
+          npx playwright install --with-deps chromium
+
+      - name: Analyze
+        run: melos run lint
+
+      - name: Run the suite
+        run: melos run e2eWeb
+
+      # The CLI hides Playwright's stderr, so a failure that is not a failing
+      # test — a browser that will not launch, a config that will not load —
+      # arrives as a bare exit code. This re-runs it verbose to get the reason.
+      - name: Diagnose a suite failure
+        if: failure()
+        run: |
+          cd packages/apps/market_app
+          patrol test --device chrome --web-headless=true --verbose > /tmp/patrol.log 2>&1 || true
+          echo "===== first lines the browser wrote (the message, not the stack) ====="
+          grep -n "Playwright stderr" /tmp/patrol.log | head -40 | cut -c1-300
+          echo "===== anything that reads like a Dart failure ====="
+          grep -nE "Unsupported|Unhandled|Unexpected|Failed assertion|MissingPlugin|NoSuchMethod|TypeError|Uncaught|Exception|Error:" /tmp/patrol.log \
+            | grep -v "dart_sdk.js" | head -25 | cut -c1-300
+
+      # Runs even on failure: a red run is exactly when the report matters,
+      # and `melos run e2eWeb` exits non-zero when a test fails.
+      - name: Build the report
+        if: always()
+        run: melos run allureWeb
+
+      - name: Publish the JUnit results as a check
+        if: always()
+        uses: mikepenz/action-junit-report@v6
+        with:
+          report_paths: packages/apps/market_app/playwright-report/results.xml
+          check_name: JUnit — web
+          fail_on_failure: false
+
+      - name: Upload the report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: report-web
+          path: allure/web/report
+          retention-days: 14
+
+  android:
+    name: Android suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # Without this the runner cannot open /dev/kvm, and an emulator without
+      # hardware acceleration is too slow to be usable.
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      # The Gradle config compiles against 17.
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.41.9
+          channel: stable
+          cache: true
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Cache pub
+        uses: actions/cache@v6
+        with:
+          path: ~/.pub-cache
+          key: pub-${{ runner.os }}-${{ hashFiles('**/pubspec.yaml') }}
+          restore-keys: pub-${{ runner.os }}-
+
+      - name: Install tooling
+        run: |
+          dart pub global activate melos 7.3.0
+          dart pub global activate patrol_cli 4.4.0
+          echo "$HOME/.pub-cache/bin" >> "$GITHUB_PATH"
+
+      - run: melos bs
+
+      # api-level 31 is Android 12, the same as the physical device the suite
+      # was verified on. `run_android.sh` needs no argument: it takes the first
+      # authorised device, and the emulator is the only one here.
+      - name: Run the suite on an emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 31
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          script: bash tool/e2e/run_android.sh
+
+      - name: Build the report
+        if: always()
+        run: melos run allureAndroid
+
+      # The device log is the only place the step and screenshot markers exist
+      # on mobile, so it is worth keeping when a run goes wrong.
+      - name: Upload the device log on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: android-logcat
+          path: build/e2e/android_run.log
+          retention-days: 7
+
+      - name: Upload the report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: report-android
+          path: allure/android/report
+          retention-days: 14
+
+  publish:
+    name: Publish both reports to Pages
+    needs: [web, android]
+    # `always()` so a red suite still publishes its report — that is when the
+    # screenshots are worth looking at. Only main: a pull request's report is
+    # downloadable from its own run, and letting branches publish would leave
+    # the site showing whatever was pushed last rather than what is merged.
+    if: always() && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      # A Pages deployment replaces the whole site, and there is only one site
+      # per repository — so the two reports cannot publish independently
+      # without erasing each other. They are assembled here instead.
+      - name: Collect the reports
+        uses: actions/download-artifact@v8
+        with:
+          pattern: report-*
+          path: downloads
+
+      - name: Assemble the site
+        run: |
+          mkdir -p site
+          [ -d downloads/report-web ] && cp -r downloads/report-web site/web || echo "no web report"
+          [ -d downloads/report-android ] && cp -r downloads/report-android site/android || echo "no android report"
+          cat > site/index.html <<HTML
+          <!doctype html>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <title>Market · E2E reports</title>
+          <style>
+            :root { color-scheme: light dark; --fg:#111; --muted:#666; --line:#e5e7eb; --bg:#fff; --card:#fafafa; }
+            @media (prefers-color-scheme: dark) {
+              :root { --fg:#e8e8e8; --muted:#9a9a9a; --line:#2a2a2a; --bg:#111; --card:#181818; }
+            }
+            body { margin:0; padding:3rem 1.25rem; background:var(--bg); color:var(--fg);
+                   font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+            main { max-width:44rem; margin:0 auto; }
+            h1 { font-size:1.5rem; margin:0 0 .25rem; }
+            p.sub { color:var(--muted); margin:0 0 2rem; }
+            a.card { display:block; padding:1.25rem 1.5rem; margin-bottom:1rem; text-decoration:none;
+                     border:1px solid var(--line); border-radius:12px; background:var(--card); color:inherit; }
+            a.card:hover { border-color:#0f766e; }
+            a.card b { display:block; font-size:1.1rem; }
+            a.card span { color:var(--muted); font-size:.9rem; }
+            footer { margin-top:2.5rem; color:var(--muted); font-size:.85rem; }
+            code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+          </style>
+          <main>
+            <h1>Market · end-to-end reports</h1>
+            <p class="sub">Patrol suite, one report per platform.</p>
+            <a class="card" href="web/"><b>Web</b><span>Chromium, driven by Playwright</span></a>
+            <a class="card" href="android/"><b>Android</b><span>emulator, API 31, native instrumentation</span></a>
+            <footer>
+              Built from <code>${GITHUB_SHA:0:7}</code> ·
+              run <a href="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}">#${GITHUB_RUN_NUMBER}</a>
+            </footer>
+          </main>
+          HTML
+          find site -maxdepth 2 -name index.html | sort
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+
+      - id: deployment
+        uses: actions/deploy-pages@v5
