@@ -29,3 +29,4 @@ packages/apps/market_app/playwright-report/
 packages/apps/market_app/test-results/
 packages/apps/market_app/node_modules/
 packages/apps/market_app/test_bundle.dart
+packages/apps/market_app/patrol_test/test_bundle.dart

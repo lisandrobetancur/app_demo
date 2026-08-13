@@ -31,6 +31,11 @@ class HomeViewModel extends ViewModel<HomeState> {
       );
       final List<Category> categories = await catalog.getCategories();
       final List<Product> recents = await catalog.getRecentProducts(limit: 10);
+      // The badge this view renders used to be filled at bootstrap, when a
+      // restored session was still a thing. Now that every run starts logged
+      // out, the dashboard loads its own counter — which also keeps it fresh
+      // on every refresh rather than only once per launch.
+      await ref.read(notificationsServiceProvider).refreshUnreadCount(user.id);
       if (key != mountedKey) {
         return;
       }

@@ -12,7 +12,6 @@ class LoginKeys {
   static const Key togglePasswordVisibilityButton = Key(
     'toggle_password_visibility_button',
   );
-  static const Key rememberMeCheckbox = Key('remember_me_checkbox');
   static const Key submitButton = Key('login_submit_button');
   static const Key goToRegisterButton = Key('go_to_register_button');
   static const Key goToRecoverPasswordButton = Key(
