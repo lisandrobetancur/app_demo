@@ -13,6 +13,8 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  # Turning the JUnit results into annotations writes a check run.
+  checks: write
 
 # Two runs deploying Pages at once would race. Queue them instead of
 # cancelling: a deploy that is already halfway is worth finishing.
@@ -65,6 +67,20 @@ jobs:
 
       - run: melos bs
 
+      # `patrol test` runs `npx playwright install` itself, but without
+      # `--with-deps` — and a Chromium missing its system libraries dies before
+      # the first test with its stderr swallowed by the CLI, which surfaces
+      # only as "Playwright process exited unexpectedly with code 1". Doing the
+      # install here makes both the dependencies and any error visible; the
+      # install Patrol runs later then finds everything in place.
+      - name: Install Playwright and its system dependencies
+        run: |
+          RUNNER_DIR="$(find "$HOME/.pub-cache/hosted/pub.dev" -maxdepth 1 -type d -name 'patrol-*' | head -1)/web_runner"
+          echo "web_runner: $RUNNER_DIR"
+          cd "$RUNNER_DIR"
+          npm install
+          npx playwright install --with-deps chromium
+
       - name: Analyze
         run: melos run lint
 
@@ -72,6 +88,15 @@ jobs:
       # converter reads, `junit` is what the summary below reads.
       - name: Run the E2E suite
         run: melos run e2eWeb
+
+      # The CLI hides Playwright's stderr, so a failure that is not a failing
+      # test — a browser that will not launch, a config that will not load —
+      # arrives as a bare exit code. This re-runs it verbose to get the reason.
+      - name: Diagnose a suite failure
+        if: failure()
+        run: |
+          cd packages/apps/market_app
+          patrol test --device chrome --web-headless=true --verbose 2>&1 | tail -100
 
       # Runs even on failure: a red run is exactly when the report matters,
       # and `melos run e2eWeb` exits non-zero when a test fails.
