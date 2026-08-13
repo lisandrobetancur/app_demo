@@ -22,8 +22,6 @@ class LoginViewModel extends ViewModel<LoginState> {
   void toggleObscurePassword() =>
       state = state.copyWith(obscurePassword: !state.obscurePassword);
 
-  void setRememberMe(bool value) => state = state.copyWith(rememberMe: value);
-
   Future<void> submit() async {
     if (!state.canSubmit) {
       return;
@@ -34,7 +32,6 @@ class LoginViewModel extends ViewModel<LoginState> {
       await service.login(
         email: state.email,
         password: state.password,
-        rememberMe: state.rememberMe,
       );
       if (key != mountedKey) {
         return;

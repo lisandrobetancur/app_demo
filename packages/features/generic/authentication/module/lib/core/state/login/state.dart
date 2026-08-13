@@ -6,7 +6,6 @@ class LoginState {
     this.email = '',
     this.password = '',
     this.obscurePassword = true,
-    this.rememberMe = false,
     this.isSubmitting = false,
     this.errorKey,
   });
@@ -14,7 +13,6 @@ class LoginState {
   final String email;
   final String password;
   final bool obscurePassword;
-  final bool rememberMe;
   final bool isSubmitting;
 
   /// Translation key of the submit error, `null` when there is none.
@@ -32,7 +30,6 @@ class LoginState {
     String? email,
     String? password,
     bool? obscurePassword,
-    bool? rememberMe,
     bool? isSubmitting,
     String? errorKey,
     bool clearError = false,
@@ -40,7 +37,6 @@ class LoginState {
     email: email ?? this.email,
     password: password ?? this.password,
     obscurePassword: obscurePassword ?? this.obscurePassword,
-    rememberMe: rememberMe ?? this.rememberMe,
     isSubmitting: isSubmitting ?? this.isSubmitting,
     errorKey: clearError ? null : errorKey ?? this.errorKey,
   );
@@ -51,7 +47,6 @@ class LoginState {
       other.email == email &&
       other.password == password &&
       other.obscurePassword == obscurePassword &&
-      other.rememberMe == rememberMe &&
       other.isSubmitting == isSubmitting &&
       other.errorKey == errorKey;
 
@@ -60,7 +55,6 @@ class LoginState {
     email,
     password,
     obscurePassword,
-    rememberMe,
     isSubmitting,
     errorKey,
   );
