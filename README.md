@@ -305,9 +305,12 @@ melos run dartFix           # dart fix --apply
 melos run pubGet
 melos run rmlock
 melos run rmOverrides
-melos run e2eWeb            # end-to-end suite
-melos run allureReport      # convert the last run and build the report
-melos run allureServe       # open it
+melos run e2eWeb            # end-to-end suite on Chrome
+melos run e2eAndroid        # end-to-end suite on a connected device
+melos run allureWeb         # build allure/web/report
+melos run allureAndroid     # build allure/android/report
+melos run allureServeWeb    # open the web report
+melos run allureServeAndroid
 ```
 
 > Melos 7 reads its configuration from the workspace root `pubspec.yaml`; the
@@ -432,11 +435,20 @@ melos run e2eWeb        # runs the suite, emitting Playwright JSON
 ```
 
 ```bash
-melos run allureReport  # converts that JSON and builds allure-report/
+melos run allureWeb     # converts that JSON and builds allure/web/report
 ```
 
 ```bash
-melos run allureServe   # opens the report in a browser
+melos run allureServeWeb  # opens the report in a browser
+```
+
+Everything Allure produces lives under a single directory, one subdirectory per
+platform, and each script wipes its own before rebuilding:
+
+```
+allure/
+├── web/{results,report}
+└── android/{results,report}
 ```
 
 Why a converter (`tool/allure/patrol_to_allure.mjs`) instead of the usual
@@ -481,7 +493,7 @@ how the results get out, and that is where the work was:
 | Runner | Playwright + Chromium | native instrumentation (`PatrolJUnitRunner`) |
 | Marker transport | Playwright's per-test stdout capture | `adb logcat` |
 | Converter input | `playwright-report/results.json` | `build/e2e/android_run.log` |
-| Report | `allure-report-web` | `allure-report-android` |
+| Report | `allure/web/report` | `allure/android/report` |
 
 The converter has one adapter per transport (`fromPlaywright`, `fromPatrolLog`)
 feeding a single renderer, because the payload is identical: Patrol emits the

@@ -36,9 +36,11 @@ import { resolve } from "node:path";
 import { hostname } from "node:os";
 
 const REPO_ROOT = resolve(import.meta.dirname, "../..");
+// Everything Allure produces lives under one directory, one subdirectory per
+// platform: allure/<platform>/{results,report}.
+const ALLURE_ROOT = resolve(REPO_ROOT, "allure");
 const DEFAULTS = {
   input: resolve(REPO_ROOT, "packages/apps/market_app/playwright-report/results.json"),
-  output: resolve(REPO_ROOT, "allure-results"),
 };
 
 /** Playwright status -> Allure status. */
@@ -70,6 +72,7 @@ function parseArgs(argv) {
   // extension keeps the common cases flag-free.
   args.format ??= args.input.endsWith(".json") ? "playwright" : "patrol-log";
   args.platform ??= args.format === "playwright" ? "web" : "android";
+  args.output ??= resolve(ALLURE_ROOT, args.platform, "results");
   return args;
 }
 

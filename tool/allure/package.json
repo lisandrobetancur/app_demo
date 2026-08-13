@@ -3,14 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Turns Patrol web results into an Allure report.",
-  "scripts": {
-    "convert": "node patrol_to_allure.mjs",
-    "clean": "node -e \"require('node:fs').rmSync('../../allure-report',{recursive:true,force:true})\"",
-    "generate": "npm run clean && allure generate ../../allure-results --output ../../allure-report --report-name \"Market E2E\"",
-    "serve": "allure serve ../../allure-report",
-    "report": "npm run convert && npm run generate"
-  },
+  "description": "Turns a Patrol run into an Allure report. Provides the Allure CLI; the pipeline itself lives in the Melos scripts (allureWeb, allureAndroid) so there is one place that knows the paths.",
   "devDependencies": {
     "allure": "3.14.3"
   }

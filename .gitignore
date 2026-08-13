@@ -32,10 +32,5 @@ packages/apps/market_app/test_bundle.dart
 packages/apps/market_app/patrol_test/test_bundle.dart
 
 # Allure
-allure-results/
-allure-report/
-allure-results-web/
-allure-report-web/
-allure-results-android/
-allure-report-android/
+allure/
 tool/allure/node_modules/

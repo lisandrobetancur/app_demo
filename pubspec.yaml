@@ -84,14 +84,21 @@ melos:
     # only channel carrying the step and screenshot markers on mobile.
     e2eAndroid: bash tool/e2e/run_android.sh
 
-    # One report per platform, each self-contained. They are kept apart on
-    # purpose: a web run and a device run are different environments, and
-    # merging them would average away the differences worth seeing.
+    # Everything Allure produces lives under one directory:
     #
-    # The output directory is removed first: Allure 3 has no `--clean` and
-    # nests a second build under `awesome/` instead of replacing the old one,
-    # which silently leaves you reading a stale report.
-    allureWeb: rm -rf allure-report-web && node tool/allure/patrol_to_allure.mjs --output allure-results-web --platform web && npx --prefix tool/allure allure generate allure-results-web --output allure-report-web --report-name "Market E2E · Web"
-    allureAndroid: rm -rf allure-report-android && node tool/allure/patrol_to_allure.mjs --input build/e2e/android_run.log --output allure-results-android --platform android && npx --prefix tool/allure allure generate allure-results-android --output allure-report-android --report-name "Market E2E · Android"
-    allureServeWeb: npx --prefix tool/allure allure serve allure-results-web
-    allureServeAndroid: npx --prefix tool/allure allure serve allure-results-android
+    #   allure/
+    #   ├── web/{results,report}
+    #   └── android/{results,report}
+    #
+    # One report per platform, kept apart on purpose: a web run and a device
+    # run are different environments, and merging them would average away the
+    # differences worth seeing.
+    #
+    # Each script wipes its own platform directory first. That is not just
+    # tidiness: Allure 3 has no `--clean`, and generating into a directory
+    # that already holds a report nests the new one under `awesome/` instead
+    # of replacing it, which silently leaves you reading a stale report.
+    allureWeb: rm -rf allure/web && node tool/allure/patrol_to_allure.mjs --platform web && npx --prefix tool/allure allure generate allure/web/results --output allure/web/report --report-name "Market E2E · Web"
+    allureAndroid: rm -rf allure/android && node tool/allure/patrol_to_allure.mjs --input build/e2e/android_run.log --platform android && npx --prefix tool/allure allure generate allure/android/results --output allure/android/report --report-name "Market E2E · Android"
+    allureServeWeb: npx --prefix tool/allure allure serve allure/web/results
+    allureServeAndroid: npx --prefix tool/allure allure serve allure/android/results

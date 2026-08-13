@@ -22,7 +22,7 @@
         "http.server",
         "4041",
         "--directory",
-        "allure-report-android"
+        "allure/android/report"
       ],
       "port": 4041
     },
@@ -34,7 +34,7 @@
         "http.server",
         "4042",
         "--directory",
-        "allure-report-web"
+        "allure/web/report"
       ],
       "port": 4042
     }
