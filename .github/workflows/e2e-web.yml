@@ -96,7 +96,12 @@ jobs:
         if: failure()
         run: |
           cd packages/apps/market_app
-          patrol test --device chrome --web-headless=true --verbose 2>&1 | tail -100
+          patrol test --device chrome --web-headless=true --verbose > /tmp/patrol.log 2>&1 || true
+          echo "===== first lines the browser wrote (the message, not the stack) ====="
+          grep -n "Playwright stderr" /tmp/patrol.log | head -40 | cut -c1-300
+          echo "===== anything that reads like a Dart failure ====="
+          grep -nE "Unsupported|Unhandled|Unexpected|Failed assertion|MissingPlugin|NoSuchMethod|TypeError|Uncaught|Exception|Error:" /tmp/patrol.log \
+            | grep -v "dart_sdk.js" | head -25 | cut -c1-300
 
       # Runs even on failure: a red run is exactly when the report matters,
       # and `melos run e2eWeb` exits non-zero when a test fails.
