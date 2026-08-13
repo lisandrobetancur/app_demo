@@ -109,13 +109,21 @@ function stdoutOf(result) {
  *  * `PATROL_SHOT` — a screenshot, taken when a business step closes, so it
  *    is attached to that step rather than to an individual tap.
  */
-function stepsFrom(stdout, outputDir) {
+function stepsFrom(stdout, outputDir, startTime) {
   const root = [];
   const businessStack = []; // business steps currently open
   const interactionStack = []; // patrol interactions currently open
   const shots = new Map(); // name -> { total, chunks: Map<index, string> }
   const orphanShots = [];
   let lastClosedBusiness = null;
+
+  // `PATROL_STEP` markers carry no timestamp of their own, so a business step
+  // is dated by the run's own clock: the last time seen in the `PATROL_LOG`
+  // stream, starting from when the test began. Wall-clock time would date them
+  // at *parse* time instead — which put every business step outside its own
+  // test's range and collapsed its duration to a millisecond, while the
+  // interactions nested under it still showed seconds.
+  let clock = startTime ?? Date.now();
 
   /** Where a new child belongs right now. */
   const currentChildren = () =>
@@ -138,13 +146,13 @@ function stepsFrom(stdout, outputDir) {
     if (stepAt >= 0) {
       const [, phase, , payload] = line.slice(stepAt).split("|", 4);
       if (phase === "begin") {
-        const step = { name: payload, status: "passed", start: Date.now(), stop: Date.now(), steps: [], parameters: [], attachments: [] };
+        const step = { name: payload, status: "passed", start: clock, stop: clock, steps: [], parameters: [], attachments: [] };
         currentChildren().push(step);
         businessStack.push(step);
       } else {
         const step = businessStack.pop();
         if (step) {
-          step.stop = Date.now();
+          step.stop = clock;
           step.status = payload === "failed" ? "failed" : "passed";
           lastClosedBusiness = step;
         }
@@ -164,6 +172,7 @@ function stepsFrom(stdout, outputDir) {
     if (entry.type !== "step") continue;
 
     const at = Date.parse(entry.timestamp);
+    if (Number.isFinite(at)) clock = at;
     if (entry.status === "start") {
       const step = { name: stripAnsi(entry.action ?? "step"), status: "passed", start: at, stop: at, steps: [], parameters: [], attachments: [] };
       const parent = interactionStack[interactionStack.length - 1];
@@ -209,6 +218,22 @@ function collectScreenshot(line, shots, outputDir) {
   writeFileSync(resolve(outputDir, source), Buffer.from(base64, "base64"));
   shots.delete(name);
   return { name, source, type: "image/png" };
+}
+
+
+/** Earliest start and latest stop across a step tree, for clock skew. */
+function stepBounds(steps) {
+  let start = Infinity;
+  let stop = -Infinity;
+  const visit = list => {
+    for (const step of list) {
+      if (Number.isFinite(step.start)) start = Math.min(start, step.start);
+      if (Number.isFinite(step.stop)) stop = Math.max(stop, step.stop);
+      visit(step.steps);
+    }
+  };
+  visit(steps);
+  return { start, stop };
 }
 
 /**
@@ -348,7 +373,14 @@ function convert({ input, output, format, platform }) {
           const suiteName = run.suite;
           const name = run.name;
           const fullName = `${suiteName}#${name}`;
-          const { steps, orphanShots } = stepsFrom(run.stdout, output);
+          const { steps, orphanShots } = stepsFrom(run.stdout, output, run.start);
+
+          // Two clocks measure the same test: Playwright times it from
+          // outside, Dart timestamps the interactions from inside the browser.
+          // They disagree by a few milliseconds, so the last interaction can
+          // land just after Playwright called the test done. Widen the test to
+          // hold its own steps rather than report a child outliving its parent.
+          const bounds = stepBounds(steps);
 
           const testResult = {
             uuid: randomUUID(),
@@ -360,8 +392,8 @@ function convert({ input, output, format, platform }) {
             status: run.status,
             statusDetails: run.statusDetails,
             stage: "finished",
-            start: run.start,
-            stop: run.stop,
+            start: Math.min(run.start, bounds.start),
+            stop: Math.max(run.stop, bounds.stop),
             steps,
             // Screenshots taken before the first interaction (or after the
             // last one) have no step to hang from, so they stay on the test.
