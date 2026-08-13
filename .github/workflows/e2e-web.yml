@@ -27,7 +27,7 @@ jobs:
     name: Run the suite and build the report
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: subosito/flutter-action@v2
         with:
@@ -38,22 +38,22 @@ jobs:
       # Patrol drives the web suite through Playwright, so the runner needs
       # Node: `patrol test` shells out to `npm install` and
       # `npx playwright install` inside the patrol package.
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version: 22
 
       # Chromium is a ~130 MB download on every cold run. The pub cache holds
       # the activated CLIs and the web runner's node_modules, which live inside
       # the patrol package rather than in the repo.
       - name: Cache Playwright browsers
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('**/pubspec.yaml') }}
           restore-keys: playwright-${{ runner.os }}-
 
       - name: Cache pub
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.pub-cache
           key: pub-${{ runner.os }}-${{ hashFiles('**/pubspec.yaml') }}
@@ -111,7 +111,7 @@ jobs:
 
       - name: Publish the JUnit results as a check
         if: always()
-        uses: mikepenz/action-junit-report@v4
+        uses: mikepenz/action-junit-report@v6
         with:
           report_paths: packages/apps/market_app/playwright-report/results.xml
           fail_on_failure: false
@@ -120,7 +120,7 @@ jobs:
       # report of a pull request — Pages only ever holds main.
       - name: Upload the report as an artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: allure-web-report
           path: allure/web/report
@@ -128,7 +128,7 @@ jobs:
 
       - name: Upload the report for Pages
         if: always() && github.ref == 'refs/heads/main'
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: allure/web/report
 
@@ -142,4 +142,4 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
