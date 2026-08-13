@@ -80,6 +80,16 @@ melos:
     # business step, which is the only one that works identically on web,
     # Android and iOS.
     e2eWeb: cd packages/apps/market_app && patrol test --device chrome --web-headless=true --web-reporter='["list","json","junit"]'
+
+    # Same suite with a visible browser, to watch it drive the app. Note the
+    # `=false`: on patrol_cli 4.4.0 a bare `--web-headless` prints the help
+    # text instead of running.
+    e2eWebHeaded: cd packages/apps/market_app && patrol test --device chrome --web-headless=false --web-reporter='["list","json","junit"]'
+
+    # The three steps in one, for when you want the report without thinking
+    # about it. They stay separate above so you can stop after the run.
+    e2eWebReport: melos run e2eWeb && melos run allureWeb && melos run allureServeWeb
+    e2eWebHeadedReport: melos run e2eWebHeaded && melos run allureWeb && melos run allureServeWeb
     # Runs the suite on a connected Android device, capturing logcat — the
     # only channel carrying the step and screenshot markers on mobile.
     e2eAndroid: bash tool/e2e/run_android.sh

@@ -305,12 +305,22 @@ melos run dartFix           # dart fix --apply
 melos run pubGet
 melos run rmlock
 melos run rmOverrides
-melos run e2eWeb            # end-to-end suite on Chrome
-melos run e2eAndroid        # end-to-end suite on a connected device
-melos run allureWeb         # build allure/web/report
-melos run allureAndroid     # build allure/android/report
-melos run allureServeWeb    # open the web report
+```
+
+End-to-end suite and reports:
+
+```bash
+melos run e2eWeb                  # headless Chrome
+melos run e2eWebHeaded            # visible browser
+melos run e2eAndroid              # connected Android device
+
+melos run allureWeb               # build allure/web/report
+melos run allureAndroid           # build allure/android/report
+melos run allureServeWeb          # build + open in the browser
 melos run allureServeAndroid
+
+melos run e2eWebReport            # run, convert and open, in one command
+melos run e2eWebHeadedReport
 ```
 
 > Melos 7 reads its configuration from the workspace root `pubspec.yaml`; the
@@ -349,8 +359,35 @@ dart pub global activate patrol_cli 4.4.0
 melos run e2eWeb
 ```
 
-That runs the whole suite headless with three reporters, each for a different
-reader:
+To watch it drive a real browser instead of running headless:
+
+```bash
+melos run e2eWebHeaded
+```
+
+> The flag behind it is `--web-headless=false`, with the `=` spelled out. On
+> patrol_cli 4.4.0 a bare `--web-headless` prints the help text instead of
+> running anything.
+
+Building and opening the report is a separate step on purpose, so a run does
+not force a browser window on you:
+
+```bash
+melos run allureWeb && melos run allureServeWeb
+```
+
+`allureServeWeb` opens the default browser itself, on a random free port. When
+you do want the whole thing in one command, these chain the three steps:
+
+```bash
+melos run e2eWebReport        # headless, then open the report
+```
+
+```bash
+melos run e2eWebHeadedReport  # visible browser, then open the report
+```
+
+The run itself uses three reporters, each for a different reader:
 
 | Reporter | For whom | Output |
 |---|---|---|
