@@ -28,6 +28,27 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        // Patrol runs the Dart suite through its own instrumentation runner.
+        testInstrumentationRunner = "pl.leancode.patrol.PatrolJUnitRunner"
+        testInstrumentationRunnerArguments["clearPackageData"] = "true"
+    }
+
+    // The orchestrator is not optional here, and not just for a clean state.
+    // Patrol enumerates the Dart tests and asks the native side to run them
+    // one at a time, but a Dart test bundle runs every test the moment it is
+    // started. Without a fresh process per test case, the first request runs
+    // the whole bundle and the remaining five find nothing left to execute —
+    // which shows up as 1 passed, 5 failed.
+    testOptions {
+        execution = "ANDROIDX_TEST_ORCHESTRATOR"
+    }
+
+    // Installing the orchestrator APK times out on slower devices with the
+    // default limit, which surfaces as an opaque
+    // `ShellCommandUnresponsiveException` rather than as a timeout.
+    installation {
+        timeOutInMs = 10 * 60 * 1000
     }
 
     buildTypes {
@@ -41,4 +62,8 @@ android {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    androidTestUtil("androidx.test:orchestrator:1.5.1")
 }

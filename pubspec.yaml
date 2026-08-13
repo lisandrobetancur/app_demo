@@ -63,3 +63,63 @@ melos:
     rmlock: melos exec -c 1 -- rm -f pubspec.lock
     rmOverrides: melos exec -c 1 -- rm -f pubspec_overrides.yaml
     pubGet: melos exec -c 1 -- flutter pub get
+
+    # End-to-end suite on the web.
+    #
+    # Three reporters, each for a different reader: `list` for the terminal,
+    # `json` for the Allure converter, and `junit` for CI — GitLab, Jenkins
+    # and Azure read results.xml natively and turn it into a test tab, which
+    # a static Allure site cannot do. Patrol only accepts this whitelist, so
+    # no third-party reporter can be plugged in here.
+    #
+    # `json` is not optional: Playwright's per-test stdout capture is the only
+    # channel that carries the screenshot markers out of the browser. The CLI's
+    # own stdout drops them.
+    #
+    # There is deliberately no video: the evidence model is one screenshot per
+    # business step, which is the only one that works identically on web,
+    # Android and iOS.
+    # The previous run's output is deleted before starting. Patrol overwrites
+    # it on success anyway, but a run that dies early would otherwise leave
+    # yesterday's results.json in place, and the next report would be built
+    # from it without a word — a report stamped "now" holding stale data.
+    e2eWeb: rm -rf packages/apps/market_app/playwright-report && cd packages/apps/market_app && patrol test --device chrome --web-headless=true --web-reporter='["list","json","junit"]'
+
+    # Same suite with a visible browser, to watch it drive the app. Note the
+    # `=false`: on patrol_cli 4.4.0 a bare `--web-headless` prints the help
+    # text instead of running.
+    e2eWebHeaded: rm -rf packages/apps/market_app/playwright-report && cd packages/apps/market_app && patrol test --device chrome --web-headless=false --web-reporter='["list","json","junit"]'
+
+    # The three steps in one, for when you want the report without thinking
+    # about it. They stay separate above so you can stop after the run.
+    e2eWebReport: melos run e2eWeb && melos run allureWeb && melos run allureServeWeb
+    e2eWebHeadedReport: melos run e2eWebHeaded && melos run allureWeb && melos run allureServeWeb
+    # Runs the suite on a connected Android device, capturing logcat — the
+    # only channel carrying the step and screenshot markers on mobile.
+    e2eAndroid: bash tool/e2e/run_android.sh
+
+    # Everything Allure produces lives under one directory:
+    #
+    #   allure/
+    #   ├── web/{results,report}
+    #   └── android/{results,report}
+    #
+    # One report per platform, kept apart on purpose: a web run and a device
+    # run are different environments, and merging them would average away the
+    # differences worth seeing.
+    #
+    # Every run starts from nothing: the platform directory is deleted before
+    # it is rebuilt, so a report only ever describes the run that produced it.
+    # That is not just tidiness — Allure 3 has no `--clean`, and generating
+    # into a directory that already holds a report nests the new one under
+    # `awesome/` instead of replacing it, which silently leaves you reading a
+    # stale report.
+    #
+    # No history is kept, by choice. Allure can accumulate one with
+    # `--history-path` to draw Status dynamics and Durations dynamics, but
+    # that file is state surviving between runs, and here a report is meant to
+    # describe one execution and nothing else.
+    allureWeb: rm -rf allure/web && node tool/allure/patrol_to_allure.mjs --platform web && npx --prefix tool/allure allure awesome allure/web/results --output allure/web/report --report-name "Market E2E · Web"
+    allureAndroid: rm -rf allure/android && node tool/allure/patrol_to_allure.mjs --input build/e2e/android_run.log --platform android && npx --prefix tool/allure allure awesome allure/android/results --output allure/android/report --report-name "Market E2E · Android"
+    allureServeWeb: npx --prefix tool/allure allure serve allure/web/results
+    allureServeAndroid: npx --prefix tool/allure allure serve allure/android/results

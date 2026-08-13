@@ -307,6 +307,22 @@ melos run rmlock
 melos run rmOverrides
 ```
 
+End-to-end suite and reports:
+
+```bash
+melos run e2eWeb                  # headless Chrome
+melos run e2eWebHeaded            # visible browser
+melos run e2eAndroid              # connected Android device
+
+melos run allureWeb               # build allure/web/report
+melos run allureAndroid           # build allure/android/report
+melos run allureServeWeb          # build + open in the browser
+melos run allureServeAndroid
+
+melos run e2eWebReport            # run, convert and open, in one command
+melos run e2eWebHeadedReport
+```
+
 > Melos 7 reads its configuration from the workspace root `pubspec.yaml`; the
 > standalone `melos.yaml` of earlier versions is no longer picked up.
 
@@ -340,6 +356,61 @@ dart pub global activate patrol_cli 4.4.0
 ```
 
 ```bash
+melos run e2eWeb
+```
+
+To watch it drive a real browser instead of running headless:
+
+```bash
+melos run e2eWebHeaded
+```
+
+> The flag behind it is `--web-headless=false`, with the `=` spelled out. On
+> patrol_cli 4.4.0 a bare `--web-headless` prints the help text instead of
+> running anything.
+
+Building and opening the report is a separate step on purpose, so a run does
+not force a browser window on you:
+
+```bash
+melos run allureWeb && melos run allureServeWeb
+```
+
+`allureServeWeb` opens the default browser itself, on a random free port. When
+you do want the whole thing in one command, these chain the three steps:
+
+```bash
+melos run e2eWebReport        # headless, then open the report
+```
+
+```bash
+melos run e2eWebHeadedReport  # visible browser, then open the report
+```
+
+The run itself uses three reporters, each for a different reader:
+
+| Reporter | For whom | Output |
+|---|---|---|
+| `list` | the terminal | live progress |
+| `json` | the Allure converter | `playwright-report/results.json` |
+| `junit` | CI | `playwright-report/results.xml` — GitLab, Jenkins and Azure turn it into a test tab, which a static Allure site cannot do |
+
+Patrol only accepts that whitelist, so no third-party reporter can be plugged
+in — which is why Allure is fed by a converter instead.
+
+`json` is not optional here, and not only for its metadata: Playwright's
+per-test stdout capture is the **only channel** that carries the screenshot
+markers out of the browser. `patrol_cli` parses `PATROL_LOG` lines and reprints
+them formatted, and drops everything else — so its own stdout contains none of
+them.
+
+There is deliberately **no video**. The evidence is one screenshot per business
+step, which is the only model that behaves identically on web, Android and iOS;
+adding video would give the web report something no mobile run could match.
+
+To watch it in a real browser, or to run a single file:
+
+```bash
 cd packages/apps/market_app && patrol test --device chrome
 ```
 
@@ -347,11 +418,24 @@ cd packages/apps/market_app && patrol test --device chrome
 cd packages/apps/market_app && patrol test --device chrome --target patrol_test/login_test.dart --web-headless=true
 ```
 
+### What the suite covers
+
+| Test | What it proves |
+|---|---|
+| `login_test` · signs in with the seeded demo account | the session reaches the dashboard and it greets the right user |
+| `login_test` · rejects wrong credentials | the error is the generic one — the app never reveals whether an email exists |
+| `login_test` · keeps submission blocked | live validation disables the CTA until the form is valid |
+| `purchase_flow_test` · buys and confirms an order | the critical path end to end: catalog → detail → cart → coupon → three-step checkout → order |
+| `purchase_flow_test` · own publication | a product you own offers seller actions instead of the purchase CTA |
+| `purchase_flow_test` · expired coupon | the coupon error is the specific one, not a generic failure |
+
+Last verified run: **6 passed, 0 failed, 0 flaky in 55 s** on Chromium.
+
 ### Three layers
 
 ```
 patrol_test/
-├── support/     app launcher + fixed test data mirroring the seed
+├── support/     app launcher, fixed data mirroring the seed, takeScreenshot
 ├── pages/       Page Objects: locators and atomic interactions
 ├── steps/       business language composing pages, with its assertions
 └── *_test.dart  specs that read as sentences
@@ -380,6 +464,196 @@ requires `equatable ^2.1.0`, which would break the `equatable: 2.0.7` pin this
 workspace mandates. `patrol_cli` must match — the CLI refuses to run on a
 mismatch — so use **4.4.0**, per the
 [compatibility table](https://patrol.leancode.co/documentation/compatibility-table).
+
+### Allure report
+
+```bash
+melos run e2eWeb        # runs the suite, emitting Playwright JSON
+```
+
+```bash
+melos run allureWeb     # converts that JSON and builds allure/web/report
+```
+
+```bash
+melos run allureServeWeb  # opens the report in a browser
+```
+
+Everything Allure produces lives under a single directory, one subdirectory per
+platform, and each script wipes its own before rebuilding:
+
+```
+allure/
+├── web/{results,report}
+└── android/{results,report}
+```
+
+Why a converter (`tool/allure/patrol_to_allure.mjs`) instead of the usual
+`allure-playwright` reporter: Patrol owns the Playwright config that runs the
+web suite, and its `mapReporters` accepts only a whitelist — `html`, `json`,
+`junit`, `list`, `dot`, `line`, `github`, `null` — and throws on anything else.
+So the pipeline uses the supported `json` reporter and translates it.
+
+The translation is not a straight copy. Patrol prints a structured
+`PATROL_LOG {…}` line for every interaction, so each `tap`, `enterText` and
+`waitUntilVisible` becomes a real Allure **step** with its own duration, and a
+step still open when a test dies is marked `broken` — which is usually the one
+that actually failed. Tests are grouped by the Dart file they came from
+(`login_test`, `purchase_flow_test`) under a `Patrol web E2E` parent suite.
+
+Allure 3 is used through its npm package, so **no Java is required**. The
+converter has no dependencies beyond Node itself.
+
+Two traps worth knowing: Allure 3's CLI has no `--clean`, and generating into
+a directory that already holds a report **nests the new one under `awesome/`**
+instead of replacing it — so the scripts delete the output first, otherwise you
+end up reading a stale report.
+
+### Every run starts from nothing
+
+A report describes the run that produced it, and nothing else. Three things
+enforce that, because deleting the report alone is not enough:
+
+- `allureWeb` / `allureAndroid` delete `allure/<platform>/` before rebuilding
+  it, results and report alike.
+- `e2eWeb` deletes `playwright-report/` before starting. Patrol overwrites it
+  on success anyway, but a run that dies early would leave the previous
+  `results.json` in place — and the next report would be built from it without
+  a word, stamped with today's date. `run_android.sh` truncates its log the
+  same way.
+- The converter prints the age of its input and warns past ten minutes, since
+  the generated page carries the time it was *generated*, never the time the
+  tests ran.
+
+No history is kept either. Allure can accumulate one with `--history-path`,
+which is what fills *Status dynamics*, *Status transitions* and *Durations
+dynamics* — those charts show a single point here. That is deliberate: history
+is state surviving between runs, and it would be the one thing a rebuild does
+not clear.
+
+### Running on Android
+
+The same suite runs on a physical device, and produces its own Allure report:
+
+```bash
+melos run e2eAndroid
+```
+
+```bash
+melos run allureAndroid
+```
+
+Everything above the transport is shared — the tests, the steps, the pages and
+`takeScreenshot` are plain Flutter and move across untouched. What differs is
+how the results get out, and that is where the work was:
+
+| Piece | Web | Android |
+|---|---|---|
+| Runner | Playwright + Chromium | native instrumentation (`PatrolJUnitRunner`) |
+| Marker transport | Playwright's per-test stdout capture | `adb logcat` |
+| Converter input | `playwright-report/results.json` | `build/e2e/android_run.log` |
+| Report | `allure/web/report` | `allure/android/report` |
+
+The converter has one adapter per transport (`fromPlaywright`, `fromPatrolLog`)
+feeding a single renderer, because the payload is identical: Patrol emits the
+same `PATROL_LOG` protocol on every platform, and a `TestEntry` carries the
+name, status, both timestamps and the error message — every field the web path
+takes from Playwright. `stepsFrom()`, which builds the step tree and reassembles
+the screenshots, is shared verbatim.
+
+Three things are worth knowing before running this on another machine.
+
+**The markers come from the device log, not from the CLI.** `patrol_cli` parses
+`PATROL_LOG` to pretty-print it and silently drops every other line, so its
+stdout carries none of the step or screenshot markers. `tool/e2e/run_android.sh`
+therefore reads logcat in parallel with the run. Logcat is also a ring buffer
+that drops lines under load, so the script raises it to 16 MB before starting;
+the converter skips a screenshot whose chunks are incomplete rather than failing
+the report.
+
+**The AndroidX test orchestrator is required**, and not for the usual reason. It
+is normally described as the way to get `clearPackageData` between tests, which
+this suite does not need — `app_launcher.dart` already resets its own state in
+Dart. What it actually provides is a *fresh process per test case*, and Patrol
+needs that: it enumerates the Dart tests and asks the native side for one at a
+time, but a Dart test bundle runs every test as soon as it starts. Without the
+orchestrator the first request executes the whole bundle and the remaining cases
+find nothing left to run — 1 passed, 5 failed.
+
+**Installing the orchestrator can time out** on a mid-range device, surfacing as
+`ShellCommandUnresponsiveException` and `Failed to install split APK(s)` rather
+than as a timeout. `installation { timeOutInMs }` in `android/app/build.gradle.kts`
+raises the limit; pre-installing it once with `adb install` also works.
+
+Last verified run: **6 passed, 0 failed in 2 m 50 s** on a Samsung SM-A315G
+(Android 12), 33 screenshots in the report — the same six tests and the same
+count as the web run.
+
+### A screenshot per business step
+
+The report is organised the way the suite is: **business steps at the top,
+Patrol's raw interactions nested underneath, and one screenshot per step.**
+
+```
+1  Log in as the demo user                              [image]
+   1  Submit credentials for ana@market.demo            [image]
+      1  waitUntilVisible widgets with key ['login_view']
+      2  enterText widgets with key ['email_input']
+      …
+2  Open the catalog                                     [image]
+   1  tap widgets with key ['go_to_catalog_button']
+   …
+```
+
+A step is the unit a reader cares about, so it is the unit worth a picture —
+a screenshot of every individual tap is noise.
+
+#### `takeScreenshot`, which Patrol does not ship
+
+Patrol's web automation exposes taps, text, cookies, dialogs and window
+control, but **no capture**, and its Dart API has no `takeScreenshot`. So the
+suite adds one as an extension on `PatrolIntegrationTester`:
+
+```dart
+await $.takeScreenshot('cart_with_coupon');
+```
+
+The frame is rasterised inside the app from a `RepaintBoundary` the launcher
+wraps around the widget tree, encoded as PNG and printed to the browser
+console, which the Playwright bridge forwards into the test's stdout, where
+the converter reassembles it.
+
+Two details make that work:
+
+- **`debugPrintSynchronously`, not `debugPrint`.** The latter throttles to
+  about 1 KB/s and silently drops the rest, which shredded every payload.
+- **Chunked base64.** A single very long line gets mangled on the way out, so
+  the image travels in 800-character pieces and only becomes an attachment
+  once all of them arrive.
+
+#### Declaring a step
+
+`BaseSteps.step` names a step, captures the screen it left behind and reports
+its outcome — a failing step still emits its image, so the report shows what
+the screen looked like when it broke:
+
+```dart
+Future<void> loginAsDemoUser() =>
+    step('Log in as the demo user', () async {
+      await submitCredentials(...);
+      await _dashboard.waitUntilVisible();
+      expect(_dashboard.greetingText, contains(TestData.demoFullName));
+    });
+```
+
+Page objects stay free of reporting: they know how to touch a widget, not what
+the touch was for.
+
+Each capture costs roughly 150 ms. To run without them:
+
+```bash
+cd packages/apps/market_app && patrol test --device chrome --dart-define=E2E_SCREENSHOTS=false
+```
 
 ---
 

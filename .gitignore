@@ -33,3 +33,4 @@ packages/apps/market_app/patrol_test/test_bundle.dart
 
 # Allure: results and generated report, rebuilt on every run
 allure/
+tool/allure/node_modules/

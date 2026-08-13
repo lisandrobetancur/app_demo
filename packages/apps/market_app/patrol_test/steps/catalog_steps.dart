@@ -1,40 +1,40 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:patrol/patrol.dart';
 
 import '../pages/pages.dart';
+import 'base_steps.dart';
 
 /// Business steps around browsing and opening products.
-class CatalogSteps {
-  CatalogSteps(this.$)
+class CatalogSteps extends BaseSteps {
+  CatalogSteps(super.$)
     : _dashboard = DashboardPage($),
       _catalog = CatalogPage($),
       _detail = ProductDetailPage($);
 
-  final PatrolIntegrationTester $;
   final DashboardPage _dashboard;
   final CatalogPage _catalog;
   final ProductDetailPage _detail;
 
   /// Enters the catalog from the dashboard and waits for the data state.
-  Future<void> openCatalog() async {
+  Future<void> openCatalog() => step('Open the catalog', () async {
     await _dashboard.waitUntilVisible();
     await _dashboard.openCatalog();
     await _catalog.waitUntilVisible();
     await _catalog.state('data').waitUntilVisible();
-  }
+  });
 
   /// Opens a product detail from the catalog list, scrolling to it first.
-  Future<void> openProduct(String productId) async {
-    await _catalog.openProduct(productId);
-    await _detail.waitUntilVisible();
-    await _detail.state('data').waitUntilVisible();
-  }
+  Future<void> openProduct(String productId) =>
+      step('Open product $productId', () async {
+        await _catalog.openProduct(productId);
+        await _detail.waitUntilVisible();
+        await _detail.state('data').waitUntilVisible();
+      });
 
   /// Searches and asserts the expected product survived the filter.
   Future<void> searchAndExpect({
     required String term,
     required String expectedProductId,
-  }) async {
+  }) => step('Search "$term"', () async {
     await _catalog.search(term);
     await $.pumpAndSettle();
     expect(
@@ -42,49 +42,55 @@ class CatalogSteps {
       isTrue,
       reason: 'searching "$term" must keep $expectedProductId in the results',
     );
-  }
+  });
 
   /// Adds the product currently on screen to the cart.
-  Future<void> addCurrentProductToCart({int quantity = 1}) async {
-    expect(
-      _detail.isAddToCartEnabled,
-      isTrue,
-      reason: 'the product must be purchasable before adding it to the cart',
-    );
-    for (int i = 1; i < quantity; i++) {
-      await _detail.increaseQuantity();
-    }
-    await _detail.addToCart();
-    await $.pumpAndSettle();
-  }
+  Future<void> addCurrentProductToCart({int quantity = 1}) => step(
+    'Add the product to the cart',
+    () async {
+      expect(
+        _detail.isAddToCartEnabled,
+        isTrue,
+        reason: 'the product must be purchasable before adding it to the cart',
+      );
+      for (int i = 1; i < quantity; i++) {
+        await _detail.increaseQuantity();
+      }
+      await _detail.addToCart();
+      await $.pumpAndSettle();
+    },
+  );
 
   /// Leaves the product detail and returns to the tab it was opened from.
   ///
   /// The detail is a full-screen route pushed on top of the navigation shell,
   /// so the tabs are only reachable again after popping it.
-  Future<void> leaveProductDetail() async {
-    await _detail.goBack();
-    await $.pumpAndSettle();
-  }
+  Future<void> leaveProductDetail() =>
+      step('Leave the product detail', () async {
+        await _detail.goBack();
+        await $.pumpAndSettle();
+      });
 
   /// Asserts a product owned by the logged-in user shows seller actions
   /// instead of the purchase CTA.
-  Future<void> expectOwnedByViewer() async {
-    await _detail.waitUntilVisible();
-    expect(
-      _detail.isOwnedByViewer,
-      isTrue,
-      reason: 'an own publication must offer edit instead of add-to-cart',
-    );
-  }
+  Future<void> expectOwnedByViewer() =>
+      step('Expect seller actions on an own publication', () async {
+        await _detail.waitUntilVisible();
+        expect(
+          _detail.isOwnedByViewer,
+          isTrue,
+          reason: 'an own publication must offer edit instead of add-to-cart',
+        );
+      });
 
   /// Asserts the CTA is disabled for a product with no stock.
-  Future<void> expectOutOfStock() async {
-    await _detail.waitUntilVisible();
-    expect(
-      _detail.isAddToCartEnabled,
-      isFalse,
-      reason: 'a product without stock must disable the purchase CTA',
-    );
-  }
+  Future<void> expectOutOfStock() =>
+      step('Expect the purchase CTA disabled', () async {
+        await _detail.waitUntilVisible();
+        expect(
+          _detail.isAddToCartEnabled,
+          isFalse,
+          reason: 'a product without stock must disable the purchase CTA',
+        );
+      });
 }

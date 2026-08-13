@@ -1,0 +1,10 @@
+{
+  "name": "market-allure",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Turns a Patrol run into an Allure report. Provides the Allure CLI; the pipeline itself lives in the Melos scripts (allureWeb, allureAndroid) so there is one place that knows the paths.",
+  "devDependencies": {
+    "allure": "3.14.3"
+  }
+}

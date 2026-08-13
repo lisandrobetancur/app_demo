@@ -6,8 +6,9 @@ import 'package:patrol/patrol.dart';
 ///
 ///  * a page knows **where** things are (keys, never raw text) and **how** to
 ///    touch them (tap, type, read) — nothing else;
-///  * a page never asserts business rules and never chains flows; that is the
-///    steps layer's job;
+///  * a page never asserts business rules, never chains flows and never
+///    reports: screenshots belong to the steps layer, which knows what a
+///    given interaction was *for*;
 ///  * locators come from the feature's `constants/` package, so a renamed key
 ///    breaks the test at compile time instead of at run time.
 abstract class BasePage {

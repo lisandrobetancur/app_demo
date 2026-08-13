@@ -29,7 +29,7 @@ void main() {
     );
 
     await steps.auth.expectLoginRejected();
-    steps.auth.expectGenericCredentialsError();
+    await steps.auth.expectGenericCredentialsError();
   });
 
   patrolTest('keeps submission blocked while the form is invalid', (

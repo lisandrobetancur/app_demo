@@ -10,6 +10,8 @@ import 'package:market_app/market_app.dart';
 import 'package:patrol/patrol.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'screenshot.dart';
+
 /// Boots the real application inside a Patrol test.
 ///
 /// This mirrors `lib/main.dart` but pumps the widget tree instead of calling
@@ -67,7 +69,9 @@ Future<void> launchMarketApp(
           ...appOverrides,
           databaseProvider.overrideWithValue(database),
         ],
-        child: const MarketApp(),
+        // The boundary is what `captureScreenshot` rasterises, so it wraps
+        // the whole app and nothing else.
+        child: RepaintBoundary(key: appBoundaryKey, child: const MarketApp()),
       ),
     ),
   );

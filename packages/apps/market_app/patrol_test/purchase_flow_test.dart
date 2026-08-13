@@ -22,11 +22,11 @@ void main() {
     await steps.catalog.leaveProductDetail();
 
     await steps.cart.openCart();
-    steps.cart.expectTotalsVisible();
+    await steps.cart.expectTotalsVisible();
     await steps.cart.applySeededValidCoupon();
 
     await steps.cart.checkoutWithCard(addressId: 'addr_demo_home');
-    steps.cart.expectOrderCreated();
+    await steps.cart.expectOrderCreated();
   });
 
   patrolTest('shows seller actions on an own publication', (
