@@ -46,14 +46,6 @@ class _LoginForm extends ConsumerWidget {
               ),
             ),
           ),
-          CheckboxListTile(
-            key: LoginKeys.rememberMeCheckbox,
-            value: state.rememberMe,
-            contentPadding: EdgeInsets.zero,
-            controlAffinity: ListTileControlAffinity.leading,
-            title: Text('authentication.login.remember_me'.tr()),
-            onChanged: (bool? value) => viewModel.setRememberMe(value ?? false),
-          ),
           if (state.errorKey != null)
             Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.md),

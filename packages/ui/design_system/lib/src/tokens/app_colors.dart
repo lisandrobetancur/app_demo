@@ -25,6 +25,13 @@ class AppColors {
   /// Informational feedback.
   static const Color info = Color(0xFF2563EB);
 
+  /// Page background in the light theme.
+  ///
+  /// Material 3 would otherwise paint pages in `scheme.surface`, which carries
+  /// a tint of the brand seed. This keeps the background plain white and lets
+  /// the tinted surfaces — app bar, cards, sheets — read as raised against it.
+  static const Color backgroundLight = Color(0xFFFFFFFF);
+
   /// Shimmer base tone (light theme).
   static const Color shimmerBaseLight = Color(0xFFE5E7EB);
 

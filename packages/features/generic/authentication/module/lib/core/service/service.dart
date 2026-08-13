@@ -49,7 +49,6 @@ class AuthenticationService implements IAuthenticationService {
   Future<AuthUser> login({
     required String email,
     required String password,
-    required bool rememberMe,
   }) async {
     final Map<String, Object?>? row = await _dao.findByEmail(_normalize(email));
     if (row == null) {
@@ -65,12 +64,9 @@ class AuthenticationService implements IAuthenticationService {
     }
     final AuthUser user = AuthUser.fromMap(row);
     _session.state = user;
-    final SharedPreferences prefs = await _prefs;
-    if (rememberMe) {
-      await prefs.setString(AuthenticationLimits.sessionUserIdPrefKey, user.id);
-    } else {
-      await prefs.remove(AuthenticationLimits.sessionUserIdPrefKey);
-    }
+    // The session is deliberately not persisted: every launch starts logged
+    // out, so writing it would only leave a credential lying in storage that
+    // the next bootstrap deletes anyway.
     return user;
   }
 

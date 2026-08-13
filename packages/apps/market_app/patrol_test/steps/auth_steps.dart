@@ -29,24 +29,19 @@ class AuthSteps {
   Future<void> submitCredentials({
     required String email,
     required String password,
-    bool rememberMe = false,
   }) async {
     await _login.waitUntilVisible();
     await _login.enterEmail(email);
     await _login.enterPassword(password);
-    if (rememberMe) {
-      await _login.toggleRememberMe();
-    }
     await _login.submit();
   }
 
   /// Logs in with the seeded demo account and asserts the dashboard greets
   /// that user.
-  Future<void> loginAsDemoUser({bool rememberMe = false}) async {
+  Future<void> loginAsDemoUser() async {
     await submitCredentials(
       email: TestData.demoEmail,
       password: TestData.demoPassword,
-      rememberMe: rememberMe,
     );
     await _dashboard.waitUntilVisible();
     expect(

@@ -20,30 +20,25 @@ class SplashViewModel extends ViewModel<SplashState> {
       // Opening the connection also creates/seeds the schema on first run.
       await ref.read(databaseProvider).db;
       await ref.read(settingsServiceProvider).restore();
-      final AuthUser? user = await ref
-          .read(authenticationServiceProvider)
-          .restoreSession();
+      // The app always opens on the login screen, so a session left by an
+      // earlier run is discarded here instead of restored. Dropping it — as
+      // opposed to keeping it and routing to login anyway — is what stops the
+      // app from holding a live session nobody has re-authenticated.
+      await ref.read(authenticationServiceProvider).logout();
       final bool seenOnboarding = await ref
           .read(settingsServiceProvider)
           .hasSeenOnboarding();
-      if (user != null) {
-        await ref
-            .read(notificationsServiceProvider)
-            .refreshUnreadCount(user.id);
-      }
       if (key != mountedKey) {
         return;
       }
       // From here on the router may resolve real routes; a deep link parked
-      // during bootstrap resumes as soon as there is a session.
+      // during bootstrap resumes once the user has signed in.
       ref.read(bootstrapGateProvider).markReady();
       state = state.copyWith(isInitializing: false);
       if (!seenOnboarding) {
         navigatorNotifier.goToOnboarding();
-      } else if (user == null) {
-        navigatorNotifier.goToLogin();
       } else {
-        navigatorNotifier.goToDashboard();
+        navigatorNotifier.goToLogin();
       }
     } on Object catch (error, stackTrace) {
       log.error('splash.initialize', error, stackTrace);

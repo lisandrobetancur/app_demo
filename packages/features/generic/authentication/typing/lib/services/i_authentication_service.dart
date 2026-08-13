@@ -10,11 +10,9 @@ abstract interface class IAuthenticationService {
   Future<AuthUser?> restoreSession();
 
   /// Logs in. Throws `AuthException(invalidCredentials)` on a wrong pair.
-  /// With [rememberMe] the session survives app restarts.
   Future<AuthUser> login({
     required String email,
     required String password,
-    required bool rememberMe,
   });
 
   /// Registers a new user, opens their session and creates the welcome

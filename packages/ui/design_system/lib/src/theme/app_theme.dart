@@ -27,6 +27,11 @@ class AppTheme {
       brightness: brightness,
     );
     return base.copyWith(
+      // Only the light theme is pinned: white is a background, not a theme,
+      // and forcing it in the dark theme would defeat the point of having one.
+      scaffoldBackgroundColor: brightness == Brightness.light
+          ? AppColors.backgroundLight
+          : base.scaffoldBackgroundColor,
       textTheme: AppTypography.textTheme(base.textTheme),
       appBarTheme: AppBarTheme(
         centerTitle: false,
