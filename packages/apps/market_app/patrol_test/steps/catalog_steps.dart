@@ -37,11 +37,15 @@ class CatalogSteps extends BaseSteps {
   }) => step('Search "$term"', () async {
     await _catalog.search(term);
     await $.pumpAndSettle();
-    expect(
-      _catalog.productItem(expectedProductId).exists,
-      isTrue,
-      reason: 'searching "$term" must keep $expectedProductId in the results',
-    );
+    // Asserted through the finder rather than a bool, so a failure names the
+    // widget it looked for. `isPresent` and not `isVisible` on purpose: a
+    // product can legitimately be in the results and still need scrolling.
+    softly
+        .assertThatWidget(_catalog.productItem(expectedProductId))
+        .describedAs(
+          'searching "$term" must keep $expectedProductId in the results',
+        )
+        .isPresent();
   });
 
   /// Adds the product currently on screen to the cart.

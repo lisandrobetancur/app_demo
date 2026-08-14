@@ -49,16 +49,22 @@ class CartSteps extends BaseSteps {
     await _cart.enterCoupon(code);
     await _cart.applyCoupon();
     await $.pumpAndSettle();
-    expect(
-      _cart.couponErrorText.exists,
-      isTrue,
-      reason: 'coupon $code should have been rejected with an inline error',
-    );
-    expect(
-      $(expectedMessage).exists,
-      isTrue,
-      reason: 'the error for $code must be the specific one, not a generic',
-    );
+    // Soft: "an error appeared" and "it is the *right* error" fail for
+    // different reasons, and a hard expect on the first would never let the
+    // second run — so a generic message replacing a specific one would look
+    // like no error at all.
+    softly
+        .assertThat(_cart.couponErrorText.exists)
+        .describedAs(
+          'coupon $code should have been rejected with an inline error',
+        )
+        .isTrue();
+    softly
+        .assertThat($(expectedMessage).exists)
+        .describedAs(
+          'the error for $code must be the specific one, not a generic',
+        )
+        .isTrue();
   });
 
   /// Runs the three checkout steps and confirms the purchase.

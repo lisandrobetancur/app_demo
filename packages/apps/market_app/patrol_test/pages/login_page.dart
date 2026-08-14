@@ -17,7 +17,6 @@ class LoginPage extends BasePage {
 
   PatrolFinder get submitButton => $(LoginKeys.submitButton);
 
-
   PatrolFinder get togglePasswordButton =>
       $(LoginKeys.togglePasswordVisibilityButton);
 
@@ -30,7 +29,6 @@ class LoginPage extends BasePage {
 
   Future<void> enterPassword(String password) =>
       passwordInput.enterText(password);
-
 
   Future<void> togglePasswordVisibility() => togglePasswordButton.tap();
 

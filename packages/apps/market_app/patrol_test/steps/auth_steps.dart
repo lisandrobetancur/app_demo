@@ -39,34 +39,37 @@ class AuthSteps extends BaseSteps {
 
   /// Logs in with the seeded demo account and asserts the dashboard greets
   /// that user.
-  Future<void> loginAsDemoUser() =>
-      step('Log in as the demo user', () async {
-        await submitCredentials(
-          email: TestData.demoEmail,
-          password: TestData.demoPassword,
-        );
-        await _dashboard.waitUntilVisible();
-        expect(
-          _dashboard.greetingText,
-          contains(TestData.demoFullName),
-          reason: 'the dashboard must greet the logged-in user by name',
-        );
-      });
+  Future<void> loginAsDemoUser() => step('Log in as the demo user', () async {
+    await submitCredentials(
+      email: TestData.demoEmail,
+      password: TestData.demoPassword,
+    );
+    await _dashboard.waitUntilVisible();
+    expect(
+      _dashboard.greetingText,
+      contains(TestData.demoFullName),
+      reason: 'the dashboard must greet the logged-in user by name',
+    );
+  });
 
   /// Asserts the login screen rejected the attempt and stayed put.
-  Future<void> expectLoginRejected() =>
-      step('Expect the login to be rejected', () async {
-        expect(
-          _login.isVisible,
-          isTrue,
-          reason: 'a failed login must keep the user on the login screen',
-        );
-        expect(
-          _dashboard.isVisible,
-          isFalse,
-          reason: 'a failed login must not reach the dashboard',
-        );
-      });
+  Future<void> expectLoginRejected() => step(
+    'Expect the login to be rejected',
+    () async {
+      // Soft: a rejected login has two halves — it stays put *and* it does
+      // not slip through. With a hard `expect`, the first failure hides the
+      // second, and "still on login" versus "also reached the dashboard"
+      // point at very different bugs.
+      softly
+          .assertThat(_login.isVisible)
+          .describedAs('a failed login must keep the user on the login screen')
+          .isTrue();
+      softly
+          .assertThat(_dashboard.isVisible)
+          .describedAs('a failed login must not reach the dashboard')
+          .isFalse();
+    },
+  );
 
   /// Asserts the visible error message — the app never reveals whether the
   /// email exists, so both wrong-email and wrong-password show this one.
