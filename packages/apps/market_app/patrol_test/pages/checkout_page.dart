@@ -1,7 +1,7 @@
 import 'package:cart_constants/cart_constants.dart';
-import 'package:design_system/design_system.dart';
 import 'package:patrol/patrol.dart';
 
+import '../support/locator.dart';
 import 'base_page.dart';
 
 /// F12 · Multi-step checkout and its success screen.
@@ -86,6 +86,10 @@ class CheckoutPage extends BasePage {
   Future<void> openOrder() => goToOrderButton.tap();
 
   /// Disabled until the current step is valid.
+  ///
+  /// Goes through the element layer so the rule is the shared one: the design
+  /// system also disables a button while it is loading, which a bare
+  /// `onPressed` check reads as enabled.
   bool get isNextEnabled =>
-      $.tester.widget<AppButton>(nextButton.finder).onPressed != null;
+      element(Loc.widgetKey(CheckoutKeys.nextButton)).isEnabled;
 }

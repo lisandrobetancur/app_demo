@@ -2,6 +2,8 @@
 library;
 
 export 'app_launcher.dart';
+export 'element.dart';
+export 'locator.dart';
 export 'money.dart';
 export 'scenario.dart';
 export 'screenshot.dart';

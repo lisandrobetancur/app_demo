@@ -23,7 +23,7 @@ class CartSteps extends BaseSteps {
 
   Future<void> _waitForCart() async {
     await _cart.waitUntilVisible();
-    await _cart.state('data').waitUntilVisible();
+    await _cart.state('data').waitVisible();
   }
 
   /// Applies a coupon and asserts it was accepted *and* discounted the right
@@ -41,7 +41,7 @@ class CartSteps extends BaseSteps {
 
         expectThat(
           'the coupon $code is accepted and replaces the input',
-          _cart.removeCouponButton.exists,
+          _cart.removeCouponButton.isDisplayed,
           isTrue,
         );
         expectThat(
@@ -69,7 +69,7 @@ class CartSteps extends BaseSteps {
     await $.pumpAndSettle();
     expectThat(
       'the coupon $code is rejected with an inline error',
-      _cart.couponErrorText.exists,
+      _cart.couponErrorText.isDisplayed,
       isTrue,
     );
     expectThat(
@@ -190,7 +190,7 @@ class CartSteps extends BaseSteps {
     await _cart.waitUntilVisible();
     expectThat(
       'the cart shows its empty state',
-      _cart.state('empty').exists,
+      _cart.state('empty').isDisplayed,
       isTrue,
     );
   });
