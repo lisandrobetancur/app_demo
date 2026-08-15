@@ -33,13 +33,6 @@ import 'package:patrol/patrol.dart';
 class Loc {
   const Loc(this.description, this.finder);
 
-  /// How this locator reads in an error message. Composed strategies build it
-  /// up ("texto \"Entrar\" dentro de key 'login_view'"), so a failure names
-  /// the locator instead of dumping a finder.
-  final String description;
-
-  final Finder finder;
-
   // --- Base strategies -----------------------------------------------------
 
   /// By key, written as the raw string. The everyday case once the widget has
@@ -75,6 +68,13 @@ class Loc {
   /// Escape hatch: any `flutter_test` finder, named so the report still reads.
   factory Loc.custom(Finder finder, String description) =>
       Loc(description, finder);
+
+  /// How this locator reads in an error message. Composed strategies build it
+  /// up ("texto \"Entrar\" dentro de key 'login_view'"), so a failure names
+  /// the locator instead of dumping a finder.
+  final String description;
+
+  final Finder finder;
 
   // --- Refinements ---------------------------------------------------------
 
