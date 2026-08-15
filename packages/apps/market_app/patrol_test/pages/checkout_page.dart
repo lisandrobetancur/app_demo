@@ -34,6 +34,20 @@ class CheckoutPage extends BasePage {
 
   PatrolFinder get orderNumberText => $(CheckoutKeys.orderNumberText);
 
+  /// The order identifier shown on the success screen, without its label.
+  ///
+  /// The view renders `"Orden {number}"` from the route's path parameter,
+  /// defaulting to an empty string when it is missing — so the label survives
+  /// even when the identifier is gone. Taking the trailing token lets a step
+  /// assert the identifier itself, and does so without pinning the test to
+  /// the Spanish copy: the number is last in every locale.
+  String get orderNumber {
+    final List<String> parts = valueIn(orderNumberText).trim().split(
+      RegExp(r'\s+'),
+    );
+    return parts.isEmpty ? '' : parts.last;
+  }
+
   PatrolFinder get goToOrderButton => $(CheckoutKeys.goToOrderButton);
 
   PatrolFinder get goToHomeButton => $(CheckoutKeys.goToHomeButton);

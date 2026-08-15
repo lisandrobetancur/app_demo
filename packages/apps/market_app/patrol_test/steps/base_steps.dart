@@ -1,12 +1,17 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:patrol/patrol.dart';
 
 import '../support/screenshot.dart';
 
 /// Marker the Allure converter reads to rebuild the business steps.
 const String _marker = 'PATROL_STEP';
+
+/// Marker carrying one assertion and its outcome.
+const String _assertMarker = 'PATROL_ASSERT';
 
 /// Base of every steps class.
 ///
@@ -41,5 +46,36 @@ abstract class BaseSteps {
       debugPrintSynchronously('$_marker|end|$id|failed');
       rethrow;
     }
+  }
+
+  /// Asserts [actual] against [matcher] and makes the check visible in the
+  /// report.
+  ///
+  /// `expect` alone leaves nothing behind: a passing assertion is invisible,
+  /// and a failing one only surfaces as the test's error message. The reader
+  /// of a report cannot tell whether a green step verified four things or
+  /// none. This wrapper emits every check as its own entry under the step,
+  /// carrying what was expected and what was found — so a green step shows
+  /// its evidence, and a red one shows which check broke while the rest
+  /// still read as passed.
+  ///
+  /// [what] names the rule in business terms ("the total adds up to
+  /// subtotal - discount + VAT"), not the mechanics.
+  ///
+  /// The assertion itself still runs through `expect`, so the failure
+  /// behaviour, the message and the stack trace are unchanged.
+  void expectThat(String what, Object? actual, Matcher matcher) {
+    final bool passed = matcher.matches(actual, <Object?, Object?>{});
+    final Map<String, String> payload = <String, String>{
+      'name': what,
+      'status': passed ? 'passed' : 'failed',
+      // The matcher's own words, so the report reads the same as a failure
+      // message would ("a numeric value within <1.0> of <66937500.0>").
+      'expected': matcher.describe(StringDescription()).toString(),
+      'actual': (StringDescription()..addDescriptionOf(actual)).toString(),
+    };
+    debugPrintSynchronously('$_assertMarker ${jsonEncode(payload)}');
+
+    expect(actual, matcher, reason: what);
   }
 }

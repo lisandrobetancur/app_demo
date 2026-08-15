@@ -37,10 +37,10 @@ class CatalogSteps extends BaseSteps {
   }) => step('Search "$term"', () async {
     await _catalog.search(term);
     await $.pumpAndSettle();
-    expect(
+    expectThat(
+      'searching "$term" keeps $expectedProductId in the results',
       _catalog.productItem(expectedProductId).exists,
       isTrue,
-      reason: 'searching "$term" must keep $expectedProductId in the results',
     );
   });
 
@@ -48,10 +48,10 @@ class CatalogSteps extends BaseSteps {
   Future<void> addCurrentProductToCart({int quantity = 1}) => step(
     'Add the product to the cart',
     () async {
-      expect(
+      expectThat(
+        'the product is purchasable before adding it to the cart',
         _detail.isAddToCartEnabled,
         isTrue,
-        reason: 'the product must be purchasable before adding it to the cart',
       );
       for (int i = 1; i < quantity; i++) {
         await _detail.increaseQuantity();
@@ -76,10 +76,10 @@ class CatalogSteps extends BaseSteps {
   Future<void> expectOwnedByViewer() =>
       step('Expect seller actions on an own publication', () async {
         await _detail.waitUntilVisible();
-        expect(
+        expectThat(
+          'an own publication offers edit instead of add-to-cart',
           _detail.isOwnedByViewer,
           isTrue,
-          reason: 'an own publication must offer edit instead of add-to-cart',
         );
       });
 
@@ -87,10 +87,10 @@ class CatalogSteps extends BaseSteps {
   Future<void> expectOutOfStock() =>
       step('Expect the purchase CTA disabled', () async {
         await _detail.waitUntilVisible();
-        expect(
+        expectThat(
+          'a product without stock disables the purchase CTA',
           _detail.isAddToCartEnabled,
           isFalse,
-          reason: 'a product without stock must disable the purchase CTA',
         );
       });
 }

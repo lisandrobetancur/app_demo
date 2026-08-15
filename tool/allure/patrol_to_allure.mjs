@@ -111,6 +111,11 @@ function stdoutOf(result) {
  *    under whichever business step was open when they happened.
  *  * `PATROL_SHOT` — a screenshot, taken when a business step closes, so it
  *    is attached to that step rather than to an individual tap.
+ *  * `PATROL_ASSERT` — one assertion and its outcome, nested under the step
+ *    that made it, so a green step shows what it actually verified.
+ *  * `PATROL_META` / `PATROL_PARAM` — the scenario's business taxonomy and
+ *    the data the case ran with. These belong to the test, not to a step, so
+ *    they are collected here and returned alongside.
  */
 function stepsFrom(stdout, outputDir, startTime) {
   const root = [];
@@ -118,6 +123,8 @@ function stepsFrom(stdout, outputDir, startTime) {
   const interactionStack = []; // patrol interactions currently open
   const shots = new Map(); // name -> { total, chunks: Map<index, string> }
   const orphanShots = [];
+  let meta = null;
+  const params = [];
   let lastClosedBusiness = null;
 
   // `PATROL_STEP` markers carry no timestamp of their own, so a business step
@@ -163,6 +170,43 @@ function stepsFrom(stdout, outputDir, startTime) {
       continue;
     }
 
+    // An assertion is a leaf: it records a check that already happened, so it
+    // opens and closes at once rather than joining the nesting stacks.
+    const assertAt = line.indexOf("PATROL_ASSERT ");
+    if (assertAt >= 0) {
+      const payload = parseJsonAfter(line, assertAt, "PATROL_ASSERT ");
+      if (payload) {
+        currentChildren().push({
+          name: payload.name ?? "assertion",
+          status: payload.status === "failed" ? "failed" : "passed",
+          start: clock,
+          stop: clock,
+          steps: [],
+          parameters: [
+            { name: "expected", value: String(payload.expected ?? "") },
+            { name: "actual", value: String(payload.actual ?? "") },
+          ],
+          attachments: [],
+        });
+      }
+      continue;
+    }
+
+    const metaAt = line.indexOf("PATROL_META ");
+    if (metaAt >= 0) {
+      meta = parseJsonAfter(line, metaAt, "PATROL_META ") ?? meta;
+      continue;
+    }
+
+    const paramAt = line.indexOf("PATROL_PARAM ");
+    if (paramAt >= 0) {
+      const payload = parseJsonAfter(line, paramAt, "PATROL_PARAM ");
+      if (payload?.name) {
+        params.push({ name: payload.name, value: String(payload.value ?? "") });
+      }
+      continue;
+    }
+
     const logAt = line.indexOf("PATROL_LOG ");
     if (logAt < 0) continue;
 
@@ -196,7 +240,16 @@ function stepsFrom(stdout, outputDir, startTime) {
   // Anything still open when the test died is what actually broke.
   for (const step of interactionStack) step.status = "broken";
   for (const step of businessStack) step.status = "broken";
-  return { steps: root, orphanShots };
+  return { steps: root, orphanShots, meta, params };
+}
+
+/** Reads the one-line JSON payload a marker carries, or null if malformed. */
+function parseJsonAfter(line, at, marker) {
+  try {
+    return JSON.parse(line.slice(at + marker.length));
+  } catch {
+    return null; // a truncated line is not worth failing the whole report over
+  }
 }
 
 /**
@@ -388,7 +441,7 @@ function convert({ input, output, format, platform }) {
           const suiteName = run.suite;
           const name = run.name;
           const fullName = `${suiteName}#${name}`;
-          const { steps, orphanShots } = stepsFrom(run.stdout, output, run.start);
+          const { steps, orphanShots, meta, params } = stepsFrom(run.stdout, output, run.start);
 
           // Two clocks measure the same test: Playwright times it from
           // outside, Dart timestamps the interactions from inside the browser.
@@ -413,7 +466,14 @@ function convert({ input, output, format, platform }) {
             // Screenshots taken before the first interaction (or after the
             // last one) have no step to hang from, so they stay on the test.
             attachments: orphanShots,
-            parameters: run.retry > 0 ? [{ name: "retry", value: String(run.retry) }] : [],
+            // The data the case ran with, so a reader can reproduce it from
+            // the report alone instead of opening the test.
+            parameters: [
+              ...params,
+              ...(run.retry > 0 ? [{ name: "retry", value: String(run.retry) }] : []),
+            ],
+            // Shown as the test's description in the report.
+            ...(meta?.description ? { description: meta.description } : {}),
             labels: [
               { name: "parentSuite", value: `Patrol ${platform} E2E` },
               { name: "suite", value: suiteName },
@@ -423,6 +483,14 @@ function convert({ input, output, format, platform }) {
               { name: "platform", value: platform },
               { name: "host", value: hostname() },
               { name: "thread", value: run.thread },
+              // Business taxonomy. `epic`/`feature`/`story` are what Allure's
+              // Behaviors view groups by, which reads by functionality rather
+              // than by file; `severity` drives its filter. A test that never
+              // called `scenario()` simply keeps the infrastructure labels.
+              ...(meta?.epic ? [{ name: "epic", value: meta.epic }] : []),
+              ...(meta?.feature ? [{ name: "feature", value: meta.feature }] : []),
+              ...(meta?.story ? [{ name: "story", value: meta.story }] : []),
+              ...(meta?.severity ? [{ name: "severity", value: meta.severity }] : []),
             ],
           };
 

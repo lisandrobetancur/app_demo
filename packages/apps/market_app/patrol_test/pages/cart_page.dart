@@ -2,6 +2,7 @@ import 'package:cart_constants/cart_constants.dart';
 import 'package:design_system/design_system.dart';
 import 'package:patrol/patrol.dart';
 
+import '../support/money.dart';
 import 'base_page.dart';
 
 /// F11 · Cart.
@@ -62,4 +63,20 @@ class CartPage extends BasePage {
   /// Disabled while a line is unavailable or the cart is empty.
   bool get isCheckoutEnabled =>
       $.tester.widget<AppButton>(checkoutButton.finder).onPressed != null;
+
+  // --- Rendered totals, read back as numbers ---
+  //
+  // The cart is the one screen where "the widget is there" says nothing: the
+  // whole point of the block is the arithmetic. These expose the amounts so a
+  // step can check the rule; whether they add up is not the page's call.
+
+  double get subtotal => Money.parse(valueIn(subtotalText));
+
+  /// Rendered with a leading `-`, so this comes back negative. The steps
+  /// compare against its magnitude.
+  double get discount => Money.parse(valueIn(discountText));
+
+  double get tax => Money.parse(valueIn(taxText));
+
+  double get total => Money.parse(valueIn(totalText));
 }

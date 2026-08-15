@@ -46,25 +46,25 @@ class AuthSteps extends BaseSteps {
           password: TestData.demoPassword,
         );
         await _dashboard.waitUntilVisible();
-        expect(
+        expectThat(
+          'the dashboard greets the logged-in user by name',
           _dashboard.greetingText,
           contains(TestData.demoFullName),
-          reason: 'the dashboard must greet the logged-in user by name',
         );
       });
 
   /// Asserts the login screen rejected the attempt and stayed put.
   Future<void> expectLoginRejected() =>
       step('Expect the login to be rejected', () async {
-        expect(
+        expectThat(
+          'a failed login keeps the user on the login screen',
           _login.isVisible,
           isTrue,
-          reason: 'a failed login must keep the user on the login screen',
         );
-        expect(
+        expectThat(
+          'a failed login does not reach the dashboard',
           _dashboard.isVisible,
           isFalse,
-          reason: 'a failed login must not reach the dashboard',
         );
       });
 
@@ -72,10 +72,10 @@ class AuthSteps extends BaseSteps {
   /// email exists, so both wrong-email and wrong-password show this one.
   Future<void> expectGenericCredentialsError() =>
       step('Expect the generic credentials error', () async {
-        expect(
+        expectThat(
+          'invalid credentials show the generic inline error',
           _login.hasErrorText('Correo o contraseña incorrectos'),
           isTrue,
-          reason: 'invalid credentials must show the generic inline error',
         );
       });
 
@@ -102,10 +102,10 @@ class AuthSteps extends BaseSteps {
     await _login.waitUntilVisible();
     await _login.enterEmail(email);
     await _login.enterPassword(password);
-    expect(
+    expectThat(
+      'live validation blocks submission for "$email"',
       _login.isSubmitEnabled,
       isFalse,
-      reason: 'live validation must block submission for "$email"',
     );
   });
 }
