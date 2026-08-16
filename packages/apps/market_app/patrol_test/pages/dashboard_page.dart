@@ -65,5 +65,4 @@ class DashboardPage extends BasePage {
     await action.scrollTo();
     await action.tap();
   }
-
 }

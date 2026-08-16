@@ -95,6 +95,16 @@ jobs:
         if: always()
         run: melos run allureWeb
 
+      # A green suite is not the same as a suite that verified something. The
+      # assertions travel from the browser console through Playwright's
+      # per-test capture into the converter, and a break anywhere along there
+      # is silent: the tests still pass, the report just holds nothing. The
+      # count goes in the job summary so that is visible from the PR, without
+      # downloading the artifact.
+      - name: Summarize the assertions
+        if: always()
+        run: node tool/allure/summarize_assertions.mjs --platform web >> "$GITHUB_STEP_SUMMARY"
+
       - name: Publish the JUnit results as a check
         if: always()
         uses: mikepenz/action-junit-report@v6

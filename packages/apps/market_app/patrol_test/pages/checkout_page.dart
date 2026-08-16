@@ -1,7 +1,7 @@
 import 'package:cart_constants/cart_constants.dart';
-import 'package:design_system/design_system.dart';
 import 'package:patrol/patrol.dart';
 
+import '../support/locator.dart';
 import 'base_page.dart';
 
 /// F12 · Multi-step checkout and its success screen.
@@ -33,6 +33,20 @@ class CheckoutPage extends BasePage {
   PatrolFinder get successView => $(CheckoutKeys.successView);
 
   PatrolFinder get orderNumberText => $(CheckoutKeys.orderNumberText);
+
+  /// The order identifier shown on the success screen, without its label.
+  ///
+  /// The view renders `"Orden {number}"` from the route's path parameter,
+  /// defaulting to an empty string when it is missing — so the label survives
+  /// even when the identifier is gone. Taking the trailing token lets a step
+  /// assert the identifier itself, and does so without pinning the test to
+  /// the Spanish copy: the number is last in every locale.
+  String get orderNumber {
+    final List<String> parts = valueIn(orderNumberText).trim().split(
+      RegExp(r'\s+'),
+    );
+    return parts.isEmpty ? '' : parts.last;
+  }
 
   PatrolFinder get goToOrderButton => $(CheckoutKeys.goToOrderButton);
 
@@ -72,6 +86,10 @@ class CheckoutPage extends BasePage {
   Future<void> openOrder() => goToOrderButton.tap();
 
   /// Disabled until the current step is valid.
+  ///
+  /// Goes through the element layer so the rule is the shared one: the design
+  /// system also disables a button while it is loading, which a bare
+  /// `onPressed` check reads as enabled.
   bool get isNextEnabled =>
-      $.tester.widget<AppButton>(nextButton.finder).onPressed != null;
+      element(Loc.widgetKey(CheckoutKeys.nextButton)).isEnabled;
 }
