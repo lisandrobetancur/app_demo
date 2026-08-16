@@ -1,6 +1,5 @@
-import 'dart:async';
-
 import 'package:flutter/foundation.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:patrol/patrol.dart';
 
 import '../support/assert_d.dart';
@@ -58,4 +57,24 @@ abstract class BaseSteps {
       rethrow;
     }
   }
+
+  /// Asserts [actual] against [matcher], softly, and makes the check visible
+  /// in the report.
+  ///
+  /// The two halves matter together. Collecting the failure means the checks
+  /// after this one still run, so a step reports every broken expectation
+  /// rather than stopping at the first. Reporting the check means a reader
+  /// sees which rules the step verified and what each one found — a green
+  /// step that asserted four things no longer looks like one that asserted
+  /// nothing.
+  ///
+  /// [what] names the rule in business terms ("the total adds up to
+  /// subtotal - discount + VAT"), not the mechanics. It becomes both the
+  /// entry in the report and the reason on the failure.
+  ///
+  /// Nothing throws here: [step] raises whatever was collected at its own
+  /// boundary, so the step still fails, still screenshots and still reports
+  /// as failed.
+  void expectThat(String what, Object? actual, Matcher matcher) =>
+      softly.softExpect(actual, matcher, reason: what);
 }

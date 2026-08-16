@@ -1,65 +1,112 @@
 import 'package:cart_constants/cart_constants.dart';
-import 'package:design_system/design_system.dart';
 import 'package:patrol/patrol.dart';
 
+import '../support/element.dart';
+import '../support/locator.dart';
+import '../support/money.dart';
 import 'base_page.dart';
 
 /// F11 · Cart.
 class CartPage extends BasePage {
   const CartPage(super.$);
 
+  // --- Locators ------------------------------------------------------------
+
+  static final Loc _view = Loc.widgetKey(CartKeys.view);
+  static final Loc _itemsList = Loc.widgetKey(CartKeys.itemsList);
+  static final Loc _couponInput = Loc.widgetKey(CartKeys.couponInput);
+  static final Loc _applyCouponButton = Loc.widgetKey(
+    CartKeys.applyCouponButton,
+  );
+  static final Loc _removeCouponButton = Loc.widgetKey(
+    CartKeys.removeCouponButton,
+  );
+  static final Loc _couponErrorText = Loc.widgetKey(CartKeys.couponErrorText);
+  static final Loc _subtotalText = Loc.widgetKey(CartKeys.subtotalText);
+  static final Loc _discountText = Loc.widgetKey(CartKeys.discountText);
+  static final Loc _taxText = Loc.widgetKey(CartKeys.taxText);
+  static final Loc _totalText = Loc.widgetKey(CartKeys.totalText);
+  static final Loc _clearCartButton = Loc.widgetKey(CartKeys.clearCartButton);
+  static final Loc _checkoutButton = Loc.widgetKey(CartKeys.checkoutButton);
+  static final Loc _undoRemoveButton = Loc.widgetKey(CartKeys.undoRemoveButton);
+
+  // Parameterised locators: the same strategy, resolved per id.
+  static Loc _state(String name) => Loc.widgetKey(CartKeys.state(name));
+  static Loc _item(String id) => Loc.widgetKey(CartKeys.item(id));
+
+  // --- Elements ------------------------------------------------------------
+
   @override
-  PatrolFinder get root => $(CartKeys.view);
+  PatrolFinder get root => _view.resolve($);
 
-  PatrolFinder get itemsList => $(CartKeys.itemsList);
+  UiElement get itemsList => element(_itemsList);
 
-  PatrolFinder get couponInput => $(CartKeys.couponInput);
+  UiElement get couponInput => element(_couponInput);
 
-  PatrolFinder get applyCouponButton => $(CartKeys.applyCouponButton);
+  UiElement get applyCouponButton => element(_applyCouponButton);
 
-  PatrolFinder get removeCouponButton => $(CartKeys.removeCouponButton);
+  UiElement get removeCouponButton => element(_removeCouponButton);
 
-  PatrolFinder get couponErrorText => $(CartKeys.couponErrorText);
+  UiElement get couponErrorText => element(_couponErrorText);
 
-  PatrolFinder get subtotalText => $(CartKeys.subtotalText);
+  UiElement get subtotalText => element(_subtotalText);
 
-  PatrolFinder get discountText => $(CartKeys.discountText);
+  UiElement get discountText => element(_discountText);
 
-  PatrolFinder get taxText => $(CartKeys.taxText);
+  UiElement get taxText => element(_taxText);
 
-  PatrolFinder get totalText => $(CartKeys.totalText);
+  UiElement get totalText => element(_totalText);
 
-  PatrolFinder get clearCartButton => $(CartKeys.clearCartButton);
+  UiElement get clearCartButton => element(_clearCartButton);
 
-  PatrolFinder get checkoutButton => $(CartKeys.checkoutButton);
+  UiElement get checkoutButton => element(_checkoutButton);
 
-  PatrolFinder get undoRemoveButton => $(CartKeys.undoRemoveButton);
+  UiElement get undoRemoveButton => element(_undoRemoveButton);
 
-  PatrolFinder state(String name) => $(CartKeys.state(name));
+  UiElement state(String name) => element(_state(name));
 
   /// A cart line by its id.
-  PatrolFinder item(String cartItemId) => $(CartKeys.item(cartItemId));
+  UiElement item(String cartItemId) => element(_item(cartItemId));
 
-  PatrolFinder increaseQuantityButton(String cartItemId) =>
-      $(CartKeys.increaseQuantityButton(cartItemId));
+  UiElement increaseQuantityButton(String cartItemId) =>
+      element(Loc.widgetKey(CartKeys.increaseQuantityButton(cartItemId)));
 
-  PatrolFinder decreaseQuantityButton(String cartItemId) =>
-      $(CartKeys.decreaseQuantityButton(cartItemId));
+  UiElement decreaseQuantityButton(String cartItemId) =>
+      element(Loc.widgetKey(CartKeys.decreaseQuantityButton(cartItemId)));
 
-  PatrolFinder removeItemButton(String cartItemId) =>
-      $(CartKeys.removeItemButton(cartItemId));
+  UiElement removeItemButton(String cartItemId) =>
+      element(Loc.widgetKey(CartKeys.removeItemButton(cartItemId)));
 
-  Future<void> enterCoupon(String code) => couponInput.enterText(code);
+  // --- Actions -------------------------------------------------------------
 
-  Future<void> applyCoupon() => applyCouponButton.tap();
+  Future<void> enterCoupon(String code) => couponInput.type(code);
 
-  Future<void> removeCoupon() => removeCouponButton.tap();
+  Future<void> applyCoupon() => applyCouponButton.click();
 
-  Future<void> goToCheckout() => checkoutButton.tap();
+  Future<void> removeCoupon() => removeCouponButton.click();
 
-  Future<void> undoRemove() => undoRemoveButton.tap();
+  Future<void> goToCheckout() => checkoutButton.click();
+
+  Future<void> undoRemove() => undoRemoveButton.click();
+
+  // --- Reads ---------------------------------------------------------------
 
   /// Disabled while a line is unavailable or the cart is empty.
-  bool get isCheckoutEnabled =>
-      $.tester.widget<AppButton>(checkoutButton.finder).onPressed != null;
+  bool get isCheckoutEnabled => checkoutButton.isEnabled;
+
+  // The rendered totals, read back as numbers.
+  //
+  // The cart is the one screen where "the widget is there" says nothing: the
+  // whole point of the block is the arithmetic. These expose the amounts so a
+  // step can check the rule; whether they add up is not the page's call.
+
+  double get subtotal => Money.parse(subtotalText.text);
+
+  /// Rendered with a leading `-`, so this comes back negative. The steps
+  /// compare against its magnitude.
+  double get discount => Money.parse(discountText.text);
+
+  double get tax => Money.parse(taxText.text);
+
+  double get total => Money.parse(totalText.text);
 }

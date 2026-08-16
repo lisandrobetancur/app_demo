@@ -44,6 +44,8 @@ import 'package:flutter/rendering.dart' show AxisDirection;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:patrol_finders/patrol_finders.dart';
 
+import 'assert_report.dart';
+
 /// Mirrors AssertJ's `Assertions.entry(key, value)` factory, used with
 /// [SoftMapAssertExt.contains]: `softly.assertThat(map).contains(entry(2, 'a'))`.
 /// It's a thin wrapper over Dart's own [MapEntry] constructor.
@@ -147,7 +149,12 @@ class AssertD {
   /// records it instead of throwing. This is the original class' primary
   /// API and remains the building block every fluent helper above uses.
   void softExpect(dynamic actual, dynamic matcher, {required String reason}) {
-    softCheck(() => expect(actual, matcher, reason: reason), reason: reason);
+    softCheck(
+      () => expect(actual, matcher, reason: reason),
+      reason: reason,
+      expected: describeExpectation(matcher),
+      actual: describeValue(actual),
+    );
   }
 
   /// Runs an arbitrary [check] (typically a call to `expect(...)`, a
@@ -157,13 +164,30 @@ class AssertD {
   ///
   /// Use this when a single `actual`/`matcher` pair isn't expressive enough
   /// -- e.g. asserting on several properties of a widget in one go.
-  void softCheck(void Function() check, {String? reason}) {
+  void softCheck(
+    void Function() check, {
+    String? reason,
+    String? expected,
+    String? actual,
+  }) {
+    bool passed = true;
     try {
       check();
     } on TestFailure catch (failure, stackTrace) {
+      passed = false;
       _record(reason, failure, stackTrace);
     } on PatrolFinderException catch (error, stackTrace) {
+      passed = false;
       _record(reason, TestFailure('$error'), stackTrace);
+    } finally {
+      // Reported whether it passed or failed: otherwise a step that verified
+      // four rules and one that verified none both just look green.
+      reportAssertion(
+        name: reason ?? 'assertion',
+        passed: passed,
+        expected: expected,
+        actual: actual,
+      );
     }
   }
 
@@ -179,15 +203,28 @@ class AssertD {
   Future<void> softCheckAsync(
     Future<void> Function() check, {
     String? reason,
+    String? expected,
+    String? actual,
   }) async {
+    bool passed = true;
     try {
       await check();
     } on TestFailure catch (failure, stackTrace) {
+      passed = false;
       _record(reason, failure, stackTrace);
     } on PatrolTimeoutException catch (error, stackTrace) {
+      passed = false;
       _record(reason, TestFailure('$error'), stackTrace);
     } on PatrolFinderException catch (error, stackTrace) {
+      passed = false;
       _record(reason, TestFailure('$error'), stackTrace);
+    } finally {
+      reportAssertion(
+        name: reason ?? 'assertion',
+        passed: passed,
+        expected: expected,
+        actual: actual,
+      );
     }
   }
 

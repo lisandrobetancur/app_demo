@@ -501,6 +501,33 @@ step still open when a test dies is marked `broken` — which is usually the one
 that actually failed. Tests are grouped by the Dart file they came from
 (`login_test`, `purchase_flow_test`) under a `Patrol web E2E` parent suite.
 
+Four markers of the suite's own travel the same stdout channel and are
+translated alongside Patrol's:
+
+| Marker | Emitted by | Becomes |
+|---|---|---|
+| `PATROL_STEP` | `BaseSteps.step` | A business step, with Patrol's interactions nested under it |
+| `PATROL_SHOT` | `takeScreenshot` | An attachment on the step that produced it |
+| `PATROL_ASSERT` | `BaseSteps.expectThat` | A leaf step carrying `expected` / `actual` |
+| `PATROL_META` / `PATROL_PARAM` | `scenario()` / `testParam()` | The test's labels, description and case data |
+
+The last three carry their payload as one-line JSON rather than pipe-separated
+fields, so a value containing a `|` — an assertion message, a description —
+cannot corrupt the stream.
+
+`PATROL_ASSERT` is what makes a green step readable. `expect` on its own
+leaves nothing behind: a passing assertion is invisible and a failing one only
+surfaces as the test's error message, so a reader cannot tell whether a step
+verified four rules or none. Every check becomes its own entry under its step,
+showing what was expected and what was found — and when one fails, the checks
+that passed alongside it still read as passed.
+
+`scenario()` supplies the business taxonomy: `epic`, `feature` and `story`
+drive Allure's **Behaviors** view, which groups by functionality instead of by
+file, and `severity` drives its filter. `testParam()` records the data a case
+ran with — user, coupon, amounts — so a failure can be reproduced without
+opening the test. Neither touches the app: both just print to stdout.
+
 Allure 3 is used through its npm package, so **no Java is required**. The
 converter has no dependencies beyond Node itself.
 

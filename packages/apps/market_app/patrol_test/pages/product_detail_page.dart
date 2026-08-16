@@ -1,8 +1,8 @@
 import 'package:catalog_constants/catalog_constants.dart';
-import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:patrol/patrol.dart';
 
+import '../support/locator.dart';
 import 'base_page.dart';
 
 /// F08 · Product detail.
@@ -55,8 +55,11 @@ class ProductDetailPage extends BasePage {
   Future<void> toggleFavorite() => favoriteToggleButton.tap();
 
   /// False when the product is out of stock: the CTA stays disabled.
+  ///
+  /// Goes through the element layer so the rule is the shared one — including
+  /// the loading state, which a bare `onPressed` check misses.
   bool get isAddToCartEnabled =>
-      $.tester.widget<AppButton>(addToCartButton.finder).onPressed != null;
+      element(Loc.widgetKey(ProductDetailKeys.addToCartButton)).isEnabled;
 
   /// True when the viewer owns this publication (seller actions instead of
   /// the purchase CTA).

@@ -39,46 +39,46 @@ class AuthSteps extends BaseSteps {
 
   /// Logs in with the seeded demo account and asserts the dashboard greets
   /// that user.
-  Future<void> loginAsDemoUser() => step('Log in as the demo user', () async {
-    await submitCredentials(
-      email: TestData.demoEmail,
-      password: TestData.demoPassword,
-    );
-    await _dashboard.waitUntilVisible();
-    expect(
-      _dashboard.greetingText,
-      contains(TestData.demoFullName),
-      reason: 'the dashboard must greet the logged-in user by name',
-    );
-  });
+  Future<void> loginAsDemoUser() =>
+      step('Log in as the demo user', () async {
+        await submitCredentials(
+          email: TestData.demoEmail,
+          password: TestData.demoPassword,
+        );
+        await _dashboard.waitUntilVisible();
+        expectThat(
+          'the dashboard greets the logged-in user by name',
+          _dashboard.greetingText,
+          contains(TestData.demoFullName),
+        );
+      });
 
   /// Asserts the login screen rejected the attempt and stayed put.
-  Future<void> expectLoginRejected() => step(
-    'Expect the login to be rejected',
-    () async {
-      // Soft: a rejected login has two halves — it stays put *and* it does
-      // not slip through. With a hard `expect`, the first failure hides the
-      // second, and "still on login" versus "also reached the dashboard"
-      // point at very different bugs.
-      softly
-          .assertThat(_login.isVisible)
-          .describedAs('a failed login must keep the user on the login screen')
-          .isTrue();
-      softly
-          .assertThat(_dashboard.isVisible)
-          .describedAs('a failed login must not reach the dashboard')
-          .isFalse();
-    },
-  );
+  Future<void> expectLoginRejected() =>
+      step('Expect the login to be rejected', () async {
+        // Two halves that fail for different reasons: "still on
+        // login" and "also reached the dashboard" point at very
+        // different bugs, so both are collected.
+        expectThat(
+          'a failed login keeps the user on the login screen',
+          _login.isVisible,
+          isTrue,
+        );
+        expectThat(
+          'a failed login does not reach the dashboard',
+          _dashboard.isVisible,
+          isFalse,
+        );
+      });
 
   /// Asserts the visible error message — the app never reveals whether the
   /// email exists, so both wrong-email and wrong-password show this one.
   Future<void> expectGenericCredentialsError() =>
       step('Expect the generic credentials error', () async {
-        expect(
+        expectThat(
+          'invalid credentials show the generic inline error',
           _login.hasErrorText('Correo o contraseña incorrectos'),
           isTrue,
-          reason: 'invalid credentials must show the generic inline error',
         );
       });
 
@@ -105,10 +105,10 @@ class AuthSteps extends BaseSteps {
     await _login.waitUntilVisible();
     await _login.enterEmail(email);
     await _login.enterPassword(password);
-    expect(
+    expectThat(
+      'live validation blocks submission for "$email"',
       _login.isSubmitEnabled,
       isFalse,
-      reason: 'live validation must block submission for "$email"',
     );
   });
 }
