@@ -78,6 +78,14 @@ jobs:
         if: always()
         run: melos run allureAndroid
 
+      # Same guard as the web job: a green run whose assertions never reached
+      # the report verifies nothing, and says so nowhere. On mobile the
+      # markers travel through logcat instead of the browser console, so this
+      # is the check that the device-log path carries them too.
+      - name: Summarize the assertions
+        if: always()
+        run: node tool/allure/summarize_assertions.mjs --platform android >> "$GITHUB_STEP_SUMMARY"
+
       # The device log is the only place the step and screenshot markers exist
       # on mobile, so it is worth keeping when a run goes wrong.
       - name: Upload the device log on failure

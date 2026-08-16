@@ -531,6 +531,25 @@ opening the test. Neither touches the app: both just print to stdout.
 Allure 3 is used through its npm package, so **no Java is required**. The
 converter has no dependencies beyond Node itself.
 
+### Counting what the report actually holds
+
+A green suite and a suite that verified something are not the same claim, and
+the difference is invisible from the outside. The assertions travel from the
+browser console — or from logcat, on a device — through the per-test capture
+and into the converter, and a break anywhere along that chain is silent: the
+tests still pass, the report just holds nothing behind them.
+
+So both CI jobs run `tool/allure/summarize_assertions.mjs` after building the
+report and write the count into the job summary, where it is readable from the
+pull request without downloading an artifact:
+
+| Escenario | Aserciones | Pasadas | Fallidas |
+|---|--:|--:|--:|
+| buys a product from the catalog… | 16 | 16 | 0 |
+
+Zero assertions is reported as a warning rather than an empty table, because
+that is the case worth noticing.
+
 Two traps worth knowing: Allure 3's CLI has no `--clean`, and generating into
 a directory that already holds a report **nests the new one under `awesome/`**
 instead of replacing it — so the scripts delete the output first, otherwise you
