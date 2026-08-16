@@ -55,6 +55,22 @@ const STATUS = {
   skipped: "skipped",
 };
 
+/**
+ * `PATROL_STEP` outcome -> Allure status.
+ *
+ * `broken` is the one worth naming. Allure separates a test that *failed* —
+ * a valid test whose expectation went unmet, so the product misbehaved — from
+ * one that is *broken*, which could not check the product at all. The suite
+ * decides which is which in `BaseSteps`, where the error type is still known
+ * (a `TestFailure` versus a locator that matched nothing), and sends the
+ * verdict here rather than leaving it to be guessed from a message.
+ */
+const STEP_STATUS = {
+  passed: "passed",
+  failed: "failed",
+  broken: "broken",
+};
+
 /** `PATROL_LOG` test status -> Allure status. */
 const TEST_STATUS = {
   success: "passed",
@@ -163,7 +179,7 @@ function stepsFrom(stdout, outputDir, startTime) {
         const step = businessStack.pop();
         if (step) {
           step.stop = clock;
-          step.status = payload === "failed" ? "failed" : "passed";
+          step.status = STEP_STATUS[payload] ?? "passed";
           lastClosedBusiness = step;
         }
       }
@@ -241,6 +257,13 @@ function stepsFrom(stdout, outputDir, startTime) {
   for (const step of interactionStack) step.status = "broken";
   for (const step of businessStack) step.status = "broken";
   return { steps: root, orphanShots, meta, params };
+}
+
+/** Whether any step in the tree, at any depth, ended with [status]. */
+function hasStep(steps, status) {
+  return (steps ?? []).some(
+    step => step.status === status || hasStep(step.steps, status),
+  );
 }
 
 /** Reads the one-line JSON payload a marker carries, or null if malformed. */
@@ -450,6 +473,16 @@ function convert({ input, output, format, platform }) {
           // hold its own steps rather than report a child outliving its parent.
           const bounds = stepBounds(steps);
 
+          // Playwright reports one "failed" for both a wrong answer and a
+          // broken question — it has no reason to tell them apart. The step
+          // tree does: the suite marked each step as it closed. Promote that
+          // verdict, so a run whose only casualty was a stale locator reads
+          // as *broken* rather than as a product defect.
+          const status =
+            run.status === "failed" && !hasStep(steps, "failed") && hasStep(steps, "broken")
+              ? "broken"
+              : run.status;
+
           const testResult = {
             uuid: randomUUID(),
             // Scoped by platform so a web and a mobile run of the same test
@@ -457,7 +490,7 @@ function convert({ input, output, format, platform }) {
             historyId: createHash("md5").update(`${platform}#${fullName}`).digest("hex"),
             name,
             fullName,
-            status: run.status,
+            status,
             statusDetails: run.statusDetails,
             stage: "finished",
             start: Math.min(run.start, bounds.start),

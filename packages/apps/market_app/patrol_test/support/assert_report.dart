@@ -54,3 +54,23 @@ String describeExpectation(Object? matcher) {
 /// Renders a value the way a failure message would.
 String describeValue(Object? value) =>
     (StringDescription()..addDescriptionOf(value)).toString();
+
+/// Whether an error that ended a step is the product's fault or the test's.
+///
+/// The same line AssertD draws internally, carried out to the report:
+///
+///  * a [TestFailure] means an expectation the test *made* went unmet — the
+///    test ran correctly and the product did not behave. `failed`.
+///  * anything else means the test could not do its job: a locator that
+///    matched nothing, a wait that timed out, a value that could not be read.
+///    The product may be fine; nobody checked. `broken`.
+///
+/// It is the distinction WebDriver suites live by — an assertion failure
+/// versus a `NoSuchElementException` — and the one Allure reports as *failed*
+/// versus *broken*, so a reader can tell "the app is wrong" from "the suite
+/// needs fixing" without opening a stack trace.
+///
+/// Decided on the error object, where the type is still known, rather than by
+/// pattern-matching a message downstream: a message is not a contract.
+String stepOutcomeOf(Object error) =>
+    error is TestFailure ? 'failed' : 'broken';

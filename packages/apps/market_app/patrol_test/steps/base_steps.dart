@@ -1,7 +1,9 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:patrol/patrol.dart';
 
 import '../support/assert_d.dart';
+import '../support/assert_report.dart';
 import '../support/consequence.dart';
 import '../support/screenshot.dart';
 
@@ -37,6 +39,9 @@ abstract class BaseSteps {
   /// state the step produced. A failing step still emits its `end` marker
   /// (and its screenshot) before the error propagates, so the report shows
   /// what the screen looked like when it broke.
+  ///
+  /// A step that ends badly is reported as **failed** or **broken**, never
+  /// just "red" — see [stepOutcomeOf].
   Future<T> step<T>(String name, Future<T> Function() body) async {
     final int id = _sequence++;
     debugPrintSynchronously('$_marker|begin|$id|$name');
@@ -46,14 +51,15 @@ abstract class BaseSteps {
       // failure that never surfaced would leave a green step in the report
       // covering a broken expectation — the classic way soft assertions go
       // wrong. The throw lands in the catch below, so the failure still gets
-      // its screenshot and its `failed` marker.
+      // its screenshot and its outcome marker.
       softly.assertAll();
       await $.takeScreenshot(name);
       debugPrintSynchronously('$_marker|end|$id|passed');
       return result;
-    } on Object {
-      await $.takeScreenshot('$name (failed)');
-      debugPrintSynchronously('$_marker|end|$id|failed');
+    } on Object catch (error) {
+      final String outcome = stepOutcomeOf(error);
+      await $.takeScreenshot('$name ($outcome)');
+      debugPrintSynchronously('$_marker|end|$id|$outcome');
       rethrow;
     }
   }
