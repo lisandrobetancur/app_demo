@@ -547,8 +547,17 @@ pull request without downloading an artifact:
 |---|--:|--:|--:|
 | buys a product from the catalog… | 16 | 16 | 0 |
 
-Zero assertions is reported as a warning rather than an empty table, because
-that is the case worth noticing.
+The step **fails** when the report holds no assertions at all. A notice in a
+summary nobody opens would not protect against the very thing this exists to
+catch — a suite that stayed green while it stopped verifying anything. What it
+does *not* do is add a second red mark to a run that produced no results at
+all: a cancelled run, or a converter that already failed, is someone else's
+red, and the step says so and leaves.
+
+The pipe into `$GITHUB_STEP_SUMMARY` runs under `shell: bash` on purpose. That
+is what sets `pipefail`; with the default shell, `tee` would return its own
+success and swallow the script's exit code, turning the check quietly back
+into a notice.
 
 Two traps worth knowing: Allure 3's CLI has no `--clean`, and generating into
 a directory that already holds a report **nests the new one under `awesome/`**

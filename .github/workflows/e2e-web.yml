@@ -103,7 +103,11 @@ jobs:
       # downloading the artifact.
       - name: Summarize the assertions
         if: always()
-        run: node tool/allure/summarize_assertions.mjs --platform web >> "$GITHUB_STEP_SUMMARY"
+        # `shell: bash` and not the default: it is what sets `pipefail`, and
+        # without it `tee` would return its own success and swallow the
+        # script's exit code — quietly turning the check back into a notice.
+        shell: bash
+        run: node tool/allure/summarize_assertions.mjs --platform web | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Publish the JUnit results as a check
         if: always()
