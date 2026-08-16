@@ -46,28 +46,32 @@ class AuthSteps extends BaseSteps {
           password: TestData.demoPassword,
         );
         await _dashboard.waitUntilVisible();
-        expectThat(
-          'the dashboard greets the logged-in user by name',
-          _dashboard.greetingText,
-          contains(TestData.demoFullName),
+        should(
+          seeThat(
+            'the dashboard greets the logged-in user by name',
+            () => _dashboard.greetingText,
+            contains(TestData.demoFullName),
+          ),
         );
       });
 
   /// Asserts the login screen rejected the attempt and stayed put.
   Future<void> expectLoginRejected() =>
       step('Expect the login to be rejected', () async {
-        // Two halves that fail for different reasons: "still on
-        // login" and "also reached the dashboard" point at very
-        // different bugs, so both are collected.
-        expectThat(
-          'a failed login keeps the user on the login screen',
-          _login.isVisible,
-          isTrue,
-        );
-        expectThat(
-          'a failed login does not reach the dashboard',
-          _dashboard.isVisible,
-          isFalse,
+        // One claim with two halves that fail for different reasons: "still
+        // on login" and "also reached the dashboard" point at very different
+        // bugs, so the batch checks both.
+        should(
+          seeThat(
+            'a failed login keeps the user on the login screen',
+            () => _login.isVisible,
+            isTrue,
+          ),
+          seeThat(
+            'a failed login does not reach the dashboard',
+            () => _dashboard.isVisible,
+            isFalse,
+          ),
         );
       });
 
@@ -75,10 +79,12 @@ class AuthSteps extends BaseSteps {
   /// email exists, so both wrong-email and wrong-password show this one.
   Future<void> expectGenericCredentialsError() =>
       step('Expect the generic credentials error', () async {
-        expectThat(
-          'invalid credentials show the generic inline error',
-          _login.hasErrorText('Correo o contraseña incorrectos'),
-          isTrue,
+        should(
+          seeThat(
+            'invalid credentials show the generic inline error',
+            () => _login.hasErrorText('Correo o contraseña incorrectos'),
+            isTrue,
+          ),
         );
       });
 
@@ -105,10 +111,12 @@ class AuthSteps extends BaseSteps {
     await _login.waitUntilVisible();
     await _login.enterEmail(email);
     await _login.enterPassword(password);
-    expectThat(
-      'live validation blocks submission for "$email"',
-      _login.isSubmitEnabled,
-      isFalse,
+    should(
+      seeThat(
+        'live validation blocks submission for "$email"',
+        () => _login.isSubmitEnabled,
+        isFalse,
+      ),
     );
   });
 }

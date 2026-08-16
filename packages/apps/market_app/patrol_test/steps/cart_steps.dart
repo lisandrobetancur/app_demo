@@ -39,21 +39,26 @@ class CartSteps extends BaseSteps {
         await _cart.applyCoupon();
         await $.pumpAndSettle();
 
-        expectThat(
-          'the coupon $code is accepted and replaces the input',
-          _cart.removeCouponButton.isDisplayed,
-          isTrue,
-        );
-        expectThat(
-          'the subtotal is untouched by the coupon',
-          _cart.subtotal,
-          Money.closeToAmount(subtotalBefore),
-        );
-        expectThat(
-          'the discount is ${TestData.validCouponDiscountPct}% of the subtotal',
-          _cart.discount.abs(),
-          Money.closeToAmount(
-            subtotalBefore * TestData.validCouponDiscountPct / 100,
+        // Accepting the coupon and applying it correctly are different
+        // claims that fail apart: the applied-coupon row can appear while the
+        // discount stays at zero.
+        should(
+          seeThat(
+            'the coupon $code is accepted and replaces the input',
+            () => _cart.removeCouponButton.isDisplayed,
+            isTrue,
+          ),
+          seeThat(
+            'the subtotal is untouched by the coupon',
+            () => _cart.subtotal,
+            Money.closeToAmount(subtotalBefore),
+          ),
+          seeThat(
+            'the discount is ${TestData.validCouponDiscountPct}% of the subtotal',
+            () => _cart.discount.abs(),
+            Money.closeToAmount(
+              subtotalBefore * TestData.validCouponDiscountPct / 100,
+            ),
           ),
         );
       });
@@ -70,20 +75,22 @@ class CartSteps extends BaseSteps {
     // "An error appeared" and "it is the *right* error" fail for
     // different reasons, so a generic message replacing a specific one
     // would otherwise look like no error at all.
-    expectThat(
-      'the coupon $code is rejected with an inline error',
-      _cart.couponErrorText.isDisplayed,
-      isTrue,
-    );
-    expectThat(
-      'the error for $code is the specific one, not a generic',
-      $(expectedMessage).exists,
-      isTrue,
-    );
-    expectThat(
-      'a rejected coupon discounts nothing',
-      _cart.discount.abs(),
-      Money.closeToAmount(0),
+    should(
+      seeThat(
+        'the coupon $code is rejected with an inline error',
+        () => _cart.couponErrorText.isDisplayed,
+        isTrue,
+      ),
+      seeThat(
+        'the error for $code is the specific one, not a generic',
+        () => $(expectedMessage).exists,
+        isTrue,
+      ),
+      seeThat(
+        'a rejected coupon discounts nothing',
+        () => _cart.discount.abs(),
+        Money.closeToAmount(0),
+      ),
     );
   });
 
@@ -93,10 +100,14 @@ class CartSteps extends BaseSteps {
   /// method, so this also exercises that rule.
   Future<void> checkoutWithCard({required String addressId}) =>
       step('Check out paying by card', () async {
-        expectThat(
-          'checkout is reachable with a valid cart',
-          _cart.isCheckoutEnabled,
-          isTrue,
+        // On its own: a cart that cannot check out makes everything below
+        // meaningless, so this one is a precondition, not part of a claim.
+        should(
+          seeThat(
+            'checkout is reachable with a valid cart',
+            () => _cart.isCheckoutEnabled,
+            isTrue,
+          ),
         );
         await _cart.goToCheckout();
         await _checkout.waitUntilVisible();
@@ -114,10 +125,12 @@ class CartSteps extends BaseSteps {
             expiry: '12/29',
             cvv: '123',
           );
-          expectThat(
-            'a well-formed card unlocks the summary step',
-            _checkout.isNextEnabled,
-            isTrue,
+          should(
+            seeThat(
+              'a well-formed card unlocks the summary step',
+              () => _checkout.isNextEnabled,
+              isTrue,
+            ),
           );
           await _checkout.goNext();
         });
@@ -136,10 +149,12 @@ class CartSteps extends BaseSteps {
   /// presence check passes on an order that cannot be found again.
   Future<void> expectOrderCreated() =>
       step('Expect the order to be created', () async {
-        expectThat(
-          'the success screen shows an order identifier',
-          _checkout.orderNumber,
-          matches(RegExp(r'^[0-9A-F]{8}$')),
+        should(
+          seeThat(
+            'the success screen shows an order identifier',
+            () => _checkout.orderNumber,
+            matches(RegExp(r'^[0-9A-F]{8}$')),
+          ),
         );
       });
 
@@ -196,10 +211,12 @@ class CartSteps extends BaseSteps {
   /// Asserts the cart is showing its empty state.
   Future<void> expectEmptyCart() => step('Expect an empty cart', () async {
     await _cart.waitUntilVisible();
-    expectThat(
-      'the cart shows its empty state',
-      _cart.state('empty').isDisplayed,
-      isTrue,
+    should(
+      seeThat(
+        'the cart shows its empty state',
+        () => _cart.state('empty').isDisplayed,
+        isTrue,
+      ),
     );
   });
 

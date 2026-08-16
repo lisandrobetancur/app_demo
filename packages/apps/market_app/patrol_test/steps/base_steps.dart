@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter_test/flutter_test.dart';
 import 'package:patrol/patrol.dart';
 
 import '../support/assert_d.dart';
@@ -59,26 +58,6 @@ abstract class BaseSteps {
     }
   }
 
-  /// Asserts [actual] against [matcher], softly, and makes the check visible
-  /// in the report.
-  ///
-  /// The two halves matter together. Collecting the failure means the checks
-  /// after this one still run, so a step reports every broken expectation
-  /// rather than stopping at the first. Reporting the check means a reader
-  /// sees which rules the step verified and what each one found — a green
-  /// step that asserted four things no longer looks like one that asserted
-  /// nothing.
-  ///
-  /// [what] names the rule in business terms ("the total adds up to
-  /// subtotal - discount + VAT"), not the mechanics. It becomes both the
-  /// entry in the report and the reason on the failure.
-  ///
-  /// Nothing throws here: [step] raises whatever was collected at its own
-  /// boundary, so the step still fails, still screenshots and still reports
-  /// as failed.
-  void expectThat(String what, Object? actual, Matcher matcher) =>
-      softly.softExpect(actual, matcher, reason: what);
-
   /// Checks one or more expectations together.
   ///
   /// ```dart
@@ -99,10 +78,14 @@ abstract class BaseSteps {
   /// A lone failure is rethrown as itself, not dressed up as an aggregate, so
   /// a single expectation reads exactly like a plain `expect`.
   ///
-  /// The scope is **this call**, deliberately narrower than [expectThat],
-  /// which collects into the step and raises at the step's boundary. Use
-  /// [should] to say "these belong together"; use [expectThat] for a check
-  /// that stands on its own.
+  /// Grouping is therefore the only thing that decides the behaviour, and it
+  /// reads as intent: expectations written in one call are one claim, and a
+  /// claim is checked whole. Split them into separate calls and each becomes
+  /// a precondition for the next.
+  ///
+  /// This is the single way a step asserts. [softly] still exists underneath
+  /// — [step] raises whatever it holds at the step boundary — but a step
+  /// should not reach for it directly.
   void should(
     Consequence first, [
     Consequence? second,

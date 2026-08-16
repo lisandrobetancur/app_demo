@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import '../pages/pages.dart';
+import '../support/support.dart';
 import 'base_steps.dart';
 
 /// Business steps around browsing and opening products.
@@ -40,22 +41,24 @@ class CatalogSteps extends BaseSteps {
     // Asserted through the finder rather than a bool, so a failure names the
     // widget it looked for. `isPresent` and not `isVisible` on purpose: a
     // product can legitimately be in the results and still need scrolling.
-    softly
-        .assertThatWidget(_catalog.productItem(expectedProductId))
-        .describedAs(
-          'searching "$term" must keep $expectedProductId in the results',
-        )
-        .isPresent();
+    should(
+      seeThatIsPresent(
+        'searching "$term" keeps $expectedProductId in the results',
+        _catalog.productItem(expectedProductId),
+      ),
+    );
   });
 
   /// Adds the product currently on screen to the cart.
   Future<void> addCurrentProductToCart({int quantity = 1}) => step(
     'Add the product to the cart',
     () async {
-      expectThat(
-        'the product is purchasable before adding it to the cart',
-        _detail.isAddToCartEnabled,
-        isTrue,
+      should(
+        seeThat(
+          'the product is purchasable before adding it to the cart',
+          () => _detail.isAddToCartEnabled,
+          isTrue,
+        ),
       );
       for (int i = 1; i < quantity; i++) {
         await _detail.increaseQuantity();
@@ -80,10 +83,12 @@ class CatalogSteps extends BaseSteps {
   Future<void> expectOwnedByViewer() =>
       step('Expect seller actions on an own publication', () async {
         await _detail.waitUntilVisible();
-        expectThat(
-          'an own publication offers edit instead of add-to-cart',
-          _detail.isOwnedByViewer,
-          isTrue,
+        should(
+          seeThat(
+            'an own publication offers edit instead of add-to-cart',
+            () => _detail.isOwnedByViewer,
+            isTrue,
+          ),
         );
       });
 
@@ -91,10 +96,12 @@ class CatalogSteps extends BaseSteps {
   Future<void> expectOutOfStock() =>
       step('Expect the purchase CTA disabled', () async {
         await _detail.waitUntilVisible();
-        expectThat(
-          'a product without stock disables the purchase CTA',
-          _detail.isAddToCartEnabled,
-          isFalse,
+        should(
+          seeThat(
+            'a product without stock disables the purchase CTA',
+            () => _detail.isAddToCartEnabled,
+            isFalse,
+          ),
         );
       });
 }
