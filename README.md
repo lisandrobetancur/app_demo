@@ -522,6 +522,31 @@ verified four rules or none. Every check becomes its own entry under its step,
 showing what was expected and what was found — and when one fails, the checks
 that passed alongside it still read as passed.
 
+### Failed or broken, not just red
+
+Two things end a step badly and they mean opposite things. An expectation the
+test *made* went unmet — the test ran correctly and the product did not
+behave. Or the test could not do its job at all: a locator matched nothing, a
+wait timed out, a value could not be read; the product may be fine, nobody
+checked.
+
+WebDriver suites live by this distinction — an assertion failure versus a
+`NoSuchElementException` — and Allure reports it as **failed** versus
+**broken**. The suite decides it in `stepOutcomeOf`, on the error object,
+where the type is still known: a `TestFailure` is `failed`, anything else is
+`broken`. Deciding it downstream would mean pattern-matching a message, and a
+message is not a contract.
+
+`should` inherits this for free, and the result reads as intent: an assertion
+the test made explicitly is the product's problem, while the same missing
+widget tapped without being asserted is the suite's. `seeThatIsPresent` on an
+absent widget is *failed* — the test asked, the answer was no. A bare `.tap()`
+on that same widget is *broken* — nobody asked, the test assumed.
+
+The converter carries the verdict up: Playwright reports one `failed` for both
+cases, so a test whose only casualty was a stale locator is promoted to
+*broken* rather than being read as a product defect.
+
 `scenario()` supplies the business taxonomy: `epic`, `feature` and `story`
 drive Allure's **Behaviors** view, which groups by functionality instead of by
 file, and `severity` drives its filter. `testParam()` records the data a case
