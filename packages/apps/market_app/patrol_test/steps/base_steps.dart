@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:patrol/patrol.dart';
 
 import '../support/assert_d.dart';
+import '../support/consequence.dart';
 import '../support/screenshot.dart';
 
 /// Marker the Allure converter reads to rebuild the business steps.
@@ -77,4 +78,71 @@ abstract class BaseSteps {
   /// as failed.
   void expectThat(String what, Object? actual, Matcher matcher) =>
       softly.softExpect(actual, matcher, reason: what);
+
+  /// Checks one or more expectations together.
+  ///
+  /// ```dart
+  /// should(
+  ///   seeThat('la edad', () => ageField.text, equals('40')),
+  ///   seeThat('el nombre', () => nameField.text, equals('Juan')),
+  /// );
+  /// ```
+  ///
+  /// **Several expectations behave softly, one behaves hard — and that falls
+  /// out of a single rule** rather than two code paths: everything passed in
+  /// is evaluated, failures are gathered, and whatever was gathered is raised
+  /// when the call ends. With one expectation there is nothing after it to
+  /// run, so raising at the end of the call is the same instant a hard
+  /// assertion would have raised. With several, the second is checked even
+  /// when the first fails, and the report shows both.
+  ///
+  /// A lone failure is rethrown as itself, not dressed up as an aggregate, so
+  /// a single expectation reads exactly like a plain `expect`.
+  ///
+  /// The scope is **this call**, deliberately narrower than [expectThat],
+  /// which collects into the step and raises at the step's boundary. Use
+  /// [should] to say "these belong together"; use [expectThat] for a check
+  /// that stands on its own.
+  void should(
+    Consequence first, [
+    Consequence? second,
+    Consequence? third,
+    Consequence? fourth,
+    Consequence? fifth,
+    Consequence? sixth,
+    Consequence? seventh,
+    Consequence? eighth,
+  ]) => shouldAll(<Consequence>[
+    first,
+    if (second != null) second,
+    if (third != null) third,
+    if (fourth != null) fourth,
+    if (fifth != null) fifth,
+    if (sixth != null) sixth,
+    if (seventh != null) seventh,
+    if (eighth != null) eighth,
+  ]);
+
+  /// [should] over a list built at run time — one expectation per row, per
+  /// field, per seeded record.
+  void shouldAll(List<Consequence> consequences) {
+    // Its own collector, not the step's: these expectations are a batch that
+    // resolves here, which is what makes a single one behave hard.
+    final AssertD batch = AssertD();
+    for (final Consequence consequence in consequences) {
+      consequence.evaluateWith(batch);
+    }
+
+    final List<SoftFailure> failures = batch.failures;
+    if (failures.isEmpty) {
+      return;
+    }
+    if (failures.length == 1) {
+      // Rethrown bare: "Multiple Failures (1 failure)" around a lone
+      // expectation would only obscure it. The batch is local, so nothing
+      // outlives this call.
+      throw failures.single.failure;
+    }
+    batch.assertAll();
+  }
 }

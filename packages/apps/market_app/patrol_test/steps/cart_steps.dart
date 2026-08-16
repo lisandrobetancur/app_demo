@@ -165,25 +165,30 @@ class CartSteps extends BaseSteps {
       final double discount = _cart.discount.abs();
       final double taxable = subtotal - discount;
 
-      expectThat(
-        'the subtotal is a real amount, not an empty cart',
-        subtotal,
-        greaterThan(0),
-      );
-      expectThat(
-        'the discount never exceeds the subtotal',
-        discount,
-        lessThanOrEqualTo(subtotal),
-      );
-      expectThat(
-        'VAT is ${(TestData.taxRate * 100).round()}% of the taxable base',
-        _cart.tax,
-        Money.closeToAmount(taxable * TestData.taxRate),
-      );
-      expectThat(
-        'the total is the taxable base plus VAT',
-        _cart.total,
-        Money.closeToAmount(taxable + taxable * TestData.taxRate),
+      // One batch, because these four are one claim: the totals block is
+      // internally consistent. Checked together, a broken line does not hide
+      // the others, and the report shows which of the four gave way.
+      should(
+        seeThat(
+          'the subtotal is a real amount, not an empty cart',
+          () => subtotal,
+          greaterThan(0),
+        ),
+        seeThat(
+          'the discount never exceeds the subtotal',
+          () => discount,
+          lessThanOrEqualTo(subtotal),
+        ),
+        seeThat(
+          'VAT is ${(TestData.taxRate * 100).round()}% of the taxable base',
+          () => _cart.tax,
+          Money.closeToAmount(taxable * TestData.taxRate),
+        ),
+        seeThat(
+          'the total is the taxable base plus VAT',
+          () => _cart.total,
+          Money.closeToAmount(taxable + taxable * TestData.taxRate),
+        ),
       );
     },
   );
