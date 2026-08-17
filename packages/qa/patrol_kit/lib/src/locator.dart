@@ -37,8 +37,7 @@ class Loc {
 
   /// By key, written as the raw string. The everyday case once the widget has
   /// one.
-  factory Loc.key(String value) =>
-      Loc("key '$value'", find.byKey(Key(value)));
+  factory Loc.key(String value) => Loc("key '$value'", find.byKey(Key(value)));
 
   /// By an already-declared [Key] — the constants packages expose theirs this
   /// way, so a renamed key still breaks at compile time.

@@ -1,7 +1,6 @@
 import 'package:app_cross_constants/app_cross_constants.dart';
 import 'package:patrol/patrol.dart';
-
-import 'base_page.dart';
+import 'package:patrol_kit/patrol_kit.dart';
 
 /// F02 · Onboarding.
 class OnboardingPage extends BasePage {

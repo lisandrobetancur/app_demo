@@ -1,9 +1,6 @@
 import 'package:authentication_constants/authentication_constants.dart';
 import 'package:patrol/patrol.dart';
-
-import '../support/element.dart';
-import '../support/locator.dart';
-import 'base_page.dart';
+import 'package:patrol_kit/patrol_kit.dart';
 
 /// F04 · Login.
 ///

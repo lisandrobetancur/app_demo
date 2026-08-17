@@ -72,28 +72,24 @@ jobs:
       - name: Analyze
         run: melos run lint
 
-      - name: Run the suite
+      # Antes de gastar dos minutos de navegador: si el framework mismo está
+      # roto, la suite E2E mentiría en vez de fallar.
+      - name: Test the kit
+        run: melos run testKit
+
+      # Y los del cableado: que los JSON de datos estén declarados como
+      # assets, que el índice apunte a archivos que existen y que los campos
+      # se llamen como la fachada cree. Roto esto, la suite E2E falla por lo
+      # que parece un defecto del producto.
+      - name: Test the data files
+        run: melos run testApp
+
+      # Limpia lo de la corrida anterior, corre, y genera el reporte — las
+      # tres cosas. El reporte se construye también cuando la suite falla, que
+      # es cuando importa, y el paso sigue saliendo en rojo porque el script
+      # propaga el código de salida de la suite y no el del reporte.
+      - name: Run the suite and build the report
         run: melos run e2eWeb
-
-      # The CLI hides Playwright's stderr, so a failure that is not a failing
-      # test — a browser that will not launch, a config that will not load —
-      # arrives as a bare exit code. This re-runs it verbose to get the reason.
-      - name: Diagnose a suite failure
-        if: failure()
-        run: |
-          cd packages/apps/market_app
-          patrol test --device chrome --web-headless=true --verbose > /tmp/patrol.log 2>&1 || true
-          echo "===== first lines the browser wrote (the message, not the stack) ====="
-          grep -n "Playwright stderr" /tmp/patrol.log | head -40 | cut -c1-300
-          echo "===== anything that reads like a Dart failure ====="
-          grep -nE "Unsupported|Unhandled|Unexpected|Failed assertion|MissingPlugin|NoSuchMethod|TypeError|Uncaught|Exception|Error:" /tmp/patrol.log \
-            | grep -v "dart_sdk.js" | head -25 | cut -c1-300
-
-      # Runs even on failure: a red run is exactly when the report matters,
-      # and `melos run e2eWeb` exits non-zero when a test fails.
-      - name: Build the report
-        if: always()
-        run: melos run allureWeb
 
       # A green suite is not the same as a suite that verified something. The
       # assertions travel from the browser console through Playwright's
@@ -113,7 +109,7 @@ jobs:
         if: always()
         uses: mikepenz/action-junit-report@v6
         with:
-          report_paths: packages/apps/market_app/playwright-report/results.xml
+          report_paths: build/e2e/web/playwright/results.xml
           check_name: JUnit — web
           fail_on_failure: false
 
@@ -122,5 +118,27 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: report-web
-          path: allure/web/report
+          path: build/e2e/web/allure/report
           retention-days: 14
+
+      # Al final del job, y no junto al fallo: este paso vuelve a correr la
+      # suite, lo que sobrescribe build/e2e/web/playwright/ — los resultados de
+      # los que se construyen el reporte y el check de JUnit. Puesto antes, una
+      # corrida roja terminaba publicando un reporte de la RE-ejecución en vez
+      # de la original. Aquí ya está todo publicado y puede pisar lo que
+      # quiera.
+      #
+      # El CLI esconde el stderr de Playwright, así que un fallo que no es un
+      # test caído — un navegador que no arranca, una config que no carga —
+      # llega como un código de salida pelado. Esto lo repite en verbose para
+      # sacarle el motivo.
+      - name: Diagnose a suite failure
+        if: failure()
+        run: |
+          cd packages/apps/market_app
+          patrol test --device chrome --web-headless=true --verbose > /tmp/patrol.log 2>&1 || true
+          echo "===== first lines the browser wrote (the message, not the stack) ====="
+          grep -n "Playwright stderr" /tmp/patrol.log | head -40 | cut -c1-300
+          echo "===== anything that reads like a Dart failure ====="
+          grep -nE "Unsupported|Unhandled|Unexpected|Failed assertion|MissingPlugin|NoSuchMethod|TypeError|Uncaught|Exception|Error:" /tmp/patrol.log \
+            | grep -v "dart_sdk.js" | head -25 | cut -c1-300

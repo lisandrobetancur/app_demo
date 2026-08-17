@@ -1,0 +1,16 @@
+{
+  "demo": {
+    "email": "ana@market.demo",
+    "password": "Demo1234",
+    "fullName": "Ana Marín",
+    "phone": "+57 300 111 2233",
+    "publications": 5
+  },
+  "second": {
+    "email": "bruno@market.demo",
+    "password": "Demo1234",
+    "fullName": "Bruno Vega",
+    "phone": "+57 300 444 5566",
+    "publications": 10
+  }
+}

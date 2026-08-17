@@ -38,10 +38,9 @@ class Money {
       throw FormatException('No number in the rendered price "$rendered"');
     }
     // `.` groups, `,` marks decimals in the pinned locale.
-    final String normalized = digitsOnly.replaceAll('.', '').replaceAll(
-      ',',
-      '.',
-    );
+    final String normalized = digitsOnly
+        .replaceAll('.', '')
+        .replaceAll(',', '.');
     final double? value = double.tryParse(normalized);
     if (value == null) {
       throw FormatException('Cannot read a price from "$rendered"');
@@ -50,6 +49,5 @@ class Money {
   }
 
   /// Matcher for a currency amount, with the rounding tolerance applied.
-  static Matcher closeToAmount(double expected) =>
-      closeTo(expected, tolerance);
+  static Matcher closeToAmount(double expected) => closeTo(expected, tolerance);
 }

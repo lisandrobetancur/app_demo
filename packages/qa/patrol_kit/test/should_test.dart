@@ -1,9 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-
-import '../patrol_test/support/assert_d.dart';
-import '../patrol_test/support/consequence.dart';
+import 'package:patrol_kit/patrol_kit.dart';
 
 /// Pins the rule behind `should`: several expectations behave softly, one
 /// behaves hard, and both fall out of the same evaluation.

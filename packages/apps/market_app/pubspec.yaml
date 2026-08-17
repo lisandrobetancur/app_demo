@@ -52,9 +52,25 @@ dev_dependencies:
   # ships its own `PatrolIntegrationTester` on top of it. AssertD takes a
   # `PatrolTester` so it works with either, which needs the direct dependency.
   patrol_finders: 3.5.0
+  patrol_kit: 0.1.0
 
 flutter:
   uses-material-design: true
+  assets:
+    # Datos de prueba, leídos por `TestDataStore` a través de `rootBundle`.
+    #
+    # Van como assets y no como archivos en disco porque un test de Patrol se
+    # compila DENTRO del binario y corre donde corre la app: en una pestaña
+    # del navegador en web, en el dispositivo en Android e iOS. No hay
+    # `dart:io` en web ni un checkout del repositorio en un teléfono, así que
+    # leer del disco funcionaría en uno de los tres.
+    #
+    # El costo: un asset declarado aquí viaja en TODA build de la app, release
+    # incluida. En este repo da igual. En una app que se publica significa
+    # llevar fixtures — y credenciales de prueba — en el binario de
+    # producción, y ahí la salida es cambiar el `TestDataSource` por uno que
+    # no toque el bundle. Está documentado en `patrol_kit/lib/src/test_data.dart`.
+    - patrol_test/data/
 
 # End-to-end tests. `app_name` and the platform ids are required by the CLI
 # even for web runs, where Patrol drives Chromium through Playwright.

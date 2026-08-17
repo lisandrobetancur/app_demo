@@ -1,0 +1,22 @@
+{
+  "own": {
+    "id": "product_car_001",
+    "name": "Sedán compacto 2022",
+    "owner": "demo",
+    "comment": "De Ana: el detalle muestra las acciones de vendedor, no el CTA de compra."
+  },
+  "buyable": {
+    "id": "product_car_002",
+    "name": "SUV familiar 2024",
+    "owner": "second",
+    "price": 62500000,
+    "stock": 2,
+    "comment": "De Bruno con stock: el detalle muestra el CTA de compra."
+  },
+  "outOfStock": {
+    "id": "product_scooter_003",
+    "owner": "second",
+    "stock": 0,
+    "comment": "De Bruno sin stock: el CTA debe quedar deshabilitado."
+  }
+}

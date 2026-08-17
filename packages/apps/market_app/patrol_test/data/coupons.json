@@ -1,0 +1,6 @@
+{
+  "valid": { "code": "DEMO10", "discountPct": 10, "status": "active" },
+  "expired": { "code": "PAST20", "status": "expired" },
+  "inactive": { "code": "FROZEN15", "status": "inactive" },
+  "unknown": { "code": "NOPE404", "status": "missing" }
+}

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import '../patrol_test/support/assert_report.dart';
+import 'package:patrol_kit/patrol_kit.dart';
 
 /// Pins which errors are the product's fault and which are the suite's.
 ///

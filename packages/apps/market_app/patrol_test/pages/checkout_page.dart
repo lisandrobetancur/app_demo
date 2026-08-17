@@ -1,8 +1,6 @@
 import 'package:cart_constants/cart_constants.dart';
 import 'package:patrol/patrol.dart';
-
-import '../support/locator.dart';
-import 'base_page.dart';
+import 'package:patrol_kit/patrol_kit.dart';
 
 /// F12 · Multi-step checkout and its success screen.
 class CheckoutPage extends BasePage {
@@ -42,9 +40,9 @@ class CheckoutPage extends BasePage {
   /// assert the identifier itself, and does so without pinning the test to
   /// the Spanish copy: the number is last in every locale.
   String get orderNumber {
-    final List<String> parts = valueIn(orderNumberText).trim().split(
-      RegExp(r'\s+'),
-    );
+    final List<String> parts = valueIn(
+      orderNumberText,
+    ).trim().split(RegExp(r'\s+'));
     return parts.isEmpty ? '' : parts.last;
   }
 

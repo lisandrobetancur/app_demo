@@ -1,9 +1,9 @@
-import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:patrol/patrol.dart';
 
 import 'locator.dart';
+import 'widget_probes.dart';
 
 /// One element on screen, with the operations a test performs on it.
 ///
@@ -15,7 +15,7 @@ import 'locator.dart';
 /// no `getCssValue`: Flutter paints on a canvas, there is no DOM to query,
 /// and faking one would return strings to parse instead of the typed values
 /// that are actually available. [widget] is the replacement, and it is the
-/// better deal — `element.widget<AppButton>().onPressed` breaks at compile
+/// better deal — `element.widget<ElevatedButton>().onPressed` breaks at compile
 /// time when the widget changes, where `getAttribute("disabled")` would break
 /// silently at run time, months later.
 ///
@@ -53,8 +53,7 @@ class UiElement {
   ///
   /// Pass [inside] when the element lives in a specific scrollable and the
   /// screen has more than one.
-  Future<void> scrollTo({Loc? inside}) =>
-      finder.scrollTo(view: inside?.finder);
+  Future<void> scrollTo({Loc? inside}) => finder.scrollTo(view: inside?.finder);
 
   // --- Reading -------------------------------------------------------------
 
@@ -80,7 +79,7 @@ class UiElement {
   /// property off the real widget.
   ///
   /// ```dart
-  /// element.widget<AppTextField>().obscureText   // en vez de getAttribute("type")
+  /// element.widget<TextField>().obscureText     // en vez de getAttribute("type")
   /// element.widget<Text>().style?.color          // en vez de getCssValue("color")
   /// ```
   T widget<T extends Widget>() => $.tester.widget<T>(finder.finder);
@@ -93,17 +92,18 @@ class UiElement {
   /// Whether the element accepts interaction.
   ///
   /// "Enabled" lives on a different property for every widget, so it is read
-  /// per type rather than guessed. An unrecognised type **throws** instead of
-  /// defaulting to `true`: a silent `true` would let an assertion pass on a
-  /// premise nobody checked, which is the exact failure this layer exists to
-  /// avoid. Use [isEnabledWhere] to say it explicitly for that type.
+  /// from [WidgetProbes] rather than guessed. An unregistered type **throws**
+  /// instead of defaulting to `true`: a silent `true` would let an assertion
+  /// pass on a premise nobody checked, which is the exact failure this layer
+  /// exists to avoid.
   bool get isEnabled {
     final Widget target = widget<Widget>();
-    final bool? enabled = _enabledOf(target);
+    final bool? enabled = WidgetProbes.readEnabled(target);
     if (enabled == null) {
       throw StateError(
         'No se sabe si ${target.runtimeType} está habilitado ($loc). '
-        'Usa isEnabledWhere<${target.runtimeType}>((w) => …).',
+        'Regístralo con WidgetProbes.enabled<${target.runtimeType}>(…) '
+        'o dilo aquí con isEnabledWhere<${target.runtimeType}>((w) => …).',
       );
     }
     return enabled;
@@ -115,11 +115,12 @@ class UiElement {
   /// reason as [isEnabled].
   bool get isSelected {
     final Widget target = widget<Widget>();
-    final bool? selected = _selectedOf(target);
+    final bool? selected = WidgetProbes.readSelected(target);
     if (selected == null) {
       throw StateError(
         '${target.runtimeType} no expone un estado de selección ($loc). '
-        'Usa isSelectedWhere<${target.runtimeType}>((w) => …).',
+        'Regístralo con WidgetProbes.selected<${target.runtimeType}>(…) '
+        'o dilo aquí con isSelectedWhere<${target.runtimeType}>((w) => …).',
       );
     }
     return selected;
@@ -162,33 +163,3 @@ List<String> textsUnder(WidgetTester tester, Finder finder) => tester
     )
     .map((Text text) => text.data ?? '')
     .toList(growable: false);
-
-/// Enabled-ness, per widget type. `null` means "this layer does not know".
-///
-/// `AppButton` is not just `onPressed != null`: it renders a loading state
-/// that swaps the callback for `null` further down
-/// (`isLoading ? null : onPressed`), so a button mid-request is inert while
-/// still holding its callback. Reading only `onPressed` calls that button
-/// enabled — which is what the page objects did before this layer existed.
-bool? _enabledOf(Widget widget) => switch (widget) {
-  AppButton() => widget.onPressed != null && !widget.isLoading,
-  AppTextField() => widget.enabled,
-  ElevatedButton() => widget.onPressed != null,
-  TextButton() => widget.onPressed != null,
-  OutlinedButton() => widget.onPressed != null,
-  IconButton() => widget.onPressed != null,
-  FilledButton() => widget.onPressed != null,
-  TextField() => widget.enabled ?? true,
-  Checkbox() => widget.onChanged != null,
-  Switch() => widget.onChanged != null,
-  _ => null,
-};
-
-/// Selection state, per widget type. `null` means "this layer does not know".
-bool? _selectedOf(Widget widget) => switch (widget) {
-  Checkbox() => widget.value,
-  Switch() => widget.value,
-  CheckboxListTile() => widget.value,
-  SwitchListTile() => widget.value,
-  _ => null,
-};
