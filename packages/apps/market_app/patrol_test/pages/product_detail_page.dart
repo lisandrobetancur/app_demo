@@ -1,9 +1,8 @@
 import 'package:catalog_constants/catalog_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:patrol/patrol.dart';
+import 'package:patrol_kit/patrol_kit.dart';
 
-import '../support/locator.dart';
-import 'base_page.dart';
 
 /// F08 · Product detail.
 class ProductDetailPage extends BasePage {

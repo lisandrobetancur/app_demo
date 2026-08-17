@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../pages/pages.dart';
 import '../support/support.dart';
-import 'base_steps.dart';
 
 /// Business steps around the cart, coupons and checkout.
 class CartSteps extends BaseSteps {

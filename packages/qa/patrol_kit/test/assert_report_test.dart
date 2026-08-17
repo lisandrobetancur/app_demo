@@ -1,8 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-
-import '../patrol_test/support/assert_d.dart';
+import 'package:patrol_kit/patrol_kit.dart';
 
 /// Tests the seam between soft assertions and the report.
 ///

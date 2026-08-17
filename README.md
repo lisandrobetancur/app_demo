@@ -65,6 +65,7 @@ Flutter SDK package, not a third party) to enable real paths on the web — see
 packages/
 ├── apps/market_app/                 shell: wiring only (router, DI, i18n, bootstrap)
 ├── development/lint/                shared analysis_options
+├── qa/patrol_kit/                   reusable E2E scaffolding — Flutter + Patrol only
 ├── shared/                          pure logic, ZERO widgets
 │   ├── typing/                      base ViewModel, Clock, IdGenerator, ViewStatus
 │   ├── database/                    connection, schema, migrations, seed, base DAO

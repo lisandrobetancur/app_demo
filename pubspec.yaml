@@ -8,6 +8,7 @@ environment:
 workspace:
   - packages/apps/market_app
   - packages/development/lint
+  - packages/qa/patrol_kit
   - packages/features/core/cart/constants
   - packages/features/core/cart/module
   - packages/features/core/cart/typing
@@ -58,6 +59,12 @@ melos:
 
   scripts:
     lint: flutter analyze --no-fatal-infos
+
+    # Los tests del propio framework: headless, sin navegador ni dispositivo.
+    # Cubren lo que se rompería en silencio — el parser de precios, la costura
+    # entre aserciones suaves y reporte, la regla de agrupación de `should` y
+    # la clasificación failed/broken.
+    testKit: melos exec --scope=patrol_kit -- flutter test
     dartFormat: melos exec -c 1 -- dart format . --line-length 80
     dartFix: melos exec -c 1 -- dart fix --apply
     rmlock: melos exec -c 1 -- rm -f pubspec.lock

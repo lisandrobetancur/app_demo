@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-
-import '../patrol_test/support/money.dart';
+import 'package:patrol_kit/patrol_kit.dart';
 
 /// Unit tests for the price parser the E2E assertions depend on.
 ///

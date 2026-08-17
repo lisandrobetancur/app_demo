@@ -1,8 +1,7 @@
 import 'package:cart_constants/cart_constants.dart';
 import 'package:patrol/patrol.dart';
+import 'package:patrol_kit/patrol_kit.dart';
 
-import '../support/locator.dart';
-import 'base_page.dart';
 
 /// F12 · Multi-step checkout and its success screen.
 class CheckoutPage extends BasePage {

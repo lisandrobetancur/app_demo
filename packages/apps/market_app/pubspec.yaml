@@ -52,6 +52,7 @@ dev_dependencies:
   # ships its own `PatrolIntegrationTester` on top of it. AssertD takes a
   # `PatrolTester` so it works with either, which needs the direct dependency.
   patrol_finders: 3.5.0
+  patrol_kit: 0.1.0
 
 flutter:
   uses-material-design: true

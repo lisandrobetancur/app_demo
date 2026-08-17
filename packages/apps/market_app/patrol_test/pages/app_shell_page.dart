@@ -1,7 +1,7 @@
 import 'package:market_app/shell_keys.dart';
 import 'package:patrol/patrol.dart';
+import 'package:patrol_kit/patrol_kit.dart';
 
-import 'base_page.dart';
 
 /// The navigation chrome around the five preserved tabs.
 ///

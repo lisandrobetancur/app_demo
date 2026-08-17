@@ -8,9 +8,10 @@ import 'package:market_app/di/app_overrides.dart';
 import 'package:market_app/i18n/market_translations_loader.dart';
 import 'package:market_app/market_app.dart';
 import 'package:patrol/patrol.dart';
+import 'package:patrol_kit/patrol_kit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'screenshot.dart';
+import 'widget_probes.dart';
 
 /// Boots the real application inside a Patrol test.
 ///
@@ -31,6 +32,9 @@ Future<void> launchMarketApp(
   SeedMode seedMode = SeedMode.demo,
   bool onboardingSeen = true,
 }) async {
+  // What "enabled" means for this app's widgets, before anything reads it.
+  registerMarketWidgetProbes();
+
   // Real preferences, cleared through the public API: on the web they are
   // backed by local storage and survive between runs, so a stale "remember
   // me" session would otherwise skip the login screen.

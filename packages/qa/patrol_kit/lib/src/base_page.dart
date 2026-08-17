@@ -1,7 +1,7 @@
 import 'package:patrol/patrol.dart';
 
-import '../support/element.dart';
-import '../support/locator.dart';
+import 'element.dart';
+import 'locator.dart';
 
 /// Base of every Page Object.
 ///

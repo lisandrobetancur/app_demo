@@ -1,0 +1,25 @@
+name: patrol_kit
+description: "Reusable Patrol E2E scaffolding: declarative locators, an element API, soft assertions and Allure reporting. Carries nothing app-specific."
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.11.5
+
+resolution: workspace
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # `flutter_test` is a real dependency here, not a dev one: the kit is test
+  # infrastructure, so `Matcher`, `Finder` and `TestFailure` are part of its
+  # public API rather than something it only uses while testing itself.
+  flutter_test:
+    sdk: flutter
+  patrol: 4.6.1
+  # `patrol` re-exports patrol_finders but hides `PatrolTester`, and AssertD
+  # takes one by type — hence the direct dependency.
+  patrol_finders: 3.5.0
+
+dev_dependencies:
+  lint: 0.1.0

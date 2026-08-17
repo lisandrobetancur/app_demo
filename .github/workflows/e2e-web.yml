@@ -72,6 +72,11 @@ jobs:
       - name: Analyze
         run: melos run lint
 
+      # Antes de gastar dos minutos de navegador: si el framework mismo está
+      # roto, la suite E2E mentiría en vez de fallar.
+      - name: Test the kit
+        run: melos run testKit
+
       - name: Run the suite
         run: melos run e2eWeb
 

@@ -2,10 +2,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:patrol/patrol.dart';
 
-import '../support/assert_d.dart';
-import '../support/assert_report.dart';
-import '../support/consequence.dart';
-import '../support/screenshot.dart';
+import 'assert_d.dart';
+import 'assert_report.dart';
+import 'consequence.dart';
+import 'screenshot.dart';
 
 /// Marker the Allure converter reads to rebuild the business steps.
 const String _marker = 'PATROL_STEP';

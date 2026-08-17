@@ -1,10 +1,7 @@
 import 'package:cart_constants/cart_constants.dart';
 import 'package:patrol/patrol.dart';
+import 'package:patrol_kit/patrol_kit.dart';
 
-import '../support/element.dart';
-import '../support/locator.dart';
-import '../support/money.dart';
-import 'base_page.dart';
 
 /// F11 · Cart.
 class CartPage extends BasePage {
