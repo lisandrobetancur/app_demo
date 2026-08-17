@@ -57,19 +57,19 @@ void main() {
     test(
       'reading before loading names the cause that actually happens',
       () async {
-        // Y la nombra bien. La primera versión de este mensaje decía "llama a
-        // TestDataStore.load() en el launcher" — y cuando el fallo llegó de
-        // verdad, el launcher SÍ lo llamaba: lo que pasaba es que un
-        // testParam() en la cabecera del test leía los datos antes. El
-        // mensaje mandó a mirar al sitio equivocado, así que ahora nombra el
-        // orden, no la llamada.
+        // And names it correctly. The first version of this message said
+        // "call TestDataStore.load() in the launcher" — and when the failure
+        // actually arrived, the launcher WAS calling it: what happened was a
+        // testParam() in the test header reading the data first. The message
+        // sent the reader to the wrong file, so it now names the order rather
+        // than the call.
         expect(
           () => TestDataStore.dataset('users'),
           throwsA(
             isA<TestDataError>().having(
               (TestDataError e) => e.message,
               'message',
-              allOf(contains('ANTES'), contains('testParam')),
+              allOf(contains('BEFORE'), contains('testParam')),
             ),
           ),
         );
@@ -188,7 +188,7 @@ void main() {
           isA<TestDataError>().having(
             (TestDataError e) => e.message,
             'message',
-            contains('tiene 2'),
+            contains('which has 2'),
           ),
         ),
       );
@@ -253,7 +253,7 @@ void main() {
           isA<TestDataError>().having(
             (TestDataError e) => e.message,
             'message',
-            allOf(contains('users.demo.email'), contains('entero')),
+            allOf(contains('users.demo.email'), contains('an integer')),
           ),
         ),
       );

@@ -97,14 +97,14 @@ that need it — the runner and the report:
 ```dart
 e2eTest(
   'rechaza credenciales inválidas',
-  tags: <String>[Tags.smoke, Tags.negativo],
+  tags: <String>[Tags.smoke, Tags.negative],
   ($) async { … },
 );
 ```
 
 ```sh
-patrol test --device chrome --tags "smoke_test && negativo"
-patrol test --device chrome --exclude-tags "lento"
+patrol test --device chrome --tags "smoke_test && negative"
+patrol test --device chrome --exclude-tags "slow"
 ```
 
 The filter is applied while the test bundle is generated, so an excluded test

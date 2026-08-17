@@ -23,8 +23,8 @@ const String _marker = 'PATROL_TAGS';
 /// Two axes, deliberately kept apart:
 ///
 ///  * **How much of the suite** — [smoke], [regression].
-///  * **What kind of case** — [exito] for the happy path, [negativo] for the
-///    ones that assert a rejection.
+///  * **What kind of case** — [success] for the happy path, [negative] for
+///    the ones that assert a rejection.
 ///
 /// A test usually carries one of each. Nothing forbids other strings; these
 /// are the ones the pipeline knows about.
@@ -39,22 +39,22 @@ class Tags {
   static const String regression = 'regression';
 
   /// Happy path — the case where the product is asked to do its job and does.
-  static const String exito = 'exito';
+  static const String success = 'success';
 
   /// Negative path — the case where the product is asked for something it
   /// must refuse, and the assertion is on the refusal.
-  static const String negativo = 'negativo';
+  static const String negative = 'negative';
 
   /// Slow enough to be worth excluding from a quick loop.
-  static const String lento = 'lento';
+  static const String slow = 'slow';
 
   /// Every tag the kit names.
   static const List<String> all = <String>[
     smoke,
     regression,
-    exito,
-    negativo,
-    lento,
+    success,
+    negative,
+    slow,
   ];
 }
 
@@ -72,8 +72,8 @@ class Tags {
 ///
 /// ```dart
 /// e2eTest(
-///   'rechaza credenciales inválidas',
-///   tags: <String>[Tags.smoke, Tags.negativo],
+///   'rejects invalid credentials',
+///   tags: <String>[Tags.smoke, Tags.negative],
 ///   ($) async { … },
 /// );
 /// ```
@@ -81,8 +81,8 @@ class Tags {
 /// Selecting on the command line uses boolean expressions, not just names:
 ///
 /// ```sh
-/// patrol test --device chrome --tags "smoke_test && negativo"
-/// patrol test --device chrome --exclude-tags "lento"
+/// patrol test --device chrome --tags "smoke_test && negative"
+/// patrol test --device chrome --exclude-tags "slow"
 /// ```
 ///
 /// Tags are matched against what the test declares, so a filter that names a

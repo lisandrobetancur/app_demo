@@ -21,7 +21,7 @@ import 'assert_d.dart';
 class Consequence {
   const Consequence(this.what, this._check);
 
-  /// The rule in business terms — "el total suma la base más el IVA". Becomes
+  /// The rule in business terms — "the total is the base plus tax". Becomes
   /// both the entry in the report and the reason on the failure.
   final String what;
 
@@ -39,7 +39,7 @@ class Consequence {
 /// States an expectation about a value.
 ///
 /// ```dart
-/// seeThat('el nombre del comprador', () => nameField.text, equals('Juan'))
+/// seeThat('the buyer name', () => nameField.text, equals('Jane'))
 /// ```
 Consequence seeThat(String what, Object? Function() actual, Matcher matcher) =>
     Consequence(

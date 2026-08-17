@@ -14,7 +14,7 @@ import 'package:patrol/patrol.dart';
 /// pass is written with whatever is reachable:
 ///
 /// ```dart
-/// static final Loc submit = Loc.text('Iniciar sesión');
+/// static final Loc submit = Loc.text('Sign in');
 /// ```
 ///
 /// and once a `Key` is added to that widget, one line changes:
@@ -83,7 +83,7 @@ class Loc {
 
   Loc get first => Loc('$description (primero)', finder.first);
 
-  Loc get last => Loc('$description (último)', finder.last);
+  Loc get last => Loc('$description (last)', finder.last);
 
   /// Scoped to a container — the robust way to disambiguate a repeated
   /// widget, and the one that survives a redesign.

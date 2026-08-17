@@ -75,7 +75,7 @@ abstract class BaseSteps {
   /// ```dart
   /// should(
   ///   seeThat('la edad', () => ageField.text, equals('40')),
-  ///   seeThat('el nombre', () => nameField.text, equals('Juan')),
+  ///   seeThat('the name', () => nameField.text, equals('Jane')),
   /// );
   /// ```
   ///

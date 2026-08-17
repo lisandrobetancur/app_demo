@@ -11,30 +11,30 @@ import 'support/support.dart';
 void main() {
   e2eTest(
     'buys a product from the catalog and confirms the order',
-    tags: <String>[Tags.smoke, Tags.exito],
+    tags: <String>[Tags.smoke, Tags.success],
     (PatrolIntegrationTester $) async {
       scenario(
-        epic: 'Compra',
-        feature: 'Carrito y checkout',
-        story: 'Comprar un producto del catálogo hasta confirmar la orden',
+        epic: 'Purchase',
+        feature: 'Cart and checkout',
+        story: 'Buy a product from the catalog through to a confirmed order',
         severity: Severity.blocker,
         description:
-            'Camino crítico de la aplicación. Verifica además que los totales '
-            'cuadren antes y después del cupón: subtotal - descuento, IVA sobre '
-            'la base gravable, y total = base + IVA.',
+            'The critical path of the application. It also checks that the '
+            'totals add up before and after the coupon: subtotal - discount, '
+            'tax on the taxable base, and total = base + tax.',
       );
       await launchMarketApp($);
       final Steps steps = Steps($);
 
-      // Los `testParam` van DESPUÉS del arranque, no antes: leen de
-      // `TestData`, y los datos viven en el bundle de assets, que no existe
-      // hasta que la app arrancó. Además así registran lo que la prueba usó
-      // de verdad, no lo que pensaba usar.
-      testParam('Usuario', TestData.demoEmail);
-      testParam('Producto', TestData.buyableProductName);
-      testParam('Cupón', TestData.validCoupon);
-      testParam('Dirección', 'addr_demo_home');
-      testParam('Medio de pago', 'Tarjeta');
+      // `testParam` goes AFTER the launch, not before: it reads from
+      // `TestData`, and the data lives in the asset bundle, which does not
+      // exist until the app has launched. It also records what the test
+      // actually used, rather than what it meant to use.
+      testParam('User', TestData.demoEmail);
+      testParam('Product', TestData.buyableProductName);
+      testParam('Coupon', TestData.validCoupon);
+      testParam('Address', 'addr_demo_home');
+      testParam('Payment method', 'Card');
 
       await steps.auth.loginAsDemoUser();
       await steps.catalog.openCatalog();
@@ -56,26 +56,26 @@ void main() {
 
   e2eTest(
     'shows seller actions on an own publication',
-    tags: <String>[Tags.regression, Tags.exito],
+    tags: <String>[Tags.regression, Tags.success],
     (PatrolIntegrationTester $) async {
       scenario(
-        epic: 'Compra',
-        feature: 'Catálogo',
-        story: 'Ofrecer acciones de vendedor sobre una publicación propia',
+        epic: 'Purchase',
+        feature: 'Catalog',
+        story: 'Offer seller actions on a publication of your own',
         severity: Severity.normal,
         description:
-            'Una publicación propia no se compra: el detalle debe ofrecer '
-            'editar en lugar del CTA de compra.',
+            'Your own publication is not something you buy: the detail screen '
+            'must offer editing instead of the purchase CTA.',
       );
       await launchMarketApp($);
       final Steps steps = Steps($);
 
-      // Los `testParam` van DESPUÉS del arranque, no antes: leen de
-      // `TestData`, y los datos viven en el bundle de assets, que no existe
-      // hasta que la app arrancó. Además así registran lo que la prueba usó
-      // de verdad, no lo que pensaba usar.
-      testParam('Usuario', TestData.demoEmail);
-      testParam('Producto propio', TestData.ownProductName);
+      // `testParam` goes AFTER the launch, not before: it reads from
+      // `TestData`, and the data lives in the asset bundle, which does not
+      // exist until the app has launched. It also records what the test
+      // actually used, rather than what it meant to use.
+      testParam('User', TestData.demoEmail);
+      testParam('Own product', TestData.ownProductName);
 
       await steps.auth.loginAsDemoUser();
       await steps.catalog.openCatalog();
@@ -87,26 +87,26 @@ void main() {
 
   e2eTest(
     'rejects an expired coupon with its own message',
-    tags: <String>[Tags.regression, Tags.negativo],
+    tags: <String>[Tags.regression, Tags.negative],
     (PatrolIntegrationTester $) async {
       scenario(
-        epic: 'Compra',
-        feature: 'Cupones',
-        story: 'Rechazar un cupón vencido con su mensaje específico',
+        epic: 'Purchase',
+        feature: 'Coupons',
+        story: 'Reject an expired coupon with its own specific message',
         severity: Severity.minor,
         description:
-            'El error debe distinguir vencido de inexistente, y el descuento '
-            'debe quedar en cero.',
+            'The error must tell expired apart from non-existent, and the '
+            'discount must end up at zero.',
       );
       await launchMarketApp($);
       final Steps steps = Steps($);
 
-      // Los `testParam` van DESPUÉS del arranque, no antes: leen de
-      // `TestData`, y los datos viven en el bundle de assets, que no existe
-      // hasta que la app arrancó. Además así registran lo que la prueba usó
-      // de verdad, no lo que pensaba usar.
-      testParam('Usuario', TestData.demoEmail);
-      testParam('Cupón', TestData.expiredCoupon);
+      // `testParam` goes AFTER the launch, not before: it reads from
+      // `TestData`, and the data lives in the asset bundle, which does not
+      // exist until the app has launched. It also records what the test
+      // actually used, rather than what it meant to use.
+      testParam('User', TestData.demoEmail);
+      testParam('Coupon', TestData.expiredCoupon);
 
       await steps.auth.loginAsDemoUser();
       await steps.catalog.openCatalog();
@@ -117,6 +117,7 @@ void main() {
       await steps.cart.openCart();
       await steps.cart.applyRejectedCoupon(
         TestData.expiredCoupon,
+        // The app's own wording — it is matched against the rendered message.
         expectedMessage: 'El cupón está vencido',
       );
     },

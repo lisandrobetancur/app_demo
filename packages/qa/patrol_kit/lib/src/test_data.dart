@@ -82,8 +82,8 @@ class AssetTestDataSource implements TestDataSource {
       return await rootBundle.loadString(describe(path));
     } on Object catch (error) {
       throw TestDataError(
-        'No se pudo leer el asset ${describe(path)}: $error\n'
-        'Revisa que la carpeta esté declarada en el pubspec de la app:\n'
+        'Could not read the asset ${describe(path)}: $error\n'
+        'Check that the folder is declared in the app pubspec:\n'
         '  flutter:\n'
         '    assets:\n'
         '      - $basePath/',
@@ -111,15 +111,15 @@ class InMemoryTestDataSource implements TestDataSource {
     final String? content = files[path];
     if (content == null) {
       throw TestDataError(
-        'No hay datos en memoria para "$path". '
-        'Disponibles: ${files.keys.join(', ')}',
+        'No in-memory data for "$path". '
+        'Available: ${files.keys.join(', ')}',
       );
     }
     return content;
   }
 
   @override
-  String describe(String path) => 'memoria:$path';
+  String describe(String path) => 'memory:$path';
 }
 
 /// The loaded data sets, keyed by the names the index gives them.
@@ -162,14 +162,14 @@ class TestDataStore {
     final Object? datasets = parsed['datasets'];
     if (datasets is! Map<String, Object?>) {
       throw TestDataError(
-        '${source.describe(index)} debe tener un objeto "datasets" que liste '
-        'los archivos, por ejemplo {"datasets": {"users": "users.json"}}.',
+        '${source.describe(index)} must hold a "datasets" object listing the '
+        'files, for example {"datasets": {"users": "users.json"}}.',
       );
     }
     if (datasets.isEmpty) {
       throw TestDataError(
-        '${source.describe(index)} no lista ningún archivo. Un índice vacío '
-        'deja la suite sin datos y sin decirlo.',
+        '${source.describe(index)} lists no files. An empty index leaves the '
+        'suite without data and without saying so.',
       );
     }
 
@@ -177,8 +177,8 @@ class TestDataStore {
       final Object? path = entry.value;
       if (path is! String) {
         throw TestDataError(
-          'El data set "${entry.key}" en ${source.describe(index)} debe '
-          'apuntar a un nombre de archivo, no a ${path.runtimeType}.',
+          'Data set "${entry.key}" in ${source.describe(index)} must point '
+          'to a file name, not to ${path.runtimeType}.',
         );
       }
       _sets[entry.key] = DataSet._parse(
@@ -190,7 +190,7 @@ class TestDataStore {
 
     _loaded = true;
     Log.debug(
-      'Datos de prueba cargados',
+      'Test data loaded',
       data: <String, Object>{
         'index': source.describe(index),
         'datasets': _sets.keys.toList(),
@@ -202,20 +202,20 @@ class TestDataStore {
   static DataSet dataset(String name) {
     if (!_loaded) {
       throw TestDataError(
-        'Los datos de prueba no se han cargado todavía.\n'
-        'La causa habitual no es que falte TestDataStore.load(), sino que '
-        'algo lee los datos ANTES de que corra: los datos viven en el bundle '
-        'de assets, que no existe hasta que la app arrancó, así que una '
-        'lectura en la cabecera del test —un testParam(), por ejemplo— pasa '
-        'por aquí antes que el launcher.\n'
-        'Mueve la lectura después de arrancar la app, o carga los datos '
-        'antes con TestDataStore.load().',
+        'Test data has not been loaded yet.\n'
+        'The usual cause is not a missing TestDataStore.load(), but something '
+        'reading the data BEFORE it runs: the data lives in the asset bundle, '
+        'which does not exist until the app has launched, so a read in the '
+        'test header — a testParam(), say — reaches here ahead of the '
+        'launcher.\n'
+        'Move the read after the app launches, or load the data earlier with '
+        'TestDataStore.load().',
       );
     }
     final DataSet? set = _sets[name];
     if (set == null) {
       throw TestDataError(
-        'No existe el data set "$name". El índice registró: '
+        'No such data set "$name". The index registered: '
         '${_sets.keys.join(', ')}',
       );
     }
@@ -275,9 +275,9 @@ class DataSet {
     if (found == null) {
       throw TestDataError(
         _keyed.isEmpty
-            ? '$origin es una lista, no tiene registros con nombre. Usa '
-                  '.rows para recorrerla.'
-            : 'No existe el registro "$key" en $origin. Hay: '
+            ? '$origin is a list, so it has no named records. Use .rows to '
+                  'walk it.'
+            : 'No record named "$key" in $origin. Available: '
                   '${_keyed.keys.join(', ')}',
       );
     }
@@ -288,7 +288,7 @@ class DataSet {
   DataRecord row(int index) {
     if (index < 0 || index >= _rows.length) {
       throw TestDataError(
-        'La fila $index no existe en $origin, que tiene ${_rows.length}.',
+        'Row $index does not exist in $origin, which has ${_rows.length}.',
       );
     }
     return _rows[index];
@@ -307,8 +307,8 @@ class DataSet {
         final Object? value = entry.value;
         if (value is! Map<String, Object?>) {
           throw TestDataError(
-            'El registro "${entry.key}" en $origin debe ser un objeto, '
-            'no ${value.runtimeType}.',
+            'Record "${entry.key}" in $origin must be an object, not '
+            '${value.runtimeType}.',
           );
         }
         keyed[entry.key] = DataRecord._(
@@ -331,7 +331,7 @@ class DataSet {
         final Object? value = decoded[i];
         if (value is! Map<String, Object?>) {
           throw TestDataError(
-            'La fila $i en $origin debe ser un objeto, no '
+            'Row $i in $origin must be an object, not '
             '${value.runtimeType}.',
           );
         }
@@ -346,7 +346,7 @@ class DataSet {
     }
 
     throw TestDataError(
-      '$origin debe contener un objeto o una lista en su raíz, no '
+      '$origin must hold an object or a list at its root, not '
       '${decoded.runtimeType}.',
     );
   }
@@ -382,7 +382,7 @@ class DataRecord {
   Object? raw(String field) => _fields[field];
 
   /// Reads [field] as text.
-  String string(String field) => _read<String>(field, 'un texto');
+  String string(String field) => _read<String>(field, 'a string');
 
   /// Reads [field] as a whole number.
   int integer(String field) {
@@ -394,7 +394,7 @@ class DataRecord {
     if (value is double && value == value.roundToDouble()) {
       return value.toInt();
     }
-    throw _wrongType(field, 'un entero', value);
+    throw _wrongType(field, 'an integer', value);
   }
 
   /// Reads [field] as a number, whole or not.
@@ -403,11 +403,11 @@ class DataRecord {
     if (value is num) {
       return value.toDouble();
     }
-    throw _wrongType(field, 'un número', value);
+    throw _wrongType(field, 'a number', value);
   }
 
   /// Reads [field] as a boolean.
-  bool boolean(String field) => _read<bool>(field, 'un booleano');
+  bool boolean(String field) => _read<bool>(field, 'a boolean');
 
   /// Reads [field] as a list of text.
   List<String> strings(String field) {
@@ -415,7 +415,7 @@ class DataRecord {
     if (value is List<Object?> && value.every((Object? e) => e is String)) {
       return value.cast<String>();
     }
-    throw _wrongType(field, 'una lista de textos', value);
+    throw _wrongType(field, 'a list of strings', value);
   }
 
   /// Reads [field] as a nested record.
@@ -424,7 +424,7 @@ class DataRecord {
     if (value is Map<String, Object?>) {
       return DataRecord._(value, path: '$path.$field', origin: origin);
     }
-    throw _wrongType(field, 'un objeto', value);
+    throw _wrongType(field, 'an object', value);
   }
 
   /// Reads [field] as a list of nested records.
@@ -435,7 +435,7 @@ class DataRecord {
       for (int i = 0; i < value.length; i++) {
         final Object? item = value[i];
         if (item is! Map<String, Object?>) {
-          throw _wrongType('$field[$i]', 'un objeto', item);
+          throw _wrongType('$field[$i]', 'an object', item);
         }
         records.add(
           DataRecord._(item, path: '$path.$field[$i]', origin: origin),
@@ -443,7 +443,7 @@ class DataRecord {
       }
       return records;
     }
-    throw _wrongType(field, 'una lista de objetos', value);
+    throw _wrongType(field, 'a list of objects', value);
   }
 
   T _read<T>(String field, String expected) {
@@ -458,8 +458,8 @@ class DataRecord {
     final Object? value = _fields[field];
     if (value == null) {
       throw TestDataError(
-        'Falta el campo "$field" en $path ($origin). '
-        'El registro tiene: ${_fields.keys.join(', ')}',
+        'Missing field "$field" in $path ($origin). '
+        'The record has: ${_fields.keys.join(', ')}',
       );
     }
     return value;
@@ -467,7 +467,7 @@ class DataRecord {
 
   TestDataError _wrongType(String field, String expected, Object? value) =>
       TestDataError(
-        '"$path.$field" en $origin debería ser $expected, y es '
+        '"$path.$field" in $origin should be $expected, but is '
         '${value.runtimeType} ($value).',
       );
 
@@ -479,7 +479,7 @@ Map<String, Object?> _decodeObject(String raw, String origin) {
   final Object? decoded = _decode(raw, origin);
   if (decoded is! Map<String, Object?>) {
     throw TestDataError(
-      '$origin debe contener un objeto en su raíz, no ${decoded.runtimeType}.',
+      '$origin must hold an object at its root, not ${decoded.runtimeType}.',
     );
   }
   return decoded;
@@ -489,6 +489,6 @@ Object? _decode(String raw, String origin) {
   try {
     return jsonDecode(raw);
   } on FormatException catch (error) {
-    throw TestDataError('$origin no es JSON válido: ${error.message}');
+    throw TestDataError('$origin is not valid JSON: ${error.message}');
   }
 }

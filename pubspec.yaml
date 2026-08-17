@@ -118,7 +118,7 @@ melos:
     # compila dentro del binario, no es que se compile y se salte. El
     # vocabulario está en `Tags`, en el kit.
     e2eWebSmoke: bash tool/e2e/run_web.sh --tags=smoke_test
-    e2eWebNegative: bash tool/e2e/run_web.sh --tags=negativo
+    e2eWebNegative: bash tool/e2e/run_web.sh --tags=negative
 
     # Sólo la limpieza, para cuando quieras dejar una plataforma en cero sin
     # correr nada.

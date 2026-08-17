@@ -65,7 +65,7 @@ class UiElement {
   String get text {
     final List<String> found = texts;
     if (found.isEmpty) {
-      throw StateError('Sin texto en $loc — ¿locator equivocado?');
+      throw StateError('No text under $loc — wrong locator?');
     }
     return found.last;
   }
@@ -79,8 +79,8 @@ class UiElement {
   /// property off the real widget.
   ///
   /// ```dart
-  /// element.widget<TextField>().obscureText     // en vez de getAttribute("type")
-  /// element.widget<Text>().style?.color          // en vez de getCssValue("color")
+  /// element.widget<TextField>().obscureText     // instead of getAttribute("type")
+  /// element.widget<Text>().style?.color          // instead of getCssValue("color")
   /// ```
   T widget<T extends Widget>() => $.tester.widget<T>(finder.finder);
 
@@ -101,9 +101,10 @@ class UiElement {
     final bool? enabled = WidgetProbes.readEnabled(target);
     if (enabled == null) {
       throw StateError(
-        'No se sabe si ${target.runtimeType} está habilitado ($loc). '
-        'Regístralo con WidgetProbes.enabled<${target.runtimeType}>(…) '
-        'o dilo aquí con isEnabledWhere<${target.runtimeType}>((w) => …).',
+        'There is no rule for whether ${target.runtimeType} is enabled '
+        '($loc). Register one with '
+        'WidgetProbes.enabled<${target.runtimeType}>(…), or state it here '
+        'with isEnabledWhere<${target.runtimeType}>((w) => …).',
       );
     }
     return enabled;
@@ -118,9 +119,10 @@ class UiElement {
     final bool? selected = WidgetProbes.readSelected(target);
     if (selected == null) {
       throw StateError(
-        '${target.runtimeType} no expone un estado de selección ($loc). '
-        'Regístralo con WidgetProbes.selected<${target.runtimeType}>(…) '
-        'o dilo aquí con isSelectedWhere<${target.runtimeType}>((w) => …).',
+        '${target.runtimeType} exposes no selection state ($loc). '
+        'Register one with WidgetProbes.selected<${target.runtimeType}>(…), '
+        'or state it here with '
+        'isSelectedWhere<${target.runtimeType}>((w) => …).',
       );
     }
     return selected;
