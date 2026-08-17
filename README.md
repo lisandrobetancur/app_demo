@@ -335,7 +335,7 @@ as green. Opening it stays separate, because generating and opening are
 different decisions and CI only ever wants the first:
 
 ```bash
-melos run allureServeWeb          # open allure/web/report
+melos run allureServeWeb          # open build/e2e/web/allure/report
 melos run allureServeAndroid
 
 melos run e2eWebReport            # run, then open
@@ -355,11 +355,31 @@ describe different environments and are kept apart; running the web suite must
 not take out the last device result:
 
 ```bash
-melos run e2eCleanWeb             # playwright-report, test-results,
-                                  # allure/web, test_bundle.dart
-melos run e2eCleanAndroid         # build/e2e/android_run.log, allure/android
+melos run e2eCleanWeb             # build/e2e/web
+melos run e2eCleanAndroid         # build/e2e/android
 melos run e2eClean                # both
 ```
+
+Everything a run generates goes under **one root per platform**, which is what
+makes that cleaning trustworthy — deleting a whole root cannot leave anything
+behind, while enumerating four scattered paths can, and did: `test-results/`
+went unswept for months because nobody remembered it existed.
+
+```
+build/e2e/
+├── web/
+│   ├── playwright/            results.json, results.xml, Playwright's HTML
+│   ├── test-results/          per-test traces and attachments
+│   └── allure/{results,report}
+└── android/
+    ├── android_run.log        the captured logcat
+    └── allure/{results,report}
+```
+
+`build/` is already gitignored, so nothing generated needs a rule of its own.
+The one exception is `test_bundle.dart`, which patrol_cli writes at the package
+root and accepts no other path for — nor could it, being Dart source that has
+to compile inside the package. The clean script deletes it by name.
 
 Cleaning happens at the **start** of a run, not the end: clearing up afterwards
 leaves a tidy machine but also deletes the evidence of what just failed.
@@ -433,8 +453,8 @@ The run itself uses three reporters, each for a different reader:
 | Reporter | For whom | Output |
 |---|---|---|
 | `list` | the terminal | live progress |
-| `json` | the Allure converter | `playwright-report/results.json` |
-| `junit` | CI | `playwright-report/results.xml` — GitLab, Jenkins and Azure turn it into a test tab, which a static Allure site cannot do |
+| `json` | the Allure converter | `build/e2e/web/playwright/results.json` |
+| `junit` | CI | `build/e2e/web/playwright/results.xml` — GitLab, Jenkins and Azure turn it into a test tab, which a static Allure site cannot do |
 
 Patrol only accepts that whitelist, so no third-party reporter can be plugged
 in — which is why Allure is fed by a converter instead.
@@ -513,7 +533,7 @@ melos run e2eWeb        # runs the suite, emitting Playwright JSON
 ```
 
 ```bash
-melos run allureWeb     # converts that JSON and builds allure/web/report
+melos run allureWeb     # converts that JSON and rebuilds the report
 ```
 
 ```bash
@@ -635,13 +655,12 @@ end up reading a stale report.
 A report describes the run that produced it, and nothing else. Three things
 enforce that, because deleting the report alone is not enough:
 
-- `allureWeb` / `allureAndroid` delete `allure/<platform>/` before rebuilding
-  it, results and report alike.
-- `e2eWeb` deletes `playwright-report/` before starting. Patrol overwrites it
-  on success anyway, but a run that dies early would leave the previous
-  `results.json` in place — and the next report would be built from it without
-  a word, stamped with today's date. `run_android.sh` truncates its log the
-  same way.
+- `allureWeb` / `allureAndroid` delete `build/e2e/<platform>/allure/` before
+  rebuilding it, results and report alike.
+- Every run deletes `build/e2e/<platform>/` before starting. Patrol overwrites
+  its results on success anyway, but a run that dies early would leave the
+  previous `results.json` in place — and the next report would be built from it
+  without a word, stamped with today's date.
 - The converter prints the age of its input and warns past ten minutes, since
   the generated page carries the time it was *generated*, never the time the
   tests ran.
@@ -672,8 +691,8 @@ how the results get out, and that is where the work was:
 |---|---|---|
 | Runner | Playwright + Chromium | native instrumentation (`PatrolJUnitRunner`) |
 | Marker transport | Playwright's per-test stdout capture | `adb logcat` |
-| Converter input | `playwright-report/results.json` | `build/e2e/android_run.log` |
-| Report | `allure/web/report` | `allure/android/report` |
+| Converter input | `build/e2e/web/playwright/results.json` | `build/e2e/android/android_run.log` |
+| Report | `build/e2e/web/allure/report` | `build/e2e/android/allure/report` |
 
 The converter has one adapter per transport (`fromPlaywright`, `fromPatrolLog`)
 feeding a single renderer, because the payload is identical: Patrol emits the

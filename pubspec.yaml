@@ -96,7 +96,15 @@ melos:
     # El código de salida es el de la suite, no el del reporte: una corrida
     # roja sale roja aunque su reporte se haya construido bien.
     #
-    # Lo que se borra al empezar, por plataforma, está en tool/e2e/clean.sh.
+    # Todo lo generado va a UNA raíz por plataforma:
+    #
+    #   build/e2e/web/{playwright,test-results,allure/{results,report}}
+    #   build/e2e/android/{android_run.log,allure/{results,report}}
+    #
+    # Eso es lo que hace de fiar la limpieza: borrar la raíz entera no puede
+    # dejarse nada, mientras que enumerar cuatro rutas repartidas por el repo
+    # sí — así fue como `test-results/` no lo borró nadie nunca.
+    #
     # Al empezar y no al terminar: limpiar al final deja la máquina limpia
     # pero se lleva la evidencia de lo que acaba de fallar.
     e2eWeb: bash tool/e2e/run_web.sh
@@ -147,7 +155,7 @@ melos:
     # Regenerar el reporte a partir de los resultados que YA hay en disco,
     # sin volver a correr la suite. `e2eWeb` y `e2eAndroid` ya lo generan; esto
     # es para cuando cambias el convertidor y quieres ver el efecto.
-    allureWeb: rm -rf allure/web && node tool/allure/patrol_to_allure.mjs --platform web && npx --prefix tool/allure allure awesome allure/web/results --output allure/web/report --report-name "Market E2E · Web"
-    allureAndroid: rm -rf allure/android && node tool/allure/patrol_to_allure.mjs --input build/e2e/android_run.log --platform android && npx --prefix tool/allure allure awesome allure/android/results --output allure/android/report --report-name "Market E2E · Android"
-    allureServeWeb: npx --prefix tool/allure allure serve allure/web/results
-    allureServeAndroid: npx --prefix tool/allure allure serve allure/android/results
+    allureWeb: rm -rf build/e2e/web/allure && node tool/allure/patrol_to_allure.mjs --platform web && npx --prefix tool/allure allure awesome build/e2e/web/allure/results --output build/e2e/web/allure/report --report-name "Market E2E · Web"
+    allureAndroid: rm -rf build/e2e/android/allure && node tool/allure/patrol_to_allure.mjs --input build/e2e/android/android_run.log --platform android && npx --prefix tool/allure allure awesome build/e2e/android/allure/results --output build/e2e/android/allure/report --report-name "Market E2E · Android"
+    allureServeWeb: npx --prefix tool/allure allure serve build/e2e/web/allure/results
+    allureServeAndroid: npx --prefix tool/allure allure serve build/e2e/android/allure/results

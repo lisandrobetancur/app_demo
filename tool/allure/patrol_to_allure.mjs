@@ -36,11 +36,20 @@ import { resolve } from "node:path";
 import { hostname } from "node:os";
 
 const REPO_ROOT = resolve(import.meta.dirname, "../..");
-// Everything Allure produces lives under one directory, one subdirectory per
-// platform: allure/<platform>/{results,report}.
-const ALLURE_ROOT = resolve(REPO_ROOT, "allure");
+// Todo lo que produce una ejecución vive bajo una sola raíz, una subcarpeta
+// por plataforma:
+//
+//   build/e2e/
+//   ├── web/{playwright,test-results,allure/{results,report}}
+//   └── android/{android_run.log,allure/{results,report}}
+//
+// Una raíz y no cuatro repartidas por el repositorio, porque la limpieza de
+// antes se olvidaba de lo que no recordaba que existía — `test-results/` no lo
+// borró nadie durante meses. Con una raíz por plataforma, borrarla entera es
+// una operación que no puede dejarse nada.
+const E2E_ROOT = resolve(REPO_ROOT, "build/e2e");
 const DEFAULTS = {
-  input: resolve(REPO_ROOT, "packages/apps/market_app/playwright-report/results.json"),
+  input: resolve(E2E_ROOT, "web/playwright/results.json"),
 };
 
 /** How old an input may be before the report is probably describing an old run. */
@@ -91,7 +100,7 @@ function parseArgs(argv) {
   // extension keeps the common cases flag-free.
   args.format ??= args.input.endsWith(".json") ? "playwright" : "patrol-log";
   args.platform ??= args.format === "playwright" ? "web" : "android";
-  args.output ??= resolve(ALLURE_ROOT, args.platform, "results");
+  args.output ??= resolve(E2E_ROOT, args.platform, "allure", "results");
   return args;
 }
 

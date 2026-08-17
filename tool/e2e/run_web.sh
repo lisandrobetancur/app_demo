@@ -43,6 +43,14 @@ done
 
 tool/e2e/clean.sh web
 
+# Rutas ABSOLUTAS, y no es un detalle de estilo. `--web-results-dir` y
+# `--web-report-dir` acaban en las variables de entorno que lee la
+# playwright.config.ts que trae Patrol, y Playwright resuelve una ruta
+# relativa contra el directorio de SU config — dentro del paquete de patrol en
+# el pub-cache, no contra donde estás tú. Una relativa aquí escribiría los
+# resultados dentro de la caché de paquetes.
+OUT="$PWD/build/e2e/web"
+
 # `--web-locale` no es cosmético: un navegador headless recién creado puede
 # no reportar ningún idioma, y el motor de Flutter lanza "Invalid argument:
 # Incorrect locale information provided" antes de pintar un frame — la app no
@@ -61,6 +69,8 @@ set +e
   cd "$APP_DIR" && patrol test \
     --device chrome \
     "${TAGS[@]+"${TAGS[@]}"}" \
+    --web-report-dir="$OUT/playwright" \
+    --web-results-dir="$OUT/test-results" \
     --web-headless="$HEADLESS" \
     --web-locale=es-ES \
     --web-timezone=America/Bogota \
@@ -73,10 +83,10 @@ echo "── Generando el reporte ───────────────�
 # Sin `&&` con lo de arriba, y a propósito: una suite roja es exactamente
 # cuando el reporte hace falta.
 node tool/allure/patrol_to_allure.mjs --platform web \
-  && npx --prefix tool/allure allure awesome allure/web/results \
-       --output allure/web/report --report-name "Market E2E · Web" \
+  && npx --prefix tool/allure allure awesome "$OUT/allure/results" \
+       --output "$OUT/allure/report" --report-name "Market E2E · Web" \
   || echo "El reporte no se pudo generar (la suite salió con $status)." >&2
 
 echo
-echo "Reporte:  allure/web/report    ·  ábrelo con: melos run allureServeWeb"
+echo "Reporte:  build/e2e/web/allure/report  ·  ábrelo con: melos run allureServeWeb"
 exit "$status"

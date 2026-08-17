@@ -30,18 +30,13 @@ packages/apps/market_app/ios/Flutter/flutter_export_environment.sh
 .DS_Store
 
 # Patrol / Playwright
-packages/apps/market_app/playwright-report/
-packages/apps/market_app/test-results/
 packages/apps/market_app/node_modules/
 packages/apps/market_app/test_bundle.dart
 packages/apps/market_app/patrol_test/test_bundle.dart
 
-# Allure: results and generated report, rebuilt on every run.
-#
-# Anchored to the repository root on purpose. Unanchored, `allure/` also
-# matches `tool/allure/` — where the converter and the summarizer live — and
-# `git add` skips a new file there without a word. That is how
-# `summarize_assertions.mjs` reached main as a workflow step calling a script
-# that was never committed.
-/allure/
+# Todo lo que genera una corrida E2E — resultados de Playwright, logcat,
+# resultados y reporte de Allure — vive bajo `build/e2e/<plataforma>/`, que ya
+# está ignorado por la regla `build/` de arriba. Una sola raíz en vez de cuatro
+# rutas repartidas: así la limpieza no puede olvidarse de nada, que es
+# exactamente como `test-results/` se quedó sin borrar durante meses.
 tool/allure/node_modules/

@@ -28,7 +28,7 @@ function parseArgs(argv) {
     if (flag === "--platform" && value) args.platform = value;
     else if (flag === "--input" && value) args.input = resolve(value);
   }
-  args.input ??= resolve(REPO_ROOT, "allure", args.platform, "results");
+  args.input ??= resolve(REPO_ROOT, "build/e2e", args.platform, "allure", "results");
   return args;
 }
 

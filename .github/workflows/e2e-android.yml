@@ -59,7 +59,11 @@ jobs:
       # api-level 31 is Android 12, the same as the physical device the suite
       # was verified on. `run_android.sh` needs no argument: it takes the first
       # authorised device, and the emulator is the only one here.
-      - name: Run the suite on an emulator
+      # Limpia lo de la corrida anterior, corre, y genera el reporte — las tres
+      # cosas, igual que en web. El reporte se construye también cuando la
+      # suite falla, y el paso sigue saliendo en rojo porque el script propaga
+      # el código de salida de la suite.
+      - name: Run the suite on an emulator and build the report
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 31
@@ -73,10 +77,6 @@ jobs:
           profile: pixel_5
           disable-animations: true
           script: bash tool/e2e/run_android.sh
-
-      - name: Build the report
-        if: always()
-        run: melos run allureAndroid
 
       # Same guard as the web job: a green run whose assertions never reached
       # the report verifies nothing, and says so nowhere. On mobile the
@@ -97,7 +97,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: android-logcat
-          path: build/e2e/android_run.log
+          path: build/e2e/android/android_run.log
           retention-days: 7
 
       - name: Upload the report
@@ -105,5 +105,5 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: report-android
-          path: allure/android/report
+          path: build/e2e/android/allure/report
           retention-days: 14

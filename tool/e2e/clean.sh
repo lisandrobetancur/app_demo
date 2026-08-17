@@ -5,6 +5,23 @@
 #   tool/e2e/clean.sh web
 #   tool/e2e/clean.sh android
 #
+# Todo lo generado vive bajo una sola raíz, una subcarpeta por plataforma:
+#
+#   build/e2e/
+#   ├── web/
+#   │   ├── playwright/     results.json, results.xml, el HTML de Playwright
+#   │   ├── test-results/   trazas y adjuntos por test
+#   │   └── allure/{results,report}
+#   └── android/
+#       ├── android_run.log el logcat capturado
+#       └── allure/{results,report}
+#
+# Eso es lo que hace que esta limpieza sea de fiar. Antes los artefactos
+# estaban repartidos en cuatro sitios del repositorio y este script tenía que
+# enumerarlos uno a uno — y se olvidaba de los que nadie recordaba que
+# existían: `test-results/` no lo borró nadie nunca. Con una raíz por
+# plataforma, borrarla entera es una operación que no puede dejarse nada.
+#
 # Por plataforma y no todo junto, porque un reporte de web y uno de Android
 # describen entornos distintos y se guardan aparte: correr la suite web no
 # debe llevarse por delante el último resultado de dispositivo.
@@ -31,41 +48,22 @@ usage() {
 }
 
 PLATFORM="${1:-}"
+case "$PLATFORM" in
+  web | android) ;;
+  *) usage ;;
+esac
 
-# `test_bundle.dart` lo regenera patrol_cli en cada corrida, en las dos
-# plataformas. Se borra siempre: es un residuo, y uno que quedó de una
-# ejecución interrumpida puede no corresponder a los tests que hay ahora.
-COMMON=(
+targets=(
+  # La raíz de esa plataforma: se lleva resultados, reporte y logs de una vez.
+  "build/e2e/$PLATFORM"
+  # `test_bundle.dart` es la excepción, y no por descuido: patrol_cli lo genera
+  # en la raíz del paquete y no acepta otra ruta — ni podría, es código Dart
+  # que tiene que compilar dentro del paquete. Se borra igual porque es un
+  # residuo, y uno que quedó de una ejecución interrumpida puede no
+  # corresponder a los tests que hay ahora.
   "$APP_DIR/test_bundle.dart"
   "$APP_DIR/patrol_test/test_bundle.dart"
 )
-
-case "$PLATFORM" in
-  web)
-    targets=(
-      # results.json (de donde salen los marcadores), results.xml (JUnit para
-      # CI) y el HTML de Playwright.
-      "$APP_DIR/playwright-report"
-      # Trazas y adjuntos por test que escribe Playwright. Nadie los limpiaba.
-      "$APP_DIR/test-results"
-      # Resultados convertidos y reporte de Allure.
-      "allure/web"
-      "${COMMON[@]}"
-    )
-    ;;
-  android)
-    targets=(
-      # El logcat capturado: la única vía por la que los marcadores salen de
-      # un dispositivo.
-      "build/e2e/android_run.log"
-      "allure/android"
-      "${COMMON[@]}"
-    )
-    ;;
-  *)
-    usage
-    ;;
-esac
 
 removed=0
 for target in "${targets[@]}"; do

@@ -31,8 +31,8 @@ set -euo pipefail
 
 cd "$(dirname "$0")/../.."
 APP_DIR="packages/apps/market_app"
-LOG_DIR="build/e2e"
-LOG="$LOG_DIR/android_run.log"
+OUT="build/e2e/android"
+LOG="$OUT/android_run.log"
 
 DEVICE="${1:-}"
 if [[ -z "$DEVICE" ]]; then
@@ -49,7 +49,7 @@ fi
 
 tool/e2e/clean.sh android
 
-mkdir -p "$LOG_DIR"
+mkdir -p "$OUT"
 echo "Running on $DEVICE ($(adb -s "$DEVICE" shell getprop ro.product.model | tr -d '\r'))"
 
 adb -s "$DEVICE" logcat -c
@@ -78,10 +78,10 @@ echo "Device log captured at $LOG ($(wc -l < "$LOG" | tr -d ' ') lines)"
 echo
 echo "── Generando el reporte ──────────────────────────────────────────────"
 node tool/allure/patrol_to_allure.mjs --input "$LOG" --platform android \
-  && npx --prefix tool/allure allure awesome allure/android/results \
-       --output allure/android/report --report-name "Market E2E · Android" \
+  && npx --prefix tool/allure allure awesome "$OUT/allure/results" \
+       --output "$OUT/allure/report" --report-name "Market E2E · Android" \
   || echo "El reporte no se pudo generar (la suite salió con $status)." >&2
 
 echo
-echo "Reporte:  allure/android/report  ·  ábrelo con: melos run allureServeAndroid"
+echo "Reporte:  build/e2e/android/allure/report  ·  ábrelo con: melos run allureServeAndroid"
 exit "$status"

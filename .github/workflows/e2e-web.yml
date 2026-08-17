@@ -109,7 +109,7 @@ jobs:
         if: always()
         uses: mikepenz/action-junit-report@v6
         with:
-          report_paths: packages/apps/market_app/playwright-report/results.xml
+          report_paths: build/e2e/web/playwright/results.xml
           check_name: JUnit — web
           fail_on_failure: false
 
@@ -118,12 +118,12 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: report-web
-          path: allure/web/report
+          path: build/e2e/web/allure/report
           retention-days: 14
 
       # Al final del job, y no junto al fallo: este paso vuelve a correr la
-      # suite, lo que sobrescribe playwright-report/ — los resultados de los
-      # que se construyen el reporte y el check de JUnit. Puesto antes, una
+      # suite, lo que sobrescribe build/e2e/web/playwright/ — los resultados de
+      # los que se construyen el reporte y el check de JUnit. Puesto antes, una
       # corrida roja terminaba publicando un reporte de la RE-ejecución en vez
       # de la original. Aquí ya está todo publicado y puede pisar lo que
       # quiera.
