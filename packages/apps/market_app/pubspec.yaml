@@ -47,11 +47,11 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   lint: 0.1.0
-  patrol: 4.6.1
+  patrol: 4.9.0
   # `patrol` re-exports patrol_finders but hides `PatrolTester`, since it
   # ships its own `PatrolIntegrationTester` on top of it. AssertD takes a
   # `PatrolTester` so it works with either, which needs the direct dependency.
-  patrol_finders: 3.5.0
+  patrol_finders: 3.6.0
   patrol_kit: 0.1.0
 
 flutter:

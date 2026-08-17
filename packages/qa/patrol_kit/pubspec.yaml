@@ -20,10 +20,10 @@ dependencies:
   # as the test declaration it is. `flutter_test` depends on it too, but an
   # import needs the dependency spelled out.
   meta: any
-  patrol: 4.6.1
+  patrol: 4.9.0
   # `patrol` re-exports patrol_finders but hides `PatrolTester`, and AssertD
   # takes one by type — hence the direct dependency.
-  patrol_finders: 3.5.0
+  patrol_finders: 3.6.0
 
 dev_dependencies:
   lint: 0.1.0
