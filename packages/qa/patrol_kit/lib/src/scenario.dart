@@ -69,10 +69,7 @@ void scenario({
 /// testParam('Cupón', TestData.validCoupon);
 /// ```
 void testParam(String name, Object? value) {
-  _emit(_paramMarker, <String, String>{
-    'name': name,
-    'value': '$value',
-  });
+  _emit(_paramMarker, <String, String>{'name': name, 'value': '$value'});
 }
 
 /// Markers travel as one-line JSON, like Patrol's own `PATROL_LOG`, so a

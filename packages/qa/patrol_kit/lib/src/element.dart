@@ -53,8 +53,7 @@ class UiElement {
   ///
   /// Pass [inside] when the element lives in a specific scrollable and the
   /// screen has more than one.
-  Future<void> scrollTo({Loc? inside}) =>
-      finder.scrollTo(view: inside?.finder);
+  Future<void> scrollTo({Loc? inside}) => finder.scrollTo(view: inside?.finder);
 
   // --- Reading -------------------------------------------------------------
 

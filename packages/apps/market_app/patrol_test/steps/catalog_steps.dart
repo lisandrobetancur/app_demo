@@ -49,23 +49,21 @@ class CatalogSteps extends BaseSteps {
   });
 
   /// Adds the product currently on screen to the cart.
-  Future<void> addCurrentProductToCart({int quantity = 1}) => step(
-    'Add the product to the cart',
-    () async {
-      should(
-        seeThat(
-          'the product is purchasable before adding it to the cart',
-          () => _detail.isAddToCartEnabled,
-          isTrue,
-        ),
-      );
-      for (int i = 1; i < quantity; i++) {
-        await _detail.increaseQuantity();
-      }
-      await _detail.addToCart();
-      await $.pumpAndSettle();
-    },
-  );
+  Future<void> addCurrentProductToCart({int quantity = 1}) =>
+      step('Add the product to the cart', () async {
+        should(
+          seeThat(
+            'the product is purchasable before adding it to the cart',
+            () => _detail.isAddToCartEnabled,
+            isTrue,
+          ),
+        );
+        for (int i = 1; i < quantity; i++) {
+          await _detail.increaseQuantity();
+        }
+        await _detail.addToCart();
+        await $.pumpAndSettle();
+      });
 
   /// Leaves the product detail and returns to the tab it was opened from.
   ///

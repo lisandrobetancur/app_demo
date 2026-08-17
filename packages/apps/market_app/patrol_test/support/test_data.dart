@@ -1,44 +1,71 @@
-/// Fixed data the tests rely on.
+import 'package:patrol_kit/patrol_kit.dart';
+
+/// Typed access to the data in `patrol_test/data/`.
 ///
-/// Everything here mirrors the deterministic seed in `shared/database`, so a
-/// test never has to guess an id, a price or a coupon code. If the seed
-/// changes, this file is the single place to update.
+/// A thin façade and nothing more: the values live in JSON, this class only
+/// names them. It exists so a test reads `TestData.demoEmail` instead of
+/// `TestDataStore.dataset('users').record('demo').string('email')` — the
+/// second says where the value is stored, the first says what it is.
+///
+/// Everything here is a getter over the loaded store, so reading a value
+/// before [TestDataStore.load] has run throws with that as the message rather
+/// than returning a stale constant. `launchMarketApp` does the loading.
+///
+/// The data still mirrors the deterministic seed in `shared/database`. What
+/// changed is who edits it: `patrol_test/data/*.json` is a file QA can open,
+/// not Dart that has to be compiled.
 class TestData {
   const TestData._();
 
-  // --- Demo accounts (see `Seed` in shared/database) ---
-  static const String demoEmail = 'ana@market.demo';
-  static const String demoPassword = 'Demo1234';
-  static const String demoFullName = 'Ana Marín';
+  static DataSet get users => TestDataStore.dataset('users');
+  static DataSet get products => TestDataStore.dataset('products');
+  static DataSet get coupons => TestDataStore.dataset('coupons');
+  static DataSet get seed => TestDataStore.dataset('seed');
 
-  static const String secondUserEmail = 'bruno@market.demo';
+  /// One row per invalid-credentials case, for the data-driven login test.
+  static List<DataRecord> get invalidLogins =>
+      TestDataStore.dataset('invalid_logins').rows;
 
-  /// Ana owns 5 publications in the seed.
-  static const int demoUserPublications = 5;
+  // --- Demo accounts ---
+  static DataRecord get demoUser => users.record('demo');
+  static DataRecord get secondUser => users.record('second');
+
+  static String get demoEmail => demoUser.string('email');
+  static String get demoPassword => demoUser.string('password');
+  static String get demoFullName => demoUser.string('fullName');
+  static String get secondUserEmail => secondUser.string('email');
+
+  /// Ana's publications in the seed.
+  static int get demoUserPublications => demoUser.integer('publications');
 
   // --- Products ---
   /// Owned by Ana: the detail shows the seller actions, not the buy CTA.
-  static const String ownProductId = 'product_car_001';
-  static const String ownProductName = 'Sedán compacto 2022';
+  static DataRecord get ownProduct => products.record('own');
+  static String get ownProductId => ownProduct.string('id');
+  static String get ownProductName => ownProduct.string('name');
 
-  /// Owned by Bruno, stock 2: the detail shows the buy CTA.
-  static const String buyableProductId = 'product_car_002';
-  static const String buyableProductName = 'SUV familiar 2024';
-  static const double buyableProductPrice = 62500000;
+  /// Owned by Bruno, in stock: the detail shows the buy CTA.
+  static DataRecord get buyableProduct => products.record('buyable');
+  static String get buyableProductId => buyableProduct.string('id');
+  static String get buyableProductName => buyableProduct.string('name');
+  static double get buyableProductPrice => buyableProduct.number('price');
 
   /// Owned by Bruno, stock 0: the CTA must be disabled.
-  static const String outOfStockProductId = 'product_scooter_003';
+  static String get outOfStockProductId =>
+      products.record('outOfStock').string('id');
 
   /// Total number of active products in the seed.
-  static const int seedProductCount = 15;
+  static int get seedProductCount =>
+      seed.record('catalog').integer('activeProducts');
 
   // --- Coupons ---
-  static const String validCoupon = 'DEMO10';
-  static const double validCouponDiscountPct = 10;
-  static const String expiredCoupon = 'PAST20';
-  static const String inactiveCoupon = 'FROZEN15';
-  static const String unknownCoupon = 'NOPE404';
+  static String get validCoupon => coupons.record('valid').string('code');
+  static double get validCouponDiscountPct =>
+      coupons.record('valid').number('discountPct');
+  static String get expiredCoupon => coupons.record('expired').string('code');
+  static String get inactiveCoupon => coupons.record('inactive').string('code');
+  static String get unknownCoupon => coupons.record('unknown').string('code');
 
   /// VAT applied by the cart, mirrors `CartLimits.taxRate`.
-  static const double taxRate = 0.19;
+  static double get taxRate => seed.record('cart').number('taxRate');
 }

@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "description": "Índice de los datos de prueba. Cada entrada de \"datasets\" es un nombre lógico y el archivo que lo contiene; añadir un data set es una línea aquí y un archivo al lado. El cargador no conoce ningún nombre de antemano: lee lo que este archivo liste.",
+  "datasets": {
+    "users": "users.json",
+    "products": "products.json",
+    "coupons": "coupons.json",
+    "seed": "seed.json",
+    "invalid_logins": "invalid_logins.json"
+  }
+}

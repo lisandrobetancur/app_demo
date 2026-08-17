@@ -2,7 +2,6 @@ import 'package:market_app/shell_keys.dart';
 import 'package:patrol/patrol.dart';
 import 'package:patrol_kit/patrol_kit.dart';
 
-
 /// The navigation chrome around the five preserved tabs.
 ///
 /// The shell renders a bottom bar below 768 px and a side rail above it, but

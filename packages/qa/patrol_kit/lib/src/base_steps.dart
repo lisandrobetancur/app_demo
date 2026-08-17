@@ -5,6 +5,7 @@ import 'package:patrol/patrol.dart';
 import 'assert_d.dart';
 import 'assert_report.dart';
 import 'consequence.dart';
+import 'log.dart';
 import 'screenshot.dart';
 
 /// Marker the Allure converter reads to rebuild the business steps.
@@ -45,6 +46,7 @@ abstract class BaseSteps {
   Future<T> step<T>(String name, Future<T> Function() body) async {
     final int id = _sequence++;
     debugPrintSynchronously('$_marker|begin|$id|$name');
+    Log.debug('Step ▸ $name');
     try {
       final T result = await body();
       // Raise anything the step collected, before it is called passed. A soft
@@ -58,6 +60,10 @@ abstract class BaseSteps {
       return result;
     } on Object catch (error) {
       final String outcome = stepOutcomeOf(error);
+      // At `error` and not `debug`: this is the line a reader looks for
+      // first, and `broken` versus `failed` is the difference between "the
+      // product is wrong" and "the test could not tell".
+      Log.error('Step ✗ $name ($outcome)', data: '$error'.split('\n').first);
       await $.takeScreenshot('$name ($outcome)');
       debugPrintSynchronously('$_marker|end|$id|$outcome');
       rethrow;

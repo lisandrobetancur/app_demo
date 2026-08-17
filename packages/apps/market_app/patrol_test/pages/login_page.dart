@@ -2,7 +2,6 @@ import 'package:authentication_constants/authentication_constants.dart';
 import 'package:patrol/patrol.dart';
 import 'package:patrol_kit/patrol_kit.dart';
 
-
 /// F04 · Login.
 ///
 /// Written against the declarative locator layer: the block below is the only

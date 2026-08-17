@@ -2,7 +2,6 @@ import 'package:cart_constants/cart_constants.dart';
 import 'package:patrol/patrol.dart';
 import 'package:patrol_kit/patrol_kit.dart';
 
-
 /// F11 · Cart.
 class CartPage extends BasePage {
   const CartPage(super.$);

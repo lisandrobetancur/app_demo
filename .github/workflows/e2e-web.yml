@@ -77,6 +77,13 @@ jobs:
       - name: Test the kit
         run: melos run testKit
 
+      # Y los del cableado: que los JSON de datos estén declarados como
+      # assets, que el índice apunte a archivos que existen y que los campos
+      # se llamen como la fachada cree. Roto esto, la suite E2E falla por lo
+      # que parece un defecto del producto.
+      - name: Test the data files
+        run: melos run testApp
+
       - name: Run the suite
         run: melos run e2eWeb
 

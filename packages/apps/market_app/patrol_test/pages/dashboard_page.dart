@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:patrol/patrol.dart';
 import 'package:patrol_kit/patrol_kit.dart';
 
-
 /// F06 · Dashboard.
 class DashboardPage extends BasePage {
   const DashboardPage(super.$);

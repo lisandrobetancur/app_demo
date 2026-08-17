@@ -1,0 +1,20 @@
+[
+  {
+    "case": "contraseña incorrecta",
+    "email": "ana@market.demo",
+    "password": "WrongPassword1",
+    "expects": "error genérico"
+  },
+  {
+    "case": "correo que no existe",
+    "email": "nadie@market.demo",
+    "password": "Demo1234",
+    "expects": "error genérico"
+  },
+  {
+    "case": "contraseña de otro usuario",
+    "email": "ana@market.demo",
+    "password": "OtraClave9",
+    "expects": "error genérico"
+  }
+]

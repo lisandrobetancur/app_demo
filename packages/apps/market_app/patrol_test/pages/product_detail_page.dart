@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:patrol/patrol.dart';
 import 'package:patrol_kit/patrol_kit.dart';
 
-
 /// F08 · Product detail.
 class ProductDetailPage extends BasePage {
   const ProductDetailPage(super.$);

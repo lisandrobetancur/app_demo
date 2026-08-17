@@ -31,36 +31,38 @@ class CartSteps extends BaseSteps {
   /// Accepting the coupon and applying it correctly are two different claims:
   /// the applied-coupon row can appear while the discount stays at zero. Both
   /// are checked, against the percentage the seed declares.
-  Future<void> applyValidCoupon(String code) =>
-      step('Apply the valid coupon $code', () async {
-        final double subtotalBefore = _cart.subtotal;
-        await _cart.enterCoupon(code);
-        await _cart.applyCoupon();
-        await $.pumpAndSettle();
+  Future<void> applyValidCoupon(String code) => step(
+    'Apply the valid coupon $code',
+    () async {
+      final double subtotalBefore = _cart.subtotal;
+      await _cart.enterCoupon(code);
+      await _cart.applyCoupon();
+      await $.pumpAndSettle();
 
-        // Accepting the coupon and applying it correctly are different
-        // claims that fail apart: the applied-coupon row can appear while the
-        // discount stays at zero.
-        should(
-          seeThat(
-            'the coupon $code is accepted and replaces the input',
-            () => _cart.removeCouponButton.isDisplayed,
-            isTrue,
+      // Accepting the coupon and applying it correctly are different
+      // claims that fail apart: the applied-coupon row can appear while the
+      // discount stays at zero.
+      should(
+        seeThat(
+          'the coupon $code is accepted and replaces the input',
+          () => _cart.removeCouponButton.isDisplayed,
+          isTrue,
+        ),
+        seeThat(
+          'the subtotal is untouched by the coupon',
+          () => _cart.subtotal,
+          Money.closeToAmount(subtotalBefore),
+        ),
+        seeThat(
+          'the discount is ${TestData.validCouponDiscountPct}% of the subtotal',
+          () => _cart.discount.abs(),
+          Money.closeToAmount(
+            subtotalBefore * TestData.validCouponDiscountPct / 100,
           ),
-          seeThat(
-            'the subtotal is untouched by the coupon',
-            () => _cart.subtotal,
-            Money.closeToAmount(subtotalBefore),
-          ),
-          seeThat(
-            'the discount is ${TestData.validCouponDiscountPct}% of the subtotal',
-            () => _cart.discount.abs(),
-            Money.closeToAmount(
-              subtotalBefore * TestData.validCouponDiscountPct / 100,
-            ),
-          ),
-        );
-      });
+        ),
+      );
+    },
+  );
 
   /// Applies a coupon expected to fail and asserts the differentiated inline
   /// error is shown with [expectedMessage].
@@ -172,40 +174,38 @@ class CartSteps extends BaseSteps {
   ///
   /// Amounts are compared with [Money.tolerance] because the display currency
   /// renders whole units, so what is on screen is already rounded.
-  Future<void> expectTotalsAddUp() => step(
-    'Expect the totals to add up',
-    () async {
-      final double subtotal = _cart.subtotal;
-      final double discount = _cart.discount.abs();
-      final double taxable = subtotal - discount;
+  Future<void> expectTotalsAddUp() =>
+      step('Expect the totals to add up', () async {
+        final double subtotal = _cart.subtotal;
+        final double discount = _cart.discount.abs();
+        final double taxable = subtotal - discount;
 
-      // One batch, because these four are one claim: the totals block is
-      // internally consistent. Checked together, a broken line does not hide
-      // the others, and the report shows which of the four gave way.
-      should(
-        seeThat(
-          'the subtotal is a real amount, not an empty cart',
-          () => subtotal,
-          greaterThan(0),
-        ),
-        seeThat(
-          'the discount never exceeds the subtotal',
-          () => discount,
-          lessThanOrEqualTo(subtotal),
-        ),
-        seeThat(
-          'VAT is ${(TestData.taxRate * 100).round()}% of the taxable base',
-          () => _cart.tax,
-          Money.closeToAmount(taxable * TestData.taxRate),
-        ),
-        seeThat(
-          'the total is the taxable base plus VAT',
-          () => _cart.total,
-          Money.closeToAmount(taxable + taxable * TestData.taxRate),
-        ),
-      );
-    },
-  );
+        // One batch, because these four are one claim: the totals block is
+        // internally consistent. Checked together, a broken line does not hide
+        // the others, and the report shows which of the four gave way.
+        should(
+          seeThat(
+            'the subtotal is a real amount, not an empty cart',
+            () => subtotal,
+            greaterThan(0),
+          ),
+          seeThat(
+            'the discount never exceeds the subtotal',
+            () => discount,
+            lessThanOrEqualTo(subtotal),
+          ),
+          seeThat(
+            'VAT is ${(TestData.taxRate * 100).round()}% of the taxable base',
+            () => _cart.tax,
+            Money.closeToAmount(taxable * TestData.taxRate),
+          ),
+          seeThat(
+            'the total is the taxable base plus VAT',
+            () => _cart.total,
+            Money.closeToAmount(taxable + taxable * TestData.taxRate),
+          ),
+        );
+      });
 
   /// Asserts the cart is showing its empty state.
   Future<void> expectEmptyCart() => step('Expect an empty cart', () async {

@@ -92,14 +92,11 @@ void main() {
   group('the step boundary', () {
     test('aggregates every collected failure into one', () {
       final AssertD softly = AssertD();
-      runZoned(
-        () {
-          softly
-            ..softExpect(1, equals(2), reason: 'first')
-            ..softExpect(3, equals(4), reason: 'second');
-        },
-        zoneSpecification: ZoneSpecification(print: (_, _, _, _) {}),
-      );
+      runZoned(() {
+        softly
+          ..softExpect(1, equals(2), reason: 'first')
+          ..softExpect(3, equals(4), reason: 'second');
+      }, zoneSpecification: ZoneSpecification(print: (_, _, _, _) {}));
 
       expect(
         softly.assertAll,

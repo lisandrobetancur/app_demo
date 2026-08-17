@@ -14,7 +14,9 @@ one project.
 |---|---|
 | `BasePage`, `Loc`, `UiElement` | Your page objects |
 | `BaseSteps`, `should`, `seeThat` | Your steps |
-| `AssertD`, the report markers, `Money` | Your launcher and your seed data |
+| `AssertD`, the report markers, `Money` | Your launcher |
+| `e2eTest`, `Tags`, `Log` | Which tags each test carries |
+| `TestDataStore`, the JSON reader | Your `data/` folder |
 | Probes for Flutter's own widgets | One registration for your design system |
 
 ## Getting started
@@ -51,7 +53,24 @@ class LoginPage extends BasePage {
 }
 ```
 
-**3. Write a step.** `step()` delimits what the report shows, captures the
+**3. Point it at your data.** Test data lives in JSON, with one parent file
+listing the rest, so adding a data set is a line in one place:
+
+```json
+// patrol_test/data/index.json
+{ "version": 1, "datasets": { "users": "users.json", "coupons": "coupons.json" } }
+```
+
+Declare the folder under `flutter: assets:` and load it once, in the launcher:
+
+```dart
+await TestDataStore.load();
+final DataRecord ana = TestDataStore.dataset('users').record('demo');
+ana.string('email');       // "ana@market.demo"
+ana.integer('publications');
+```
+
+**4. Write a step.** `step()` delimits what the report shows, captures the
 screen it left behind, and raises whatever the assertions collected:
 
 ```dart
@@ -70,6 +89,83 @@ Expectations written in **one call** are one claim and are checked whole — the
 second runs even when the first fails. Written in **separate calls**, each is a
 precondition for the next. Grouping is the only thing that decides it.
 
+## Tags
+
+`e2eTest` wraps `patrolTest` so a tag is declared once and reaches both places
+that need it — the runner and the report:
+
+```dart
+e2eTest(
+  'rechaza credenciales inválidas',
+  tags: <String>[Tags.smoke, Tags.negativo],
+  ($) async { … },
+);
+```
+
+```sh
+patrol test --device chrome --tags "smoke_test && negativo"
+patrol test --device chrome --exclude-tags "lento"
+```
+
+The filter is applied while the test bundle is generated, so an excluded test
+is never built into the binary — not built and then skipped. The vocabulary
+lives in `Tags` rather than in each test file, because a filter that names a
+tag nobody uses does not fail: it selects nothing and reports a green run of
+zero tests.
+
+## The run log
+
+`Log` is the trail that explains *how* the test got where it got, as distinct
+from the assertions, which are verdicts on the product.
+
+```dart
+Log.info('Comprando como ${user.email}');
+Log.debug('Carrito', data: <String, Object>{'items': 3});
+Log.warn('El cupón ya estaba aplicado');
+```
+
+Everything lands in a `run.log` attachment on the test; `warn` and `error`
+*also* become rows in the step tree, because a warning nobody opens the
+attachment to read is a warning that did not happen. The threshold is a flag,
+not an edit: `--dart-define=E2E_LOG_LEVEL=debug`. Default is `info`.
+
+## Test data
+
+Reading files needs saying why it works the way it does. A Patrol test is
+compiled **into** the application binary and runs where the app runs — a
+browser tab on web, the device on Android and iOS. There is no `dart:io` on
+web and no repository checkout on a phone, so reading from disk would work on
+one of the three platforms. Flutter assets resolve the same way on all of
+them, which is why the default source goes through `rootBundle`.
+
+Two file shapes are accepted, because both are what data looks like:
+
+```json
+// users.json — keyed records, read by name
+{ "demo": { "email": "ana@market.demo", "publications": 5 } }
+
+// invalid_logins.json — rows, looped over by a data-driven test
+[ { "case": "contraseña incorrecta", "email": "…", "password": "…" } ]
+```
+
+Reads are typed and every failure names the field, the record and the file:
+
+```dart
+users.record('demo').string('email');
+users.record('demo').integer('publications');
+```
+
+They throw `TestDataError`, never `TestFailure` — so a field nobody wrote
+reports the step as **broken**, not failed. Data you cannot read is the test
+being unable to check, which is not the same as the product being wrong.
+
+**One caveat worth knowing before this reaches an app that ships.** An asset
+declared by the app under test travels in *every* build of it, release
+included — test fixtures, and any credentials in them, inside the production
+binary. `TestDataSource` is an interface for that reason: point the store at
+an `InMemoryTestDataSource` fed by a generator and the same API reads data
+that was compiled in, with nothing added to the asset manifest.
+
 ## The report
 
 The kit prints markers to stdout as the suite runs; a converter turns them into
@@ -81,6 +177,8 @@ Allure results. Nothing here writes files or touches the network.
 | `PATROL_ASSERT` | `reportAssertion` | A leaf carrying `expected` / `actual` |
 | `PATROL_SHOT` | `takeScreenshot` | An attachment on the step that produced it |
 | `PATROL_META` / `PATROL_PARAM` | `scenario()` / `testParam()` | Labels, description and case data |
+| `PATROL_TAGS` | `e2eTest(tags:)` | Allure `tag` labels |
+| `PATROL_TRACE` | `Log.*` | The `run.log` attachment, plus rows for `warn`/`error` |
 
 A step that ends badly is reported as **failed** or **broken**, never just red:
 a `TestFailure` means the product misbehaved; anything else means the test could

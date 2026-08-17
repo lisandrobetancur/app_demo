@@ -38,21 +38,20 @@ class AuthSteps extends BaseSteps {
 
   /// Logs in with the seeded demo account and asserts the dashboard greets
   /// that user.
-  Future<void> loginAsDemoUser() =>
-      step('Log in as the demo user', () async {
-        await submitCredentials(
-          email: TestData.demoEmail,
-          password: TestData.demoPassword,
-        );
-        await _dashboard.waitUntilVisible();
-        should(
-          seeThat(
-            'the dashboard greets the logged-in user by name',
-            () => _dashboard.greetingText,
-            contains(TestData.demoFullName),
-          ),
-        );
-      });
+  Future<void> loginAsDemoUser() => step('Log in as the demo user', () async {
+    await submitCredentials(
+      email: TestData.demoEmail,
+      password: TestData.demoPassword,
+    );
+    await _dashboard.waitUntilVisible();
+    should(
+      seeThat(
+        'the dashboard greets the logged-in user by name',
+        () => _dashboard.greetingText,
+        contains(TestData.demoFullName),
+      ),
+    );
+  });
 
   /// Asserts the login screen rejected the attempt and stayed put.
   Future<void> expectLoginRejected() =>

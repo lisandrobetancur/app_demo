@@ -65,6 +65,15 @@ melos:
     # entre aserciones suaves y reporte, la regla de agrupación de `should` y
     # la clasificación failed/broken.
     testKit: melos exec --scope=patrol_kit -- flutter test
+
+    # Los tests unitarios de la app. Hoy son los que comprueban que los
+    # archivos de datos existen, se declaran como assets y contienen los
+    # campos que la fachada lee — la parte del cableado que, si se rompe,
+    # hace fallar un E2E por lo que parece una razón de producto.
+    testApp: melos exec --scope=market_app -- flutter test
+
+    # Todo lo que corre sin navegador ni dispositivo, en un solo comando.
+    testFast: melos run testKit && melos run testApp
     dartFormat: melos exec -c 1 -- dart format . --line-length 80
     dartFix: melos exec -c 1 -- dart fix --apply
     rmlock: melos exec -c 1 -- rm -f pubspec.lock
@@ -105,6 +114,18 @@ melos:
     # `=false`: on patrol_cli 4.4.0 a bare `--web-headless` prints the help
     # text instead of running.
     e2eWebHeaded: rm -rf packages/apps/market_app/playwright-report && cd packages/apps/market_app && patrol test --device chrome --web-headless=false --web-locale=es-ES --web-timezone=America/Bogota --web-reporter='["list","json","junit"]'
+
+    # Filtrado por tags. Patrol acepta expresiones booleanas, no sólo nombres,
+    # y el filtro se aplica al GENERAR el bundle: un test excluido no se
+    # compila dentro del binario, no es que se compile y se salte. El
+    # vocabulario está en `Tags`, en el kit.
+    #
+    #   melos run e2eWebSmoke                  -> sólo el humo
+    #   melos run e2eWebNegative               -> sólo los casos de rechazo
+    #   patrol test --tags "smoke_test && exito"
+    #   patrol test --exclude-tags "lento"
+    e2eWebSmoke: rm -rf packages/apps/market_app/playwright-report && cd packages/apps/market_app && patrol test --device chrome --tags "smoke_test" --web-headless=true --web-locale=es-ES --web-timezone=America/Bogota --web-reporter='["list","json","junit"]'
+    e2eWebNegative: rm -rf packages/apps/market_app/playwright-report && cd packages/apps/market_app && patrol test --device chrome --tags "negativo" --web-headless=true --web-locale=es-ES --web-timezone=America/Bogota --web-reporter='["list","json","junit"]'
 
     # The three steps in one, for when you want the report without thinking
     # about it. They stay separate above so you can stop after the run.

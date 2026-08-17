@@ -2,7 +2,6 @@ import 'package:catalog_constants/catalog_constants.dart';
 import 'package:patrol/patrol.dart';
 import 'package:patrol_kit/patrol_kit.dart';
 
-
 /// F07 · Catalog list, search and filters.
 class CatalogPage extends BasePage {
   const CatalogPage(super.$);

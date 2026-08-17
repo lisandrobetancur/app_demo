@@ -132,6 +132,11 @@ function stdoutOf(result) {
  *  * `PATROL_META` / `PATROL_PARAM` — the scenario's business taxonomy and
  *    the data the case ran with. These belong to the test, not to a step, so
  *    they are collected here and returned alongside.
+ *  * `PATROL_TAGS` — what the test declared to `e2eTest`, which becomes the
+ *    same vocabulary the runner filters on.
+ *  * `PATROL_TRACE` — the run log. Every line goes into one `run.log`
+ *    attachment on the test; `warn` and `error` *also* become leaf steps,
+ *    because a warning nobody opens the attachment to read did not happen.
  */
 function stepsFrom(stdout, outputDir, startTime) {
   const root = [];
@@ -141,6 +146,8 @@ function stepsFrom(stdout, outputDir, startTime) {
   const orphanShots = [];
   let meta = null;
   const params = [];
+  const tags = [];
+  const logLines = [];
   let lastClosedBusiness = null;
 
   // `PATROL_STEP` markers carry no timestamp of their own, so a business step
@@ -223,6 +230,41 @@ function stepsFrom(stdout, outputDir, startTime) {
       continue;
     }
 
+    const tagsAt = line.indexOf("PATROL_TAGS ");
+    if (tagsAt >= 0) {
+      const payload = parseJsonAfter(line, tagsAt, "PATROL_TAGS ");
+      if (Array.isArray(payload)) {
+        for (const tag of payload) if (!tags.includes(tag)) tags.push(String(tag));
+      }
+      continue;
+    }
+
+    const traceAt = line.indexOf("PATROL_TRACE ");
+    if (traceAt >= 0) {
+      const payload = parseJsonAfter(line, traceAt, "PATROL_TRACE ");
+      if (payload?.message) {
+        const level = String(payload.level ?? "info");
+        const suffix = payload.data === undefined ? "" : ` ${payload.data}`;
+        logLines.push(`${payload.at ?? ""} [${level.toUpperCase()}] ${payload.message}${suffix}`);
+        // Only the levels that mean something went sideways earn a row in the
+        // tree. `info` and below would bury the steps they are describing.
+        if (level === "warn" || level === "error") {
+          currentChildren().push({
+            name: `${level === "warn" ? "⚠" : "✖"} ${payload.message}`,
+            // `broken`, not `failed`: a log line is not a verdict on the
+            // product, and colouring it red would inflate the failure count.
+            status: level === "warn" ? "skipped" : "broken",
+            start: clock,
+            stop: clock,
+            steps: [],
+            parameters: payload.data === undefined ? [] : [{ name: "data", value: String(payload.data) }],
+            attachments: [],
+          });
+        }
+      }
+      continue;
+    }
+
     const logAt = line.indexOf("PATROL_LOG ");
     if (logAt < 0) continue;
 
@@ -256,7 +298,8 @@ function stepsFrom(stdout, outputDir, startTime) {
   // Anything still open when the test died is what actually broke.
   for (const step of interactionStack) step.status = "broken";
   for (const step of businessStack) step.status = "broken";
-  return { steps: root, orphanShots, meta, params };
+  const runLog = writeRunLog(logLines, outputDir);
+  return { steps: root, orphanShots, meta, params, tags, runLog };
 }
 
 /** Whether any step in the tree, at any depth, ended with [status]. */
@@ -273,6 +316,21 @@ function parseJsonAfter(line, at, marker) {
   } catch {
     return null; // a truncated line is not worth failing the whole report over
   }
+}
+
+/**
+ * Writes the test's run log as a single text attachment.
+ *
+ * One attachment rather than a step per line: the log is the narration of how
+ * the test got where it got, and it is read top to bottom when something
+ * already went wrong — not scanned in a tree. The lines that do deserve to
+ * interrupt the tree (`warn`, `error`) are pushed as steps where they happen.
+ */
+function writeRunLog(lines, outputDir) {
+  if (lines.length === 0) return null;
+  const source = `${randomUUID()}-attachment.txt`;
+  writeFileSync(resolve(outputDir, source), `${lines.join("\n")}\n`);
+  return { name: "run.log", source, type: "text/plain" };
 }
 
 /**
@@ -464,7 +522,7 @@ function convert({ input, output, format, platform }) {
           const suiteName = run.suite;
           const name = run.name;
           const fullName = `${suiteName}#${name}`;
-          const { steps, orphanShots, meta, params } = stepsFrom(run.stdout, output, run.start);
+          const { steps, orphanShots, meta, params, tags, runLog } = stepsFrom(run.stdout, output, run.start);
 
           // Two clocks measure the same test: Playwright times it from
           // outside, Dart timestamps the interactions from inside the browser.
@@ -498,7 +556,7 @@ function convert({ input, output, format, platform }) {
             steps,
             // Screenshots taken before the first interaction (or after the
             // last one) have no step to hang from, so they stay on the test.
-            attachments: orphanShots,
+            attachments: [...orphanShots, ...(runLog ? [runLog] : [])],
             // The data the case ran with, so a reader can reproduce it from
             // the report alone instead of opening the test.
             parameters: [
@@ -524,6 +582,10 @@ function convert({ input, output, format, platform }) {
               ...(meta?.feature ? [{ name: "feature", value: meta.feature }] : []),
               ...(meta?.story ? [{ name: "story", value: meta.story }] : []),
               ...(meta?.severity ? [{ name: "severity", value: meta.severity }] : []),
+              // What the test declared to `e2eTest`. The same strings the
+              // runner filters on (`patrol test --tags "smoke_test"`), so a
+              // reader can reproduce a selection from the report.
+              ...tags.map(tag => ({ name: "tag", value: tag })),
             ],
           };
 
