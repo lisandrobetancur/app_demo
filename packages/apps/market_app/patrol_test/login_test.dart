@@ -21,10 +21,15 @@ void main() {
             'Sin login no hay carrito, pedidos ni perfil: es la puerta de '
             'entrada a todo lo demás.',
       );
-      testParam('Usuario', TestData.demoEmail);
 
       await launchMarketApp($);
       final Steps steps = Steps($);
+
+      // Los `testParam` van DESPUÉS del arranque, no antes: leen de
+      // `TestData`, y los datos viven en el bundle de assets, que no existe
+      // hasta que la app arrancó. Además así registran lo que la prueba usó
+      // de verdad, no lo que pensaba usar.
+      testParam('Usuario', TestData.demoEmail);
 
       await steps.auth.loginAsDemoUser();
     },

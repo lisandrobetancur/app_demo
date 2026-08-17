@@ -202,8 +202,14 @@ class TestDataStore {
   static DataSet dataset(String name) {
     if (!_loaded) {
       throw TestDataError(
-        'Los datos de prueba no se han cargado. Llama a '
-        'TestDataStore.load() en el launcher, antes del primer test.',
+        'Los datos de prueba no se han cargado todavía.\n'
+        'La causa habitual no es que falte TestDataStore.load(), sino que '
+        'algo lee los datos ANTES de que corra: los datos viven en el bundle '
+        'de assets, que no existe hasta que la app arrancó, así que una '
+        'lectura en la cabecera del test —un testParam(), por ejemplo— pasa '
+        'por aquí antes que el launcher.\n'
+        'Mueve la lectura después de arrancar la app, o carga los datos '
+        'antes con TestDataStore.load().',
       );
     }
     final DataSet? set = _sets[name];
