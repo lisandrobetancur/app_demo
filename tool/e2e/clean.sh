@@ -1,41 +1,40 @@
 #!/usr/bin/env bash
 #
-# Borra todo lo que genera una ejecución, de UNA plataforma.
+# Deletes everything a run generates, for ONE platform.
 #
 #   tool/e2e/clean.sh web
 #   tool/e2e/clean.sh android
 #
-# Todo lo generado vive bajo una sola raíz, una subcarpeta por plataforma:
+# Everything generated lives under a single root, one subfolder per platform:
 #
 #   build/e2e/
 #   ├── web/
-#   │   ├── playwright/     results.json, results.xml, el HTML de Playwright
-#   │   ├── test-results/   trazas y adjuntos por test
+#   │   ├── playwright/     results.json, results.xml, Playwright's HTML
+#   │   ├── test-results/   per-test traces and attachments
 #   │   └── allure/{results,report}
 #   └── android/
-#       ├── android_run.log el logcat capturado
+#       ├── android_run.log the captured logcat
 #       └── allure/{results,report}
 #
-# Eso es lo que hace que esta limpieza sea de fiar. Antes los artefactos
-# estaban repartidos en cuatro sitios del repositorio y este script tenía que
-# enumerarlos uno a uno — y se olvidaba de los que nadie recordaba que
-# existían: `test-results/` no lo borró nadie nunca. Con una raíz por
-# plataforma, borrarla entera es una operación que no puede dejarse nada.
+# That is what makes this cleanup trustworthy. The artifacts used to be spread
+# across four places in the repository and this script had to enumerate them
+# one by one — and it forgot the ones nobody remembered existed: `test-results/`
+# was never deleted by anyone. With one root per platform, deleting it whole is
+# an operation that cannot leave anything behind.
 #
-# Por plataforma y no todo junto, porque un reporte de web y uno de Android
-# describen entornos distintos y se guardan aparte: correr la suite web no
-# debe llevarse por delante el último resultado de dispositivo.
+# Per platform rather than all at once, because a web report and an Android one
+# describe different environments and are kept apart: running the web suite
+# must not take out the last device result.
 #
-# Se ejecuta al PRINCIPIO de cada corrida, no al final. La diferencia importa:
-# limpiar al terminar deja la máquina limpia pero también borra la evidencia
-# de lo que acaba de fallar. Limpiar al empezar garantiza lo único que hace
-# falta garantizar — que nada de lo que quede en disco venga de la corrida
-# anterior.
+# It runs at the START of every run, not at the end. The difference matters:
+# cleaning up afterwards leaves the machine tidy but also deletes the evidence
+# of what just failed. Cleaning at the start guarantees the only thing that
+# needs guaranteeing — that nothing left on disk came from the previous run.
 #
-# Eso no es manía de orden. Patrol sobrescribe sus resultados cuando termina
-# bien, pero una corrida que muere antes de tiempo deja los de ayer en su
-# sitio, y el reporte siguiente se construye sobre ellos sin decir una
-# palabra: sale fechado "ahora" con datos viejos.
+# That is not tidiness for its own sake. Patrol overwrites its results when it
+# finishes properly, but a run that dies early leaves yesterday's in place, and
+# the next report is built on top of them without a word: it comes out dated
+# "now" carrying old data.
 set -euo pipefail
 
 cd "$(dirname "$0")/../.."
@@ -43,7 +42,7 @@ cd "$(dirname "$0")/../.."
 APP_DIR="packages/apps/market_app"
 
 usage() {
-  echo "uso: tool/e2e/clean.sh <web|android>" >&2
+  echo "usage: tool/e2e/clean.sh <web|android>" >&2
   exit 2
 }
 
@@ -54,13 +53,13 @@ case "$PLATFORM" in
 esac
 
 targets=(
-  # La raíz de esa plataforma: se lleva resultados, reporte y logs de una vez.
+  # That platform's root: takes results, report and logs in one go.
   "build/e2e/$PLATFORM"
-  # `test_bundle.dart` es la excepción, y no por descuido: patrol_cli lo genera
-  # en la raíz del paquete y no acepta otra ruta — ni podría, es código Dart
-  # que tiene que compilar dentro del paquete. Se borra igual porque es un
-  # residuo, y uno que quedó de una ejecución interrumpida puede no
-  # corresponder a los tests que hay ahora.
+  # `test_bundle.dart` is the exception, and not by oversight: patrol_cli
+  # generates it at the package root and accepts no other path — nor could it,
+  # being Dart code that has to compile inside the package. It is deleted all
+  # the same because it is a leftover, and one left by an interrupted run may
+  # not match the tests that are there now.
   "$APP_DIR/test_bundle.dart"
   "$APP_DIR/patrol_test/test_bundle.dart"
 )
@@ -69,13 +68,13 @@ removed=0
 for target in "${targets[@]}"; do
   if [[ -e "$target" ]]; then
     rm -rf "$target"
-    echo "  borrado  $target"
+    echo "  deleted  $target"
     removed=$((removed + 1))
   fi
 done
 
 if [[ "$removed" -eq 0 ]]; then
-  echo "Limpieza ($PLATFORM): no había nada de una corrida anterior."
+  echo "Cleanup ($PLATFORM): nothing left from a previous run."
 else
-  echo "Limpieza ($PLATFORM): $removed elemento(s)."
+  echo "Cleanup ($PLATFORM): $removed item(s)."
 fi

@@ -1,139 +1,139 @@
-# Traspaso de contexto: llevar el E2E de esta POC a una app real
+# Context handoff: taking this POC's E2E to a real app
 
-Este documento existe para que una sesión nueva —en otra cuenta, otro equipo u
-otro momento— pueda retomar el trabajo sin volver a analizar nada. Es
-autocontenido: leyéndolo se tiene todo lo que se concluyó al estudiar esta POC.
+This document exists so that a fresh session — on another account, another team
+or another day — can pick the work up without analysing anything again. It is
+self-contained: reading it gives you everything that was concluded while
+studying this POC.
 
-- **Repositorio de referencia (público):** https://github.com/lisandrobetancur/app_demo
-- **Prompt de migración por fases:** [`docs/prompt-migracion-patrol.md`](./prompt-migracion-patrol.md)
+- **Reference repository (public):** https://github.com/lisandrobetancur/app_demo
+- **Phased migration prompt:** [`docs/prompt-migracion-patrol.md`](./prompt-migracion-patrol.md)
 
-## Cómo arrancar en otra cuenta
+## How to start on another account
 
-El repo es público, así que no hace falta transferir permisos ni exportar la
-sesión. En la sesión nueva, **abierta sobre el repositorio de la app real**,
-basta con:
+The repo is public, so there is no need to transfer permissions or export the
+session. In the new session, **opened on the real app's repository**, this is
+enough:
 
 ```
-Lee https://raw.githubusercontent.com/lisandrobetancur/app_demo/main/docs/e2e-handoff.md
-y https://raw.githubusercontent.com/lisandrobetancur/app_demo/main/docs/prompt-migracion-patrol.md
+Read https://raw.githubusercontent.com/lisandrobetancur/app_demo/main/docs/e2e-handoff.md
+and https://raw.githubusercontent.com/lisandrobetancur/app_demo/main/docs/prompt-migracion-patrol.md
 
-Adopta el rol y las reglas del prompt, y empieza por la Fase 0 sobre ESTE
-proyecto. Solo la Fase 0.
+Adopt the role and the rules in the prompt, and start from Phase 0 on THIS
+project. Phase 0 only.
 ```
 
-Si esa sesión no tiene salida a internet, hay dos alternativas: clonar el repo
-de referencia dentro del entorno, o pegar el contenido del prompt a mano (es
-autocontenido y no depende de leer esta POC).
+If that session has no internet access, there are two alternatives: clone the
+reference repo inside the environment, or paste the prompt's content by hand
+(it is self-contained and does not depend on reading this POC).
 
-## Qué es la POC de referencia
+## What the reference POC is
 
-Marketplace de vehículos en Flutter, offline-first. Monorepo Melos con 36
-paquetes bajo `packages/{apps,features,shared,ui,development}`. Corre en
-Android, iOS y web desde un mismo shell. La suite E2E está hecha con **Patrol
-4.6.1**, con reporte Allure y CI en GitHub Actions.
+An offline-first Flutter vehicle marketplace. A Melos monorepo with 36 packages
+under `packages/{apps,features,shared,ui,development}`. It runs on Android, iOS
+and web from a single shell. The E2E suite is built with **Patrol 4.6.1**, with
+an Allure report and CI on GitHub Actions.
 
-**No es una plantilla para copiar tal cual.** Es una POC construida sin
-restricciones, donde se podía tocar cualquier archivo. Una app en producción
-tiene restricciones distintas, y por eso lo importante del análisis siguiente
-es la separación entre lo que Patrol **exige** y lo que esta POC simplemente
-**eligió**.
+**It is not a template to copy as-is.** It is a POC built without constraints,
+where any file could be touched. An app in production has different
+constraints, which is why what matters in the analysis below is the separation
+between what Patrol **requires** and what this POC merely **chose**.
 
-## Archivos que vale la pena mirar
+## Files worth looking at
 
-| Ruta | Qué enseña |
+| Path | What it shows |
 |---|---|
-| `packages/apps/market_app/patrol_test/` | La suite completa: `pages/`, `steps/`, `support/`, tests |
-| `patrol_test/pages/base_page.dart` | El contrato de la capa de páginas, documentado |
-| `patrol_test/steps/auth_steps.dart` | Steps en lenguaje de negocio, sin locators |
-| `patrol_test/support/app_launcher.dart` | Cómo se arranca la app dentro de un test |
-| `patrol_test/support/screenshot.dart` | Captura por paso — **sin tocar la app** |
-| `packages/apps/market_app/pubspec.yaml` | El bloque `patrol:` y la `dev_dependency` |
-| `android/app/build.gradle.kts` | Runner + orchestrator, con el porqué comentado |
-| `pubspec.yaml` (raíz) | Scripts Melos: `e2eWeb`, `e2eAndroid`, `allureWeb` |
-| `tool/allure/`, `tool/e2e/` | Conversión a Allure y captura de logcat |
-| `.github/workflows/e2e-*.yml` | CI de web y Android |
+| `packages/apps/market_app/patrol_test/` | The whole suite: `pages/`, `steps/`, `support/`, tests |
+| `patrol_test/pages/base_page.dart` | The page layer's contract, documented |
+| `patrol_test/steps/auth_steps.dart` | Steps in business language, no locators |
+| `patrol_test/support/app_launcher.dart` | How the app is launched inside a test |
+| `patrol_test/support/screenshot.dart` | Per-step capture — **without touching the app** |
+| `packages/apps/market_app/pubspec.yaml` | The `patrol:` block and the `dev_dependency` |
+| `android/app/build.gradle.kts` | Runner + orchestrator, with the reasoning in comments |
+| `pubspec.yaml` (root) | Melos scripts: `e2eWeb`, `e2eAndroid`, `allureWeb` |
+| `tool/allure/`, `tool/e2e/` | Allure conversion and logcat capture |
+| `.github/workflows/e2e-*.yml` | Web and Android CI |
 
-## Conclusión del análisis: huella real de Patrol
+## Conclusion of the analysis: Patrol's real footprint
 
-Esta es la parte que no se deduce leyendo el código, y la razón de ser de este
-documento.
+This is the part you cannot deduce by reading the code, and the reason this
+document exists.
 
-### Obligatorio (irreducible)
+### Mandatory (irreducible)
 
-| Qué | Dónde | Impacto en el binario de producción |
+| What | Where | Impact on the production binary |
 |---|---|---|
-| `patrol` en `dev_dependencies` + bloque `patrol:` | `pubspec.yaml` de la app | **Ninguno** — una `dev_dependency` no entra al release |
-| Un launcher que pumpee el árbol en vez de `runApp` | archivo nuevo en la carpeta de tests | Ninguno |
-| Android: `testInstrumentationRunner`, orchestrator, clase puente | `android/app/build.gradle`, `src/androidTest/` | Solo `androidTest`; no toca el APK de release |
-| iOS: target `RunnerUITests` | `ios/Runner.xcodeproj` | Aditivo; no toca el target de la app |
+| `patrol` in `dev_dependencies` + `patrol:` block | the app's `pubspec.yaml` | **None** — a `dev_dependency` does not enter the release |
+| A launcher that pumps the tree instead of `runApp` | new file in the test folder | None |
+| Android: `testInstrumentationRunner`, orchestrator, bridge class | `android/app/build.gradle`, `src/androidTest/` | `androidTest` only; does not touch the release APK |
+| iOS: `RunnerUITests` target | `ios/Runner.xcodeproj` | Additive; does not touch the app target |
 
-**En web la huella nativa es exactamente cero:** Patrol maneja Chromium vía
-Playwright, sin tocar `android/` ni `ios/`. Por eso web es el camino de entrada
-recomendado en un proyecto que no se quiere arriesgar.
+**On web the native footprint is exactly zero:** Patrol drives Chromium through
+Playwright, without touching `android/` or `ios/`. That is why web is the
+recommended way in for a project that does not want to take risks.
 
-### Lo que esta POC tiene pero NO es necesario
+### What this POC has but is NOT necessary
 
-Verificado en el código, no estimado:
+Verified in the code, not estimated:
 
-- **`appBoundaryKey` (screenshots)** — vive al 100% en
-  `patrol_test/support/screenshot.dart`. Huella en la app: cero. Se replica sin
-  tocar nada.
-- **`AppDurations.fastMode`** — *sí* es código de producción
+- **`appBoundaryKey` (screenshots)** — lives 100% in
+  `patrol_test/support/screenshot.dart`. Footprint in the app: zero. It can be
+  replicated without touching anything.
+- **`AppDurations.fastMode`** — this one *is* production code
   (`packages/ui/design_system/lib/src/tokens/app_durations.dart` +
-  `main.dart:18`). Es la única pieza de la POC que añade una rama de
-  comportamiento al binario real. **En una app madura, no replicarlo.**
-  Alternativa: `timeDilation` desde el test, o aceptar un `pumpAndSettle` más
-  lento.
-- **`seedMode` / `fileName` en la base de datos** — app-side en la POC.
-  Alternativa sin tocar producción: usar el DI que ya exista para sustituir el
-  repositorio o el cliente HTTP desde el launcher del test.
-- **Las ~90 `Key` centralizadas en los paquetes `*_constants`** — es lo más
-  vistoso de la POC y **Patrol no las requiere**. Los finders aceptan texto,
-  tipo de widget, descendientes y semantics. Agregar una `Key` no cambia
-  layout, render ni comportamiento, pero es código de producción: debe ser una
-  decisión explícita por widget, nunca un barrido masivo.
+  `main.dart:18`). It is the only piece of the POC that adds a behaviour branch
+  to the real binary. **In a mature app, do not replicate it.** Alternatives:
+  `timeDilation` from the test, or accepting a slower `pumpAndSettle`.
+- **`seedMode` / `fileName` on the database** — app-side in the POC.
+  Alternative without touching production: use whatever DI already exists to
+  substitute the repository or the HTTP client from the test launcher.
+- **The ~90 `Key`s centralised in the `*_constants` packages** — the flashiest
+  part of the POC, and **Patrol does not require them**. Finders accept text,
+  widget type, descendants and semantics. Adding a `Key` changes no layout, no
+  render and no behaviour, but it is production code: it must be an explicit
+  decision per widget, never a mass sweep.
 
-### Riesgos al llevarlo a una app en producción, en orden
+### Risks when taking this to a production app, in order
 
-1. **Colisión con `androidTest` existente.** Solo puede haber un
-   `testInstrumentationRunner`. Si el proyecto ya tiene tests instrumentados
-   (Espresso, o los de algún SDK), declarar el de Patrol los rompe. Es lo
-   primero que hay que verificar. Mitigación: `testBuildType` o product flavor
-   dedicado a E2E.
-2. **`main()` no factorizado.** Aquí `main.dart` tiene 14 líneas y el launcher
-   pudo espejarlo trivialmente. Una app madura suele traer `Firebase`,
-   Crashlytics, remote config, analytics y DI dentro de `main()`. Hay que
-   extraer un `bootstrap()` / `createApp()` reutilizable — **este es el trabajo
-   real del proyecto**, y es un refactor mecánico y verificable.
-3. **`project.pbxproj` en iOS.** Agregar el target genera conflictos de merge
-   si hay varias ramas vivas. Rompe el repo, no la app.
-4. **Tiempo de CI.** El orchestrator reinicia el proceso por cada test (el
-   porqué está comentado en `android/app/build.gradle.kts`). Correcto pero
-   lento: plantearlo como job nocturno o manual, no en cada PR.
+1. **Collision with an existing `androidTest`.** There can only be one
+   `testInstrumentationRunner`. If the project already has instrumented tests
+   (Espresso, or an SDK's own), declaring Patrol's breaks them. This is the
+   first thing to check. Mitigation: `testBuildType` or a product flavor
+   dedicated to E2E.
+2. **An unfactored `main()`.** Here `main.dart` is 14 lines and the launcher
+   could mirror it trivially. A mature app usually carries `Firebase`,
+   Crashlytics, remote config, analytics and DI inside `main()`. A reusable
+   `bootstrap()` / `createApp()` has to be extracted — **this is the project's
+   real work**, and it is a mechanical, verifiable refactor.
+3. **`project.pbxproj` on iOS.** Adding the target produces merge conflicts
+   when several branches are alive. It breaks the repo, not the app.
+4. **CI time.** The orchestrator restarts the process for every test (the
+   reasoning is in a comment in `android/app/build.gradle.kts`). Correct but
+   slow: propose it as a nightly or manual job, not on every PR.
 
-### Lo que NO es viable
+### What is NOT viable
 
-Un repositorio separado solo para los tests de Patrol, sin tocar la app.
-Patrol no es black-box: el test **se compila dentro del binario** e importa el
-código de la app (`app_launcher.dart` importa `package:market_app/…`,
-`database`, `design_system`), el CLI se ejecuta desde el paquete de la app y lo
-nativo vive en sus proyectos Android/iOS. Un repo externo tendría que clonar el
-workspace completo igualmente.
+A separate repository holding only the Patrol tests, without touching the app.
+Patrol is not black-box: the test **is compiled into the binary** and imports
+the app's code (`app_launcher.dart` imports `package:market_app/…`, `database`,
+`design_system`), the CLI runs from the app's package and the native side lives
+in its Android/iOS projects. An external repo would have to clone the whole
+workspace anyway.
 
-Lo que sí se puede: extraer `pages/`, `steps/` y `support/` a un paquete
-propio, dejando en la app solo los `*_test.dart` y el bloque `patrol:`. Para
-cero contacto real haría falta una herramienta black-box (Maestro, Appium)
-contra el binario ya compilado, perdiendo el acceso al árbol de widgets y al
-control de estado que hace valioso a Patrol.
+What can be done: extract `pages/`, `steps/` and `support/` into a package of
+their own, leaving only the `*_test.dart` files and the `patrol:` block in the
+app. For genuinely zero contact you would need a black-box tool (Maestro,
+Appium) against the already-compiled binary, losing the access to the widget
+tree and the state control that makes Patrol worth having.
 
-## Decisiones ya tomadas para la migración
+## Decisions already made for the migration
 
-Están codificadas en el prompt; se listan aquí para que no se re-discutan:
+They are encoded in the prompt; they are listed here so they do not get
+re-litigated:
 
-- Empezar por **web** si la app real la soporta (huella nativa cero).
-- **Los locators los define la persona, no el agente.** Antes de escribir un
-  page object, el agente entrega una tabla de solicitud por pantalla y espera.
-- **No** replicar `fastMode` ni ninguna bandera de "modo test" en producción.
-- Las `Key`, si hacen falta, van **un commit por pantalla**.
-- Una fase a la vez, con presupuesto de archivos declarado y parada obligatoria
-  al final de cada una.
+- Start with **web** if the real app supports it (zero native footprint).
+- **A person defines the locators, not the agent.** Before writing a page
+  object, the agent hands over a request table per screen and waits.
+- Do **not** replicate `fastMode` or any other "test mode" flag in production.
+- `Key`s, if needed, go in **one commit per screen**.
+- One phase at a time, with a declared file budget and a mandatory stop at the
+  end of each.

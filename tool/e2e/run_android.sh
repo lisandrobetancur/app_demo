@@ -10,20 +10,20 @@
 # console; on Android the only place they exist is logcat, and it has to be
 # read in parallel with the run.
 #
-# Igual que la corrida web, hace las tres cosas en un comando: limpia lo de la
-# corrida anterior, corre, y genera el reporte — el modelo de `aggregate` de
-# Serenity, donde el reporte es parte de la ejecución y no un paso aparte que
-# alguien tiene que recordar. Abrirlo sigue siendo otra cosa
+# Like the web run, it does three things in one command: clean up after the
+# previous run, run, and build the report — Serenity's `aggregate` model, where
+# the report is part of running rather than a separate step somebody has to
+# remember. Opening it stays a different thing
 # (`melos run allureServeAndroid`).
 #
-# El reporte se genera TAMBIÉN cuando la suite falla, que es cuando alguien lo
-# va a abrir, pero el script sigue saliendo en rojo para que CI no dé por
-# buena una corrida con tests caídos. De ahí que el estado se guarde y se
-# propague al final en vez de encadenar con `&&`.
+# The report is built EVEN WHEN the suite fails, which is when somebody is
+# going to open it, but the script still exits red so CI does not accept a run
+# with failing tests. Hence saving the status and propagating it at the end
+# instead of chaining with `&&`.
 #
-# `set -e` sigue activo para la detección del dispositivo y la captura del
-# log — ahí un fallo es un fallo — y se desactiva sólo alrededor de la
-# corrida, donde un código distinto de cero es el resultado.
+# `set -e` stays on for device detection and log capture — a failure there is a
+# failure — and is switched off only around the run, where a non-zero code is
+# the result.
 #
 #   tool/e2e/run_android.sh [device-serial]
 #
@@ -76,12 +76,12 @@ trap - EXIT
 echo "Device log captured at $LOG ($(wc -l < "$LOG" | tr -d ' ') lines)"
 
 echo
-echo "── Generando el reporte ──────────────────────────────────────────────"
+echo "── Building the report ───────────────────────────────────────────────"
 node tool/allure/patrol_to_allure.mjs --input "$LOG" --platform android \
   && npx --prefix tool/allure allure awesome "$OUT/allure/results" \
        --output "$OUT/allure/report" --report-name "Market E2E · Android" \
-  || echo "El reporte no se pudo generar (la suite salió con $status)." >&2
+  || echo "The report could not be built (the suite exited with $status)." >&2
 
 echo
-echo "Reporte:  build/e2e/android/allure/report  ·  ábrelo con: melos run allureServeAndroid"
+echo "Report:  build/e2e/android/allure/report  ·  open it with: melos run allureServeAndroid"
 exit "$status"

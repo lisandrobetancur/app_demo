@@ -1,10 +1,10 @@
 {
   "catalog": {
     "activeProducts": 15,
-    "comment": "Número de productos activos que siembra `Seed` en shared/database."
+    "comment": "Number of active products seeded by `Seed` in shared/database."
   },
   "cart": {
     "taxRate": 0.19,
-    "comment": "IVA que aplica el carrito; refleja `CartLimits.taxRate`."
+    "comment": "Tax rate the cart applies; mirrors `CartLimits.taxRate`."
   }
 }
