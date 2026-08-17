@@ -80,60 +80,48 @@ melos:
     rmOverrides: melos exec -c 1 -- rm -f pubspec_overrides.yaml
     pubGet: melos exec -c 1 -- flutter pub get
 
-    # End-to-end suite on the web.
+    # ── Suite end-to-end ────────────────────────────────────────────────
     #
-    # Three reporters, each for a different reader: `list` for the terminal,
-    # `json` for the Allure converter, and `junit` for CI — GitLab, Jenkins
-    # and Azure read results.xml natively and turn it into a test tab, which
-    # a static Allure site cannot do. Patrol only accepts this whitelist, so
-    # no third-party reporter can be plugged in here.
+    # Cada uno de estos comandos hace TRES cosas, en este orden:
     #
-    # `json` is not optional: Playwright's per-test stdout capture is the only
-    # channel that carries the screenshot markers out of the browser. The CLI's
-    # own stdout drops them.
+    #   1. borra lo que dejó la corrida anterior DE ESA plataforma,
+    #   2. corre la suite,
+    #   3. genera el reporte de Allure — siempre, también si la suite falló.
     #
-    # There is deliberately no video: the evidence model is one screenshot per
-    # business step, which is the only one that works identically on web,
-    # Android and iOS.
-    # The previous run's output is deleted before starting. Patrol overwrites
-    # it on success anyway, but a run that dies early would otherwise leave
-    # yesterday's results.json in place, and the next report would be built
-    # from it without a word — a report stamped "now" holding stale data.
+    # Es el modelo de `aggregate` de Serenity: el reporte es parte de la
+    # ejecución, no un paso que alguien tiene que acordarse de lanzar. Abrirlo
+    # sigue siendo aparte (`allureServeWeb` / `allureServeAndroid`), porque
+    # generar y abrir son decisiones distintas y en CI sólo existe la primera.
     #
-    # `--web-locale` is not cosmetic: a freshly created headless browser can
-    # report no languages at all, and Flutter's engine throws
-    # "Invalid argument: Incorrect locale information provided" out of
-    # `parseBrowserLanguages` before it paints a single frame — the app never
-    # starts, so the run reports zero tests rather than a failure. Pinning it
-    # also makes local and CI agree, and the suite asserts Spanish copy.
-    # The timezone is pinned for the same reason, before a date assertion ever
-    # depends on where the machine happens to be.
-    e2eWeb: rm -rf packages/apps/market_app/playwright-report && cd packages/apps/market_app && patrol test --device chrome --web-headless=true --web-locale=es-ES --web-timezone=America/Bogota --web-reporter='["list","json","junit"]'
+    # El código de salida es el de la suite, no el del reporte: una corrida
+    # roja sale roja aunque su reporte se haya construido bien.
+    #
+    # Lo que se borra al empezar, por plataforma, está en tool/e2e/clean.sh.
+    # Al empezar y no al terminar: limpiar al final deja la máquina limpia
+    # pero se lleva la evidencia de lo que acaba de fallar.
+    e2eWeb: bash tool/e2e/run_web.sh
+    e2eAndroid: bash tool/e2e/run_android.sh
 
-    # Same suite with a visible browser, to watch it drive the app. Note the
-    # `=false`: on patrol_cli 4.4.0 a bare `--web-headless` prints the help
-    # text instead of running.
-    e2eWebHeaded: rm -rf packages/apps/market_app/playwright-report && cd packages/apps/market_app && patrol test --device chrome --web-headless=false --web-locale=es-ES --web-timezone=America/Bogota --web-reporter='["list","json","junit"]'
+    # Con navegador visible, para verlo manejar la app.
+    e2eWebHeaded: bash tool/e2e/run_web.sh --headed
 
     # Filtrado por tags. Patrol acepta expresiones booleanas, no sólo nombres,
     # y el filtro se aplica al GENERAR el bundle: un test excluido no se
     # compila dentro del binario, no es que se compile y se salte. El
     # vocabulario está en `Tags`, en el kit.
-    #
-    #   melos run e2eWebSmoke                  -> sólo el humo
-    #   melos run e2eWebNegative               -> sólo los casos de rechazo
-    #   patrol test --tags "smoke_test && exito"
-    #   patrol test --exclude-tags "lento"
-    e2eWebSmoke: rm -rf packages/apps/market_app/playwright-report && cd packages/apps/market_app && patrol test --device chrome --tags "smoke_test" --web-headless=true --web-locale=es-ES --web-timezone=America/Bogota --web-reporter='["list","json","junit"]'
-    e2eWebNegative: rm -rf packages/apps/market_app/playwright-report && cd packages/apps/market_app && patrol test --device chrome --tags "negativo" --web-headless=true --web-locale=es-ES --web-timezone=America/Bogota --web-reporter='["list","json","junit"]'
+    e2eWebSmoke: bash tool/e2e/run_web.sh --tags=smoke_test
+    e2eWebNegative: bash tool/e2e/run_web.sh --tags=negativo
 
-    # The three steps in one, for when you want the report without thinking
-    # about it. They stay separate above so you can stop after the run.
-    e2eWebReport: melos run e2eWeb && melos run allureWeb && melos run allureServeWeb
-    e2eWebHeadedReport: melos run e2eWebHeaded && melos run allureWeb && melos run allureServeWeb
-    # Runs the suite on a connected Android device, capturing logcat — the
-    # only channel carrying the step and screenshot markers on mobile.
-    e2eAndroid: bash tool/e2e/run_android.sh
+    # Sólo la limpieza, para cuando quieras dejar una plataforma en cero sin
+    # correr nada.
+    e2eClean: bash tool/e2e/clean.sh web && bash tool/e2e/clean.sh android
+    e2eCleanWeb: bash tool/e2e/clean.sh web
+    e2eCleanAndroid: bash tool/e2e/clean.sh android
+
+    # Correr y además ABRIR el reporte. La generación ya la hace `e2eWeb`;
+    # esto sólo añade el servidor local encima.
+    e2eWebReport: melos run e2eWeb && melos run allureServeWeb
+    e2eWebHeadedReport: melos run e2eWebHeaded && melos run allureServeWeb
 
     # Everything Allure produces lives under one directory:
     #
@@ -156,6 +144,9 @@ melos:
     # `--history-path` to draw Status dynamics and Durations dynamics, but
     # that file is state surviving between runs, and here a report is meant to
     # describe one execution and nothing else.
+    # Regenerar el reporte a partir de los resultados que YA hay en disco,
+    # sin volver a correr la suite. `e2eWeb` y `e2eAndroid` ya lo generan; esto
+    # es para cuando cambias el convertidor y quieres ver el efecto.
     allureWeb: rm -rf allure/web && node tool/allure/patrol_to_allure.mjs --platform web && npx --prefix tool/allure allure awesome allure/web/results --output allure/web/report --report-name "Market E2E · Web"
     allureAndroid: rm -rf allure/android && node tool/allure/patrol_to_allure.mjs --input build/e2e/android_run.log --platform android && npx --prefix tool/allure allure awesome allure/android/results --output allure/android/report --report-name "Market E2E · Android"
     allureServeWeb: npx --prefix tool/allure allure serve allure/web/results

@@ -308,21 +308,61 @@ melos run rmlock
 melos run rmOverrides
 ```
 
-End-to-end suite and reports:
+Unit suites — no browser, no device, about a second each:
+
+```bash
+melos run testKit                 # the framework's own 49 tests
+melos run testApp                 # the data files and their wiring
+melos run testFast                # both
+```
+
+End-to-end suite. Each of these **cleans that platform's previous artifacts,
+runs, and builds the report** — three things in one command, the way Serenity's
+`aggregate` is part of the build rather than a step someone has to remember:
 
 ```bash
 melos run e2eWeb                  # headless Chrome
 melos run e2eWebHeaded            # visible browser
 melos run e2eAndroid              # connected Android device
 
-melos run allureWeb               # build allure/web/report
-melos run allureAndroid           # build allure/android/report
-melos run allureServeWeb          # build + open in the browser
+melos run e2eWebSmoke             # only --tags "smoke_test"
+melos run e2eWebNegative          # only --tags "negativo"
+```
+
+The report is built **even when the suite fails** — that is when it gets
+opened — and the command still exits non-zero, so CI does not read a red run
+as green. Opening it stays separate, because generating and opening are
+different decisions and CI only ever wants the first:
+
+```bash
+melos run allureServeWeb          # open allure/web/report
 melos run allureServeAndroid
 
-melos run e2eWebReport            # run, convert and open, in one command
+melos run e2eWebReport            # run, then open
 melos run e2eWebHeadedReport
 ```
+
+Rebuilding a report from results already on disk, without re-running the
+suite — for when you changed the converter and want to see the effect:
+
+```bash
+melos run allureWeb
+melos run allureAndroid
+```
+
+Cleaning on its own. Per platform, because a web report and a device report
+describe different environments and are kept apart; running the web suite must
+not take out the last device result:
+
+```bash
+melos run e2eCleanWeb             # playwright-report, test-results,
+                                  # allure/web, test_bundle.dart
+melos run e2eCleanAndroid         # build/e2e/android_run.log, allure/android
+melos run e2eClean                # both
+```
+
+Cleaning happens at the **start** of a run, not the end: clearing up afterwards
+leaves a tidy machine but also deletes the evidence of what just failed.
 
 > Melos 7 reads its configuration from the workspace root `pubspec.yaml`; the
 > standalone `melos.yaml` of earlier versions is no longer picked up.
