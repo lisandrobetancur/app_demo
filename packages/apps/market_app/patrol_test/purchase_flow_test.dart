@@ -23,14 +23,18 @@ void main() {
             'cuadren antes y después del cupón: subtotal - descuento, IVA sobre '
             'la base gravable, y total = base + IVA.',
       );
+      await launchMarketApp($);
+      final Steps steps = Steps($);
+
+      // Los `testParam` van DESPUÉS del arranque, no antes: leen de
+      // `TestData`, y los datos viven en el bundle de assets, que no existe
+      // hasta que la app arrancó. Además así registran lo que la prueba usó
+      // de verdad, no lo que pensaba usar.
       testParam('Usuario', TestData.demoEmail);
       testParam('Producto', TestData.buyableProductName);
       testParam('Cupón', TestData.validCoupon);
       testParam('Dirección', 'addr_demo_home');
       testParam('Medio de pago', 'Tarjeta');
-
-      await launchMarketApp($);
-      final Steps steps = Steps($);
 
       await steps.auth.loginAsDemoUser();
       await steps.catalog.openCatalog();
@@ -63,11 +67,15 @@ void main() {
             'Una publicación propia no se compra: el detalle debe ofrecer '
             'editar en lugar del CTA de compra.',
       );
-      testParam('Usuario', TestData.demoEmail);
-      testParam('Producto propio', TestData.ownProductName);
-
       await launchMarketApp($);
       final Steps steps = Steps($);
+
+      // Los `testParam` van DESPUÉS del arranque, no antes: leen de
+      // `TestData`, y los datos viven en el bundle de assets, que no existe
+      // hasta que la app arrancó. Además así registran lo que la prueba usó
+      // de verdad, no lo que pensaba usar.
+      testParam('Usuario', TestData.demoEmail);
+      testParam('Producto propio', TestData.ownProductName);
 
       await steps.auth.loginAsDemoUser();
       await steps.catalog.openCatalog();
@@ -90,11 +98,15 @@ void main() {
             'El error debe distinguir vencido de inexistente, y el descuento '
             'debe quedar en cero.',
       );
-      testParam('Usuario', TestData.demoEmail);
-      testParam('Cupón', TestData.expiredCoupon);
-
       await launchMarketApp($);
       final Steps steps = Steps($);
+
+      // Los `testParam` van DESPUÉS del arranque, no antes: leen de
+      // `TestData`, y los datos viven en el bundle de assets, que no existe
+      // hasta que la app arrancó. Además así registran lo que la prueba usó
+      // de verdad, no lo que pensaba usar.
+      testParam('Usuario', TestData.demoEmail);
+      testParam('Cupón', TestData.expiredCoupon);
 
       await steps.auth.loginAsDemoUser();
       await steps.catalog.openCatalog();

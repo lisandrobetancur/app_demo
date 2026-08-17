@@ -55,15 +55,21 @@ void main() {
     });
 
     test(
-      'reading before loading says so, instead of returning nothing',
+      'reading before loading names the cause that actually happens',
       () async {
+        // Y la nombra bien. La primera versión de este mensaje decía "llama a
+        // TestDataStore.load() en el launcher" — y cuando el fallo llegó de
+        // verdad, el launcher SÍ lo llamaba: lo que pasaba es que un
+        // testParam() en la cabecera del test leía los datos antes. El
+        // mensaje mandó a mirar al sitio equivocado, así que ahora nombra el
+        // orden, no la llamada.
         expect(
           () => TestDataStore.dataset('users'),
           throwsA(
             isA<TestDataError>().having(
               (TestDataError e) => e.message,
               'message',
-              contains('TestDataStore.load()'),
+              allOf(contains('ANTES'), contains('testParam')),
             ),
           ),
         );
