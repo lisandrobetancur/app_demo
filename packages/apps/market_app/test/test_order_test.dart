@@ -39,8 +39,7 @@ void main() {
     expect(
       files,
       isNotEmpty,
-      reason:
-          'found no *_test.dart under ${testDir.path}; did the path or '
+      reason: 'found no *_test.dart under ${testDir.path}; did the path or '
           'the working directory change?',
     );
 

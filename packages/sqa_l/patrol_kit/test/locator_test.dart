@@ -13,9 +13,8 @@ import 'package:patrol_kit/patrol_kit.dart';
 /// by hand rather than through `addTearDown` — the framework checks for leaked
 /// handles before tear-downs run.
 void main() {
-  Widget wrap(Widget child) => MaterialApp(
-    home: Scaffold(body: Center(child: child)),
-  );
+  Widget wrap(Widget child) =>
+      MaterialApp(home: Scaffold(body: Center(child: child)));
 
   group('an identifier locates the element', () {
     testWidgets('and is what the app declares, not what it renders', (

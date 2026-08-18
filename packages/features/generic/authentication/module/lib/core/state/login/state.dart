@@ -51,8 +51,13 @@ class LoginState {
       other.errorKey == errorKey;
 
   @override
-  int get hashCode =>
-      Object.hash(email, password, obscurePassword, isSubmitting, errorKey);
+  int get hashCode => Object.hash(
+    email,
+    password,
+    obscurePassword,
+    isSubmitting,
+    errorKey,
+  );
 
   @override
   String toString() =>
