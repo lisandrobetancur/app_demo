@@ -29,10 +29,7 @@ class LoginViewModel extends ViewModel<LoginState> {
     state = state.copyWith(isSubmitting: true, clearError: true);
     final Object? key = mountedKey;
     try {
-      await service.login(
-        email: state.email,
-        password: state.password,
-      );
+      await service.login(email: state.email, password: state.password);
       if (key != mountedKey) {
         return;
       }

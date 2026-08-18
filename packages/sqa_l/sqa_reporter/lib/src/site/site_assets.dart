@@ -238,6 +238,10 @@ h4 { font-weight: 400; font-size: 1.1em; margin: 0.75em 0 0.5em 0; color: var(--
   background: #fff;
 }
 
+/* The centred percentage covers the whole box in order to centre itself, so
+   it must not take the pointer: without this it sits over every segment and
+   swallows the click meant for the wedge underneath. Same for the per-slice
+   percentages. */
 .donut .donut-label {
   position: absolute;
   inset: 0;
@@ -247,6 +251,7 @@ h4 { font-weight: 400; font-size: 1.1em; margin: 0.75em 0 0.5em 0; color: var(--
   font-size: 2em;
   color: #444;
   z-index: 2;
+  pointer-events: none;
 }
 
 /* One transparent ring sector per segment, sitting over the gradient: this
@@ -266,7 +271,8 @@ h4 { font-weight: 400; font-size: 1.1em; margin: 0.75em 0 0.5em 0; color: var(--
   font-size: 0.8em;
   font-weight: 600;
   color: #444;
-  z-index: 1;
+  z-index: 2;
+  pointer-events: none;
 }
 
 .chart-legend {

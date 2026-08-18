@@ -145,6 +145,26 @@ void main() {
       );
     });
 
+    test('nothing painted over the doughnut can swallow its clicks', () {
+      // The centred percentage covers the whole box in order to centre
+      // itself; without this rule it sits over every segment and takes the
+      // click meant for the wedge underneath, which is how the doughnut
+      // ended up looking clickable while doing nothing.
+      final String css = File(
+        '${out.path}/results/sqa-reporter.css',
+      ).readAsStringSync();
+      final RegExp label = RegExp(
+        r'\.donut \.donut-label \{[^}]*pointer-events: none;',
+        dotAll: true,
+      );
+      final RegExp slice = RegExp(
+        r'\.donut-slice-label \{[^}]*pointer-events: none;',
+        dotAll: true,
+      );
+      expect(css, matches(label));
+      expect(css, matches(slice));
+    });
+
     test('bars and legend entries link to the same selection', () {
       expect(html, contains('<a class="bar-column" href="#tests"'));
       expect(html, contains('<li><a href="#tests" data-result="ERROR">'));
