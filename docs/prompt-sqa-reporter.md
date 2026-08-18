@@ -8,9 +8,26 @@ between each one.
 
 ## ROLE
 
-You are building **`sqa_reporter`**: a Dart program that turns an E2E run into a
-report which is a **visual replica of Serenity BDD's**, and which writes the
-**same result files** Serenity's Gradle `aggregate` task produces.
+You are building **`sqa_reporter`**: a Dart program that turns an E2E run into
+a report with the **same structure and layout as Serenity BDD's** — built
+clean, copying none of Serenity's files — and which writes result files with
+the **same JSON schema** Serenity's Gradle `aggregate` task produces.
+
+**Branding and legal, non-negotiable:**
+
+* **No Serenity file is ever copied** — no template, no CSS, no JS, no image.
+  Serenity's source is read for structure, schema and layout only. Ideas and
+  layout are not protected material; their files are, and copying them would
+  oblige us to carry Serenity's copyright notice, which the next rule forbids.
+* **The strings "Serenity", "serenity", "Serenity BDD" appear nowhere** in the
+  generated site, the package's code, its assets or its output — only in
+  `docs/` where the design source is honestly credited.
+* The report titles itself **"SQA Reporter"**. The slot where Serenity shows
+  the project name reads **"Test e2e Web"** or **"Test e2e Mobile"** according
+  to the platform being reported.
+* Styling is our own CSS over standard permissively-licensed libraries
+  (Bootstrap, Chart.js, DataTables — MIT and similar). Their notices travel
+  with their files, as everywhere else in the industry.
 
 This is an alternative to Allure, not an addition to it. The existing Allure
 pipeline keeps working untouched until the replacement is proven; the two
@@ -18,8 +35,9 @@ coexist for the whole of this work.
 
 Your priorities, in this order:
 
-1. **Fidelity to Serenity.** When in doubt, do what Serenity does, and say
-   where you could not find out.
+1. **Structural fidelity to Serenity.** Same pages, same panels, same
+   information in the same places; the pixels may diverge and will, since the
+   styling is ours. When in doubt about structure, do what Serenity does.
 2. **Evidence over inference.** Serenity is open source. Read its code, do not
    reconstruct it from blog posts.
 3. **Runnable at every phase.** Each phase ends with output someone can open.
@@ -66,8 +84,8 @@ assets, all published:
   `build-info.ftl`, `progress-report.ftl`, `results-by-tagtype.ftl`,
   `text-summary.ftl`.
 - **Static assets** — the CSS, JS, fonts and images in the same
-  `serenity-report-resources` module. The replica depends on these more than on
-  any template.
+  `serenity-report-resources` module. **Read-only reference** for what the
+  pages load and how they are laid out; none of it is copied.
 - **The JSON schema** — Serenity serialises a `TestOutcome` per test. Find the
   serialiser in `serenity-model` / `serenity-core` and derive the schema from
   the code, not from an example you found somewhere.
@@ -156,12 +174,14 @@ data.
 
 **Allowed files:** the reporter package, plus a new assets directory.
 
-Bring Serenity's CSS and assets across, subject to the licence answer. Match
-the layout, not an approximation of it: the same panels in the same places,
-the same result colours, the same summary counts.
+Write our own stylesheet over stock Bootstrap (and friends), matching the
+layout: the same panels in the same places, the same result colours, the same
+summary counts. No Serenity asset crosses over — see the branding rules.
 
 **Verification:** screenshots of Serenity's dashboard beside yours. Name every
-difference you can see, including the ones you chose to accept.
+structural difference; visual divergence from our own styling is expected and
+listed, not fixed. Verify also that a grep for "serenity" over the generated
+site returns nothing.
 
 ---
 

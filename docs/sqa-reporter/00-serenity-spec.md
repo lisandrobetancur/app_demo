@@ -265,10 +265,14 @@ jqtree, `css/` 68 KB (Serenity's own styling), prism, favicons.
 No CDN, no fonts fetched, no runtime requests. Copy the directory and the site
 works from `file://`.
 
-For the replica, the plausible working set is ~5 MB: bootstrap,
-bootstrap-icons' used subset, datatables, chartjs, jquery, Serenity's own
-`css/` and `scripts/`. The icon packs can be pruned once Phase 2 shows what the
-pages actually reference.
+**Decision, added after review:** none of this is copied. The owner requires
+that nothing of Serenity's exists anywhere in the product — and copying files
+verbatim would oblige carrying Serenity's copyright notice, which contradicts
+that. The inventory above stays as a *read-only reference* for what the pages
+load; the working set becomes stock Bootstrap, bootstrap-icons, DataTables and
+Chart.js obtained from their own distributions (MIT and similar), plus our own
+stylesheet. Layout and structure are followed by eye; formats and field names
+are not protected material.
 
 ---
 
@@ -291,6 +295,15 @@ What it means for this work, stated plainly:
   their files.
 - Apache 2.0 grants **no trademark rights**: the product must not be presented
   as "Serenity BDD". The planned rename already covers this.
+
+**Decision, added after review:** the obligations above never trigger,
+because no Serenity file is redistributed. The product is built clean: own
+CSS over stock MIT libraries, Serenity read for structure and schema only.
+The generated site, the package and its output contain no occurrence of the
+string "Serenity" in any casing; the report titles itself **SQA Reporter**,
+and the project-name slot reads **Test e2e Web** or **Test e2e Mobile** by
+platform. Serenity is credited in `docs/` as the design source, which is
+honesty, not an obligation.
 
 *(A reading of the licence, not legal advice.)*
 
