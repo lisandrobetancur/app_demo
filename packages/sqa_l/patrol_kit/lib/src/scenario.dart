@@ -36,26 +36,31 @@ const String _paramMarker = 'PATROL_PARAM';
 ///
 /// ```dart
 /// scenario(
-///   epic: 'Compra',
-///   feature: 'Carrito y checkout',
-///   story: 'Buy a product from the catalogue',
+///   epic: 'Purchase',
+///   feature: 'Cart and checkout',
 ///   severity: Severity.blocker,
 /// );
 /// ```
 ///
-/// [epic], [feature] and [story] are what Allure groups by in its *Behaviors*
-/// view, which reads by functionality instead of by file.
+/// [epic] and [feature] are what Allure groups by in its *Behaviors* view,
+/// which reads by functionality instead of by file.
+///
+/// There is deliberately no `story`. Allure's taxonomy offers one, but a story
+/// is a unit of work while a test is a unit of verification: the level pays
+/// for itself only when one story holds several tests. Declared one-to-one
+/// with the tests, as it was here, it is a second name for each of them and
+/// groups nothing. The test's own name is the leaf. If a project ever has real
+/// stories — several tests to one — adding the parameter back is one line and
+/// breaks no caller.
 void scenario({
   required String epic,
   required String feature,
-  required String story,
   Severity severity = Severity.normal,
   String? description,
 }) {
   _emit(_metaMarker, <String, String>{
     'epic': epic,
     'feature': feature,
-    'story': story,
     'severity': severity.label,
     if (description != null) 'description': description,
   });
@@ -65,7 +70,7 @@ void scenario({
 /// the report alone.
 ///
 /// ```dart
-/// testParam('Usuario', TestData.demoEmail);
+/// testParam('User', TestData.demoEmail);
 /// testParam('Coupon', TestData.validCoupon);
 /// ```
 void testParam(String name, Object? value) {

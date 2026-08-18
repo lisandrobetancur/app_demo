@@ -15,7 +15,6 @@ void main() {
       scenario(
         epic: 'Access',
         feature: 'Authentication',
-        story: 'Sign in with valid credentials',
         severity: Severity.blocker,
         description:
             'Without login there is no cart, no orders and no profile: it is '
@@ -42,8 +41,6 @@ void main() {
       scenario(
         epic: 'Access',
         feature: 'Authentication',
-        story: 'Reject invalid credentials without leaking whether the email '
-            'exists',
         severity: Severity.critical,
         description:
             'The message must stay generic: telling "no such email" apart from '
@@ -81,7 +78,6 @@ void main() {
       scenario(
         epic: 'Access',
         feature: 'Authentication',
-        story: 'Block submission while the form is invalid',
         severity: Severity.normal,
         description:
             'Live validation must stop the submission before it spends a call '
