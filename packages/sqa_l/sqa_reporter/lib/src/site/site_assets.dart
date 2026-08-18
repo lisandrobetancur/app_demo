@@ -77,33 +77,39 @@ a:hover { text-decoration: underline; }
 
 .topheader { background: #fff; }
 
+/* The page fills the window, with a margin rather than a column: a report of
+   fifty scenarios has long feature and scenario names, and capping the width
+   is what was wrapping them onto three lines while the screen sat empty on
+   both sides. `min-width` keeps the tables readable on a narrow window by
+   scrolling instead of squeezing. */
 .topbanner {
-  max-width: 1200px;
   min-width: 1024px;
   margin: 0 auto;
-  padding: 1em;
+  padding: 1em 1.5em;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.wordmark { font-size: 1.75em; font-weight: 300; color: #333; }
+.wordmark {
+  font-size: 1.75em;
+  font-weight: 300;
+  color: #333;
+  text-decoration: none;
+}
+
+.wordmark:hover { text-decoration: none; }
 .wordmark .accent { color: #428bca; font-weight: 400; }
 
 .projectname { text-align: right; }
 .projecttitle { font-weight: normal; font-size: 2em; color: #428bca; }
-.projectsubtitle {
-  font-weight: normal; font-style: italic; font-size: 1.25em;
-  color: #428bca; display: block;
-}
 
 /* ── Content frame ──────────────────────────────────────────────────── */
 
 .middlecontent {
-  max-width: 1200px;
   min-width: 1024px;
   margin: 0 auto;
-  padding: 0 1em 2em 1em;
+  padding: 0 1.5em 2em 1.5em;
 }
 
 .breadcrumbs { color: #777; padding: 0.5em 0; display: block; }
@@ -459,7 +465,7 @@ th.sortable.desc::after { content: " ↓"; color: #428bca; }
 }
 
 .version { color: gray; font-size: 0.85em; }
-.footer { max-width: 1200px; min-width: 1024px; margin: 1em auto; padding: 0 1em; }
+.footer { min-width: 1024px; margin: 1em auto; padding: 0 1.5em; }
 
 /* ── Test detail page ───────────────────────────────────────────────── */
 

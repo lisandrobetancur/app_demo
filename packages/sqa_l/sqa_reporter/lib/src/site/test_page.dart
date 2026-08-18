@@ -25,6 +25,7 @@ List<File> writeTestPages(
   ParsedRun run,
   Directory outputDir, {
   required String platform,
+  String? title,
   DateTime? generatedAt,
 }) {
   outputDir.createSync(recursive: true);
@@ -35,7 +36,12 @@ List<File> writeTestPages(
         '${outputDir.path}${Platform.pathSeparator}'
         '${htmlReportName(testCase)}',
       )..writeAsStringSync(
-        testPageHtml(testCase, platform: platform, generatedAt: stamp),
+        testPageHtml(
+          testCase,
+          platform: platform,
+          title: title,
+          generatedAt: stamp,
+        ),
       ),
   ];
 }
@@ -46,6 +52,7 @@ String testPageHtml(
   RunCase testCase, {
   required String platform,
   required DateTime generatedAt,
+  String? title,
 }) {
   final RunStatus status = promoteStatus(testCase.status, testCase.steps);
   final String result = serenityResult[status]!;
@@ -75,7 +82,7 @@ String testPageHtml(
     ..writeln('<html lang="en">')
     ..write(pageHead())
     ..writeln('<body>')
-    ..write(banner(platform))
+    ..write(banner(platform, title: title))
     ..writeln('<div class="middlecontent">')
     ..writeln(
       '<span class="breadcrumbs"><a href="index.html">Home</a> &gt; '

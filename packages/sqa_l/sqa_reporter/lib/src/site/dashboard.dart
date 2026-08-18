@@ -19,10 +19,16 @@ import 'page_chrome.dart';
 import 'requirements_page.dart' show coverageOverview;
 import 'site_assets.dart';
 
-/// What the report calls the project, by platform. This replaces the
-/// project-name slot: the report describes the E2E suite, not the app.
+/// The one line naming what the report is of, when nothing was given: the
+/// report describes the E2E suite, not the app, and the platform is the only
+/// thing that distinguishes two runs of it.
+///
+/// Every page takes a `title` that overrides this, and the CLI exposes it as
+/// `--title`, so a project that wants its own wording sets it in one place —
+/// the melos script that builds the report — rather than editing the
+/// generator.
 String projectTitleFor(String platform) =>
-    platform == 'web' ? 'Test e2e Web' : 'Test e2e Mobile';
+    'E2E test report ${platform == 'web' ? 'web' : 'mobile'}';
 
 /// Writes `index.html` and `sqa-reporter.css` into [outputDir], beside the
 /// JSON results. Returns the `index.html` file.
@@ -30,6 +36,7 @@ File writeDashboard(
   ParsedRun run,
   Directory outputDir, {
   required String platform,
+  String? title,
   DateTime? generatedAt,
 }) {
   outputDir.createSync(recursive: true);
@@ -42,6 +49,7 @@ File writeDashboard(
           dashboardHtml(
             run,
             platform: platform,
+            title: title,
             generatedAt: generatedAt ?? DateTime.now().toUtc(),
           ),
         );
@@ -54,6 +62,7 @@ String dashboardHtml(
   ParsedRun run, {
   required String platform,
   required DateTime generatedAt,
+  String? title,
 }) {
   final List<_Row> rows = run.cases.map(_Row.of).toList()
     ..sort((_Row a, _Row b) {
@@ -74,7 +83,7 @@ String dashboardHtml(
     ..writeln('<html lang="en">')
     ..write(pageHead())
     ..writeln('<body>')
-    ..write(banner(platform))
+    ..write(banner(platform, title: title))
     ..writeln('<div class="middlecontent">')
     ..writeln('<span class="breadcrumbs"><a href="index.html">Home</a></span>')
     ..write(menuBar(generatedAt, homeActive: true))
@@ -321,12 +330,6 @@ String _testsPane(List<_Row> rows, ParsedRun run) {
     ..writeln('<span class="pagination"></span>')
     ..writeln('</div>')
     ..writeln('</div>')
-    // The reference reports manual tests here and says so when there are
-    // none. Ours has no way to declare one — every test in this suite is
-    // automated — so the section states that rather than pretending the
-    // question was never asked.
-    ..writeln('<h3>Manual Tests</h3>')
-    ..writeln('<p class="empty-note">No manual tests were recorded</p>')
     ..write(_tagCloud(rows))
     ..writeln('</div>');
   return pane.toString();

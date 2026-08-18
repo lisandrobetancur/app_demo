@@ -15,16 +15,16 @@ String pageHead() => '''
 </head>
 ''';
 
-/// The banner: the report's own name on the left, the project title —
-/// `Test e2e Web` / `Test e2e Mobile` by platform — on the right.
-String banner(String platform) =>
+/// The banner: the report's own name on the left, linking home, and on the
+/// right the one line saying what this report is of — `E2E test report web`
+/// by default, or whatever [title] the run was given.
+String banner(String platform, {String? title}) =>
     '''
 <div class="topheader">
   <div class="topbanner">
-    <div class="wordmark">SQA <span class="accent">Reporter</span></div>
+    <a class="wordmark" href="index.html">SQA <span class="accent">Reporter</span></a>
     <div class="projectname">
-      <span class="projecttitle">${escapeHtml(projectTitleFor(platform))}</span>
-      <span class="projectsubtitle">E2E test report</span>
+      <span class="projecttitle">${escapeHtml(title ?? projectTitleFor(platform))}</span>
     </div>
   </div>
 </div>

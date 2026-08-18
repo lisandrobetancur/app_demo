@@ -32,6 +32,7 @@ List<File> writeRequirementPages(
   ParsedRun run,
   Directory outputDir, {
   required String platform,
+  String? title,
   DateTime? generatedAt,
 }) {
   outputDir.createSync(recursive: true);
@@ -41,14 +42,24 @@ List<File> writeRequirementPages(
   return <File>[
     File('${outputDir.path}${Platform.pathSeparator}capabilities.html')
       ..writeAsStringSync(
-        capabilitiesHtml(roots, platform: platform, generatedAt: stamp),
+        capabilitiesHtml(
+          roots,
+          platform: platform,
+          title: title,
+          generatedAt: stamp,
+        ),
       ),
     for (final RequirementNode feature in featuresIn(roots))
       File(
         '${outputDir.path}${Platform.pathSeparator}'
         '${featureReportName(feature)}',
       )..writeAsStringSync(
-        featurePageHtml(feature, platform: platform, generatedAt: stamp),
+        featurePageHtml(
+          feature,
+          platform: platform,
+          title: title,
+          generatedAt: stamp,
+        ),
       ),
   ];
 }
@@ -58,6 +69,7 @@ String capabilitiesHtml(
   List<RequirementNode> roots, {
   required String platform,
   required DateTime generatedAt,
+  String? title,
 }) {
   final int featureCount = featuresIn(roots).length;
   final int epicCount = roots
@@ -77,7 +89,7 @@ String capabilitiesHtml(
     ..writeln('<html lang="en">')
     ..write(pageHead())
     ..writeln('<body>')
-    ..write(banner(platform))
+    ..write(banner(platform, title: title))
     ..writeln('<div class="middlecontent">')
     ..writeln(
       '<span class="breadcrumbs"><a href="index.html">Home</a> &gt; '
@@ -115,6 +127,7 @@ String featurePageHtml(
   RequirementNode feature, {
   required String platform,
   required DateTime generatedAt,
+  String? title,
 }) {
   final List<RunCase> cases = feature.allCases
     ..sort((RunCase a, RunCase b) => a.name.compareTo(b.name));
@@ -149,7 +162,7 @@ String featurePageHtml(
     ..writeln('<html lang="en">')
     ..write(pageHead())
     ..writeln('<body>')
-    ..write(banner(platform))
+    ..write(banner(platform, title: title))
     ..writeln('<div class="middlecontent">')
     ..writeln(
       '<span class="breadcrumbs"><a href="index.html">Home</a> &gt; '

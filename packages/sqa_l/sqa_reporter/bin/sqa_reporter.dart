@@ -4,6 +4,7 @@
 ///   dart run sqa_reporter [--input <file>] [--output <dir>]
 ///                         [--format playwright|patrol-log]
 ///                         [--platform web|android|ios]
+///                         [--title "E2E test report web"]
 library;
 
 import 'dart:io';
@@ -55,21 +56,25 @@ void main(List<String> argv) {
     run,
     Directory(args.output),
     platform: args.platform,
+    title: args.title,
   );
   final List<File> pages = writeTestPages(
     run,
     Directory(args.output),
     platform: args.platform,
+    title: args.title,
   );
   final List<File> galleries = writeScreenshotPages(
     run,
     Directory(args.output),
     platform: args.platform,
+    title: args.title,
   );
   final List<File> requirements = writeRequirementPages(
     run,
     Directory(args.output),
     platform: args.platform,
+    title: args.title,
   );
 
   stdout
@@ -93,6 +98,7 @@ class _Args {
     required this.output,
     required this.format,
     required this.platform,
+    required this.title,
   });
 
   factory _Args.parse(List<String> argv) {
@@ -100,6 +106,7 @@ class _Args {
     String? output;
     String? format;
     String? platform;
+    String? title;
     for (int i = 0; i + 1 < argv.length; i += 2) {
       switch (argv[i]) {
         case '--input':
@@ -110,6 +117,8 @@ class _Args {
           format = argv[i + 1];
         case '--platform':
           platform = argv[i + 1];
+        case '--title':
+          title = argv[i + 1];
       }
     }
     final String root = _repoRoot();
@@ -127,6 +136,9 @@ class _Args {
       output: output,
       format: format,
       platform: platform,
+      // Left null on purpose when not given: the pages fall back to the
+      // platform's own wording, so the default lives in one place.
+      title: title,
     );
   }
 
@@ -134,6 +146,10 @@ class _Args {
   final String output;
   final String format;
   final String platform;
+
+  /// What the banner says this report is of. Null means the default for the
+  /// platform.
+  final String? title;
 }
 
 /// The repo root, found by walking up to the directory that holds `.git`

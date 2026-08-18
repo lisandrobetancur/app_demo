@@ -28,6 +28,7 @@ List<File> writeScreenshotPages(
   ParsedRun run,
   Directory outputDir, {
   required String platform,
+  String? title,
   DateTime? generatedAt,
 }) {
   outputDir.createSync(recursive: true);
@@ -39,7 +40,12 @@ List<File> writeScreenshotPages(
           '${outputDir.path}${Platform.pathSeparator}'
           '${screenshotsReportName(testCase)}',
         )..writeAsStringSync(
-          screenshotsPageHtml(testCase, platform: platform, generatedAt: stamp),
+          screenshotsPageHtml(
+            testCase,
+            platform: platform,
+            title: title,
+            generatedAt: stamp,
+          ),
         ),
   ];
 }
@@ -50,6 +56,7 @@ String screenshotsPageHtml(
   RunCase testCase, {
   required String platform,
   required DateTime generatedAt,
+  String? title,
 }) {
   final RunStatus status = promoteStatus(testCase.status, testCase.steps);
   final String result = serenityResult[status]!;
@@ -62,7 +69,7 @@ String screenshotsPageHtml(
     ..writeln('<html lang="en">')
     ..write(pageHead())
     ..writeln('<body>')
-    ..write(banner(platform))
+    ..write(banner(platform, title: title))
     ..writeln('<div class="middlecontent">')
     ..writeln(
       '<span class="breadcrumbs"><a href="index.html">Home</a> &gt; '

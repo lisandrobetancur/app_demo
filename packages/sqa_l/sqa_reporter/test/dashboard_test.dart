@@ -10,13 +10,14 @@ import 'fixtures.dart';
 /// the branding rule — the design source's name appears nowhere in the site.
 void main() {
   late Directory out;
+  late File inputFile;
   late String html;
 
   setUpAll(() {
     out = Directory.systemTemp.createTempSync('sqa_dashboard_test');
-    final File input = File('${out.path}/results.json')
+    inputFile = File('${out.path}/results.json')
       ..writeAsStringSync(playwrightReport());
-    final ParsedRun run = parsePlaywright(input);
+    final ParsedRun run = parsePlaywright(inputFile);
     writeSerenityResults(
       run,
       Directory('${out.path}/results'),
@@ -53,10 +54,31 @@ void main() {
       expect(html, contains('SQA <span class="accent">Reporter</span>'));
     });
 
-    test('titles the project by platform', () {
-      expect(html, contains('Test e2e Web'));
-      expect(projectTitleFor('android'), 'Test e2e Mobile');
-      expect(projectTitleFor('ios'), 'Test e2e Mobile');
+    test('the wordmark links home', () {
+      expect(html, contains('<a class="wordmark" href="index.html">'));
+    });
+
+    test('carries one title line, worded by platform', () {
+      expect(html, contains('E2E test report web'));
+      expect(projectTitleFor('web'), 'E2E test report web');
+      expect(projectTitleFor('android'), 'E2E test report mobile');
+      expect(projectTitleFor('ios'), 'E2E test report mobile');
+      expect(
+        html,
+        isNot(contains('projectsubtitle')),
+        reason: 'the two lines became one',
+      );
+    });
+
+    test('a given title replaces the default everywhere', () {
+      final String custom = dashboardHtml(
+        parsePlaywright(inputFile),
+        platform: 'web',
+        title: 'Reporte E2E · Tyba',
+        generatedAt: DateTime.utc(2026, 8, 18, 10, 5),
+      );
+      expect(custom, contains('Reporte E2E · Tyba'));
+      expect(custom, isNot(contains('E2E test report web')));
     });
   });
 
@@ -154,9 +176,8 @@ void main() {
       expect(html, contains('data-order="2"'), reason: 'ERROR ranks second');
     });
 
-    test('says so where the reference would list manual tests', () {
-      expect(html, contains('Manual Tests'));
-      expect(html, contains('No manual tests were recorded'));
+    test('has no manual-test section: every test here is automated', () {
+      expect(html, isNot(contains('Manual Tests')));
     });
   });
 
