@@ -4,6 +4,14 @@ name: Publish reports
 # the whole site and there is only one site per repository — so neither can
 # publish on its own without erasing the other. This runs after either of them
 # finishes, collects the latest report of *both* platforms, and deploys once.
+#
+# `branches` filters the branch of the run that TRIGGERED this one, and the
+# suites run on every pull request. Without the filter each of those runs would
+# publish, and since there is one site the URL would show whichever branch
+# finished last — unmerged work included, with nothing on the page saying so. A
+# report at a stable address has to describe one known branch to be worth
+# linking to, so the published one tracks `main` and a pull request's report
+# stays an artefact on its own run.
 on:
   workflow_run:
     workflows: ["E2E web", "E2E android"]
