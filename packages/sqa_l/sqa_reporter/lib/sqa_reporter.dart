@@ -8,7 +8,10 @@
 ///    transport, both producing the model;
 ///  * the **serialiser** (`serenity_writer.dart`) — writes Serenity-schema
 ///    JSON from the model. A second output format is a second serialiser,
-///    not a rewrite.
+///    not a rewrite;
+///  * the **site** (`site/`) — the HTML report over the same model, all of
+///    its markup and assets authored here (see `site_assets.dart` for where
+///    the clean-room line runs).
 library;
 
 export 'src/inputs.dart' show parsePatrolLog, parsePlaywright, splitTitle;
@@ -24,3 +27,12 @@ export 'src/serenity_writer.dart'
         serenityResult,
         slugOf,
         writeSerenityResults;
+export 'src/site/dashboard.dart'
+    show
+        compoundDuration,
+        dashboardHtml,
+        escapeHtml,
+        projectTitleFor,
+        resultIcon,
+        writeDashboard;
+export 'src/site/site_assets.dart' show resultColors, resultGlyphs;
