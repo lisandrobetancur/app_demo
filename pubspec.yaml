@@ -8,7 +8,7 @@ environment:
 workspace:
   - packages/apps/market_app
   - packages/development/lint
-  - packages/qa/patrol_kit
+  - packages/sqa_l/patrol_kit
   - packages/features/core/cart/constants
   - packages/features/core/cart/module
   - packages/features/core/cart/typing
