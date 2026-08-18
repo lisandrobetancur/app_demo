@@ -445,6 +445,14 @@ table.step-table.nested td { border-bottom: 1px solid #f2f2f2; }
 
 .feature-coverage { margin-bottom: 1em; }
 
+.requirement-narrative {
+  color: #666;
+  font-style: italic;
+  margin-bottom: 0.75em;
+}
+
+.scenario-narrative { color: #888; font-size: 0.85em; }
+
 .carousel { max-width: 800px; margin: 0 auto; }
 
 .slides {

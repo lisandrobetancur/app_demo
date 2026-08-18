@@ -80,12 +80,20 @@ trap - EXIT
 echo "Device log captured at $LOG ($(wc -l < "$LOG" | tr -d ' ') lines)"
 
 echo
-echo "── Building the report ───────────────────────────────────────────────"
+echo "── Building the reports ──────────────────────────────────────────────"
+# Two reporters over the same device log, each in its own `||` branch: neither
+# can stop the other from being built. See run_web.sh for why that matters
+# while one is replacing the other.
 node packages/sqa_l/tool/allure/patrol_to_allure.mjs --input "$LOG" --platform android \
   && pnpm --dir packages/sqa_l/tool/allure exec allure awesome "$OUT/allure/results" \
        --output "$OUT/allure/report" --report-name "Market E2E · Android" \
-  || echo "The report could not be built (the suite exited with $status)." >&2
+  || echo "The Allure report could not be built (the suite exited with $status)." >&2
+
+dart run sqa_reporter --input "$LOG" --format patrol-log --platform android \
+  || echo "The SQA report could not be built (the suite exited with $status)." >&2
 
 echo
-echo "Report:  build/e2e/android/allure/report  ·  open it with: melos run allureServeAndroid"
+echo "Reports:"
+echo "  build/e2e/android/allure/report        ·  melos run allureServeAndroid"
+echo "  build/e2e/android/sqa_reporter/report  ·  melos run sqaOpenAndroid"
 exit "$status"

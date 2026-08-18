@@ -145,6 +145,17 @@ jobs:
           path: build/e2e/web/allure/report
           retention-days: 14
 
+      # The second reporter, uploaded separately so the two can be compared
+      # run against run while one replaces the other. `melos run e2eWeb` built
+      # it in the step above; this only collects it.
+      - name: Upload the SQA report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: sqa-report-web
+          path: build/e2e/web/sqa_reporter/report
+          retention-days: 14
+
       # At the end of the job, and not next to the failure: this step runs the
       # suite again, which overwrites build/e2e/web/playwright/ — the results
       # the report and the JUnit check are built from. Placed earlier, a red

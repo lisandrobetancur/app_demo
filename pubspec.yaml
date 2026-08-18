@@ -169,3 +169,25 @@ melos:
     allureAndroid: rm -rf build/e2e/android/allure && node packages/sqa_l/tool/allure/patrol_to_allure.mjs --input build/e2e/android/android_run.log --platform android && pnpm --dir packages/sqa_l/tool/allure exec allure awesome build/e2e/android/allure/results --output build/e2e/android/allure/report --report-name "Market E2E · Android"
     allureServeWeb: pnpm --dir packages/sqa_l/tool/allure exec allure serve build/e2e/web/allure/results
     allureServeAndroid: pnpm --dir packages/sqa_l/tool/allure exec allure serve build/e2e/android/allure/results
+
+    # ── SQA Reporter ────────────────────────────────────────────────────
+    #
+    # The alternative to Allure, written in Dart and living in
+    # packages/sqa_l/sqa_reporter. Same model as the Allure scripts above:
+    # `e2eWeb` and `e2eAndroid` already build this report as part of running,
+    # and these are for rebuilding it from the results ALREADY on disk — when
+    # you change the generator and want to see the effect without paying for
+    # another suite run.
+    #
+    # One directory holds everything it produces: the JSON results, the
+    # screenshots and the pages that read them. It writes that directory from
+    # scratch every time, so a report only ever describes one run.
+    #
+    # There is no `serve` counterpart on purpose. The site is static and
+    # self-contained — no libraries, no fonts, no requests — so a browser opens
+    # it straight off the filesystem and a local server would only be one more
+    # thing to remember to stop.
+    sqaWeb: dart run sqa_reporter --input build/e2e/web/playwright/results.json --platform web
+    sqaAndroid: dart run sqa_reporter --input build/e2e/android/android_run.log --format patrol-log --platform android
+    sqaOpenWeb: bash packages/sqa_l/tool/e2e/open_report.sh build/e2e/web/sqa_reporter/report/index.html
+    sqaOpenAndroid: bash packages/sqa_l/tool/e2e/open_report.sh build/e2e/android/sqa_reporter/report/index.html

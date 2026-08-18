@@ -83,6 +83,21 @@ class RequirementNode {
     return (counts['SUCCESS'] ?? 0) * 100 / total;
   }
 
+  /// What the scenarios under this requirement say it is *for*.
+  ///
+  /// Our taxonomy has no narrative field of its own — the reference reads one
+  /// from a file beside the requirement — so this is the description the
+  /// scenarios declared, and only when they agree: one shared description is
+  /// a statement about the feature, while several different ones are
+  /// statements about individual tests and belong beside those instead.
+  String? get narrative {
+    final Set<String> declared = <String>{
+      for (final RunCase testCase in allCases)
+        if (testCase.meta?.description != null) testCase.meta!.description!,
+    };
+    return declared.length == 1 ? declared.single : null;
+  }
+
   /// The worst verdict under this requirement, or `UNDEFINED` when it holds
   /// no tests at all.
   String get result {

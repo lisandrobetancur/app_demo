@@ -131,3 +131,14 @@ jobs:
           name: report-android
           path: build/e2e/android/allure/report
           retention-days: 14
+
+      # The second reporter, uploaded separately so the two can be compared
+      # run against run while one replaces the other. `melos run e2eAndroid`
+      # built it in the step above; this only collects it.
+      - name: Upload the SQA report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: sqa-report-android
+          path: build/e2e/android/sqa_reporter/report
+          retention-days: 14

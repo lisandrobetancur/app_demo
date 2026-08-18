@@ -118,7 +118,10 @@ class _Args {
     // extension keeps the common cases flag-free.
     format ??= input.endsWith('.json') ? 'playwright' : 'patrol-log';
     platform ??= format == 'playwright' ? 'web' : 'android';
-    output ??= '$root/build/e2e/$platform/sqa_reporter/results';
+    // One directory holds the whole thing — the JSON results, the screenshots
+    // and the pages that read them — so publishing the report is copying one
+    // folder, and deleting it cannot leave half a report behind.
+    output ??= '$root/build/e2e/$platform/sqa_reporter/report';
     return _Args(
       input: input,
       output: output,

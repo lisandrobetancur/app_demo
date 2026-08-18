@@ -67,10 +67,16 @@ jobs:
             fi
           }
 
-          collect "E2E web"     report-web     web
-          collect "E2E android" report-android android
+          collect "E2E web"     report-web         web
+          collect "E2E android" report-android     android
+          # The second reporter, published beside the first: both describe the
+          # same run, and while one is replacing the other the only honest
+          # comparison is reading them side by side at the same address.
+          collect "E2E web"     sqa-report-web     sqa/web
+          collect "E2E android" sqa-report-android sqa/android
 
-          if [ ! -d site/web ] && [ ! -d site/android ]; then
+          if [ ! -d site/web ] && [ ! -d site/android ] \
+             && [ ! -d site/sqa/web ] && [ ! -d site/sqa/android ]; then
             echo "Neither platform has a report to publish."
             exit 1
           fi
@@ -92,6 +98,7 @@ jobs:
                    font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
             main { max-width:44rem; margin:0 auto; }
             h1 { font-size:1.5rem; margin:0 0 .25rem; }
+            h2 { font-size:1rem; font-weight:600; color:var(--muted); margin:2rem 0 .75rem; }
             p.sub { color:var(--muted); margin:0 0 2rem; }
             .card { display:block; padding:1.25rem 1.5rem; margin-bottom:1rem; text-decoration:none;
                     border:1px solid var(--line); border-radius:12px; background:var(--card); color:inherit; }
@@ -105,9 +112,13 @@ jobs:
           </style>
           <main>
             <h1>Market · end-to-end reports</h1>
-            <p class="sub">Patrol suite, one report per platform. Each is rebuilt from scratch on every run.</p>
+            <p class="sub">Patrol suite, one report per platform, from two reporters. Each is rebuilt from scratch on every run.</p>
+            <h2>Allure</h2>
             $(have web '<a class="card" href="web/"><b>Web</b><span>Chromium, driven by Playwright</span></a>' 'Web')
             $(have android '<a class="card" href="android/"><b>Android</b><span>emulator, API 31, native instrumentation</span></a>' 'Android')
+            <h2>SQA Reporter</h2>
+            $(have sqa/web '<a class="card" href="sqa/web/"><b>Test e2e Web</b><span>Chromium, driven by Playwright</span></a>' 'Test e2e Web')
+            $(have sqa/android '<a class="card" href="sqa/android/"><b>Test e2e Mobile</b><span>emulator, API 31, native instrumentation</span></a>' 'Test e2e Mobile')
             <footer>
               Published by run
               <a href="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}">#${GITHUB_RUN_NUMBER}</a>

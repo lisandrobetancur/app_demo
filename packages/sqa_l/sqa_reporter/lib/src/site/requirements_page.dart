@@ -119,15 +119,23 @@ String featurePageHtml(
   final List<RunCase> cases = feature.allCases
     ..sort((RunCase a, RunCase b) => a.name.compareTo(b.name));
 
+  // A description shared by every scenario describes the feature and is shown
+  // once, above; descriptions that differ describe their own test and are
+  // shown on their own row.
+  final String? narrative = feature.narrative;
+
   final StringBuffer scenarios = StringBuffer();
   for (final RunCase testCase in cases) {
     final String result =
         serenityResult[promoteStatus(testCase.status, testCase.steps)]!;
     final ({int start, int stop}) bounds = widenedBoundsOf(testCase);
+    final String? own = narrative == null ? testCase.meta?.description : null;
     scenarios.writeln(
       '<tr>'
       '<td><a href="${htmlReportName(testCase)}">'
-      '${escapeHtml(testCase.name)}</a></td>'
+      '${escapeHtml(testCase.name)}</a>'
+      '${own == null ? '' : '<div class="scenario-narrative">'
+                '${escapeHtml(own)}</div>'}</td>'
       '<td>${testCase.steps.length}</td>'
       '<td>${compoundDuration(bounds.stop - bounds.start)}</td>'
       '<td><a href="${htmlReportName(testCase)}">'
@@ -152,6 +160,12 @@ String featurePageHtml(
     ..writeln('<h2>${escapeHtml(feature.name)}</h2>')
     ..writeln('<div class="test-count-title">Feature · ${_summary(feature)}')
     ..writeln('</div>')
+    ..write(
+      narrative == null
+          ? ''
+          : '<div class="requirement-narrative">'
+                '${escapeHtml(narrative)}</div>\n',
+    )
     ..writeln('<div class="card standalone">')
     ..writeln('<div class="feature-coverage">${_coverageBar(feature)}</div>')
     ..writeln('<h3>Scenarios</h3>')

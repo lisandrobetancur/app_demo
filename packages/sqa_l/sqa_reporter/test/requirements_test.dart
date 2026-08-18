@@ -147,6 +147,58 @@ void main() {
       expect(page, contains('href="${htmlReportName(run.cases.first)}"'));
       expect(page, contains('1 test, 100% passing'));
     });
+
+    test('a description its scenarios agree on becomes the narrative', () {
+      final RequirementNode feature = roots.first.children.single;
+      expect(feature.narrative, 'The door to everything else.');
+      final String page = File(
+        '${results.path}/${featureReportName(feature)}',
+      ).readAsStringSync();
+      expect(
+        page,
+        contains(
+          '<div class="requirement-narrative">The door to everything else.',
+        ),
+      );
+    });
+
+    test('descriptions that differ stay with their own scenario', () {
+      final RequirementNode feature = RequirementNode(
+        name: 'Checkout',
+        type: 'feature',
+        cases: <RunCase>[
+          for (final String description in <String>['pays', 'refunds'])
+            RunCase(
+              suite: 'checkout_test',
+              name: 'the case that $description',
+              status: RunStatus.passed,
+              start: 0,
+              stop: 1,
+              thread: 'worker-0',
+              meta: ScenarioMeta(
+                feature: 'Checkout',
+                description: 'It $description.',
+              ),
+            ),
+        ],
+      );
+      expect(
+        feature.narrative,
+        isNull,
+        reason: 'two statements about two tests are not one about the feature',
+      );
+      final String page = featurePageHtml(
+        feature,
+        platform: 'web',
+        generatedAt: DateTime.utc(2026),
+      );
+      expect(page, isNot(contains('requirement-narrative')));
+      expect(page, contains('<div class="scenario-narrative">It pays.</div>'));
+      expect(
+        page,
+        contains('<div class="scenario-narrative">It refunds.</div>'),
+      );
+    });
   });
 
   group('the menu and the dashboard', () {
