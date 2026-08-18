@@ -103,7 +103,7 @@ jobs:
         # without it `tee` would return its own success and swallow the
         # script's exit code — quietly turning the check back into a notice.
         shell: bash
-        run: node tool/allure/summarize_assertions.mjs --platform web | tee -a "$GITHUB_STEP_SUMMARY"
+        run: node packages/sqa_l/tool/allure/summarize_assertions.mjs --platform web | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Publish the JUnit results as a check
         if: always()

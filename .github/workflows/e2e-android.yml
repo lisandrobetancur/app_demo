@@ -76,7 +76,7 @@ jobs:
           # 1080x2340, near the Samsung SM-A315G the suite was verified on.
           profile: pixel_5
           disable-animations: true
-          script: bash tool/e2e/run_android.sh
+          script: bash packages/sqa_l/tool/e2e/run_android.sh
 
       # Same guard as the web job: a green run whose assertions never reached
       # the report verifies nothing, and says so nowhere. On mobile the
@@ -88,7 +88,7 @@ jobs:
         # without it `tee` would return its own success and swallow the
         # script's exit code — quietly turning the check back into a notice.
         shell: bash
-        run: node tool/allure/summarize_assertions.mjs --platform android | tee -a "$GITHUB_STEP_SUMMARY"
+        run: node packages/sqa_l/tool/allure/summarize_assertions.mjs --platform android | tee -a "$GITHUB_STEP_SUMMARY"
 
       # The device log is the only place the step and screenshot markers exist
       # on mobile, so it is worth keeping when a run goes wrong.

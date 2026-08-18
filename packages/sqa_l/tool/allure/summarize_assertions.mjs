@@ -17,9 +17,26 @@
  */
 
 import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { dirname, resolve } from "node:path";
 
-const REPO_ROOT = resolve(import.meta.dirname, "../..");
+// The repo root, found by walking up to the directory that holds `.git`,
+// rather than by counting `..` segments. This folder has moved once already;
+// a hop count survives that move only if someone remembers to re-count it, and
+// when they do not the failure is a path that silently resolves to the wrong
+// place instead of an error.
+function repoRoot(from) {
+  let dir = from;
+  while (!existsSync(resolve(dir, ".git"))) {
+    const parent = dirname(dir);
+    if (parent === dir) {
+      throw new Error(`no .git found above ${from}`);
+    }
+    dir = parent;
+  }
+  return dir;
+}
+
+const REPO_ROOT = repoRoot(import.meta.dirname);
 
 function parseArgs(argv) {
   const args = { platform: "web" };
@@ -89,11 +106,11 @@ function main() {
     // not protect against it — so it fails.
     out.push(
       "> [!CAUTION]",
-      `> **El reporte de ${rows.length} escenario(s) no contiene ninguna aserción.**`,
+      `> **The report of ${rows.length} scenario(s) contains no assertions.**`,
       ">",
-      "> La suite corrió y quedó en verde, pero no verifica nada visible: los",
-      "> marcadores `PATROL_ASSERT` no llegaron hasta el reporte. Revisa",
-      "> `BaseSteps.should`, `reportAssertion` y el conversor",
+      "> The suite ran and came out green, but it verifies nothing visible: the",
+      "> `PATROL_ASSERT` markers never reached the report. Check",
+      "> `BaseSteps.should`, `reportAssertion` and the converter",
       "> `patrol_to_allure.mjs`.",
     );
     console.log(out.join("\n"));

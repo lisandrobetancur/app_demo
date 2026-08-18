@@ -25,11 +25,15 @@
 # failure — and is switched off only around the run, where a non-zero code is
 # the result.
 #
-#   tool/e2e/run_android.sh [device-serial]
+#   packages/sqa_l/tool/e2e/run_android.sh [device-serial]
 #
 set -euo pipefail
 
-cd "$(dirname "$0")/../.."
+# The repo root, asked of git rather than counted in `..` segments.
+# This directory has moved once already; a script that locates itself
+# by hop count breaks silently on the next move, and the failure lands
+# in CI as a missing file rather than as a wrong path.
+cd "$(git rev-parse --show-toplevel)"
 APP_DIR="packages/apps/market_app"
 OUT="build/e2e/android"
 LOG="$OUT/android_run.log"
@@ -47,7 +51,7 @@ if [[ -z "$DEVICE" ]]; then
   exit 1
 fi
 
-tool/e2e/clean.sh android
+packages/sqa_l/tool/e2e/clean.sh android
 
 mkdir -p "$OUT"
 echo "Running on $DEVICE ($(adb -s "$DEVICE" shell getprop ro.product.model | tr -d '\r'))"
@@ -77,8 +81,8 @@ echo "Device log captured at $LOG ($(wc -l < "$LOG" | tr -d ' ') lines)"
 
 echo
 echo "── Building the report ───────────────────────────────────────────────"
-node tool/allure/patrol_to_allure.mjs --input "$LOG" --platform android \
-  && npx --prefix tool/allure allure awesome "$OUT/allure/results" \
+node packages/sqa_l/tool/allure/patrol_to_allure.mjs --input "$LOG" --platform android \
+  && npx --prefix packages/sqa_l/tool/allure allure awesome "$OUT/allure/results" \
        --output "$OUT/allure/report" --report-name "Market E2E · Android" \
   || echo "The report could not be built (the suite exited with $status)." >&2
 

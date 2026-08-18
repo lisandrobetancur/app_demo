@@ -65,7 +65,9 @@ Flutter SDK package, not a third party) to enable real paths on the web — see
 packages/
 ├── apps/market_app/                 shell: wiring only (router, DI, i18n, bootstrap)
 ├── development/lint/                shared analysis_options
-├── qa/patrol_kit/                   reusable E2E scaffolding — Flutter + Patrol only
+├── sqa_l/                           everything the automation framework owns
+│   ├── patrol_kit/                  reusable E2E scaffolding — Flutter + Patrol only
+│   └── tool/{allure,e2e}/           Allure conversion and the run scripts
 ├── shared/                          pure logic, ZERO widgets
 │   ├── typing/                      base ViewModel, Clock, IdGenerator, ViewStatus
 │   ├── database/                    connection, schema, migrations, seed, base DAO
@@ -559,7 +561,7 @@ allure/
 └── android/{results,report}
 ```
 
-Why a converter (`tool/allure/patrol_to_allure.mjs`) instead of the usual
+Why a converter (`packages/sqa_l/tool/allure/patrol_to_allure.mjs`) instead of the usual
 `allure-playwright` reporter: Patrol owns the Playwright config that runs the
 web suite, and its `mapReporters` accepts only a whitelist — `html`, `json`,
 `junit`, `list`, `dot`, `line`, `github`, `null` — and throws on anything else.
@@ -635,7 +637,7 @@ browser console — or from logcat, on a device — through the per-test capture
 and into the converter, and a break anywhere along that chain is silent: the
 tests still pass, the report just holds nothing behind them.
 
-So both CI jobs run `tool/allure/summarize_assertions.mjs` after building the
+So both CI jobs run `packages/sqa_l/tool/allure/summarize_assertions.mjs` after building the
 report and write the count into the job summary, where it is readable from the
 pull request without downloading an artifact:
 
@@ -715,7 +717,7 @@ Three things are worth knowing before running this on another machine.
 
 **The markers come from the device log, not from the CLI.** `patrol_cli` parses
 `PATROL_LOG` to pretty-print it and silently drops every other line, so its
-stdout carries none of the step or screenshot markers. `tool/e2e/run_android.sh`
+stdout carries none of the step or screenshot markers. `packages/sqa_l/tool/e2e/run_android.sh`
 therefore reads logcat in parallel with the run. Logcat is also a ring buffer
 that drops lines under load, so the script raises it to 16 MB before starting;
 the converter skips a screenshot whose chunks are incomplete rather than failing

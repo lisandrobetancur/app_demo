@@ -2,7 +2,7 @@
 #
 # Runs the E2E suite in the browser and leaves the report built.
 #
-#   tool/e2e/run_web.sh [--headed] [--tags=<expression>] [--browser=<channel>]
+#   packages/sqa_l/tool/e2e/run_web.sh [--headed] [--tags=<expression>] [--browser=<channel>]
 #
 # Three things in one command, in this order: clean up after the previous run,
 # run, and build the report. This is Serenity's `aggregate` model — the report
@@ -22,7 +22,11 @@
 # where a non-zero code is a result rather than an error.
 set -euo pipefail
 
-cd "$(dirname "$0")/../.."
+# The repo root, asked of git rather than counted in `..` segments.
+# This directory has moved once already; a script that locates itself
+# by hop count breaks silently on the next move, and the failure lands
+# in CI as a missing file rather than as a wrong path.
+cd "$(git rev-parse --show-toplevel)"
 
 APP_DIR="packages/apps/market_app"
 
@@ -51,13 +55,13 @@ for arg in "$@"; do
       ;;
     *)
       echo "unrecognized argument: $arg" >&2
-      echo "usage: tool/e2e/run_web.sh [--headed] [--tags=<expression>] [--browser=<channel>]" >&2
+      echo "usage: packages/sqa_l/tool/e2e/run_web.sh [--headed] [--tags=<expression>] [--browser=<channel>]" >&2
       exit 2
       ;;
   esac
 done
 
-tool/e2e/clean.sh web
+packages/sqa_l/tool/e2e/clean.sh web
 
 # ABSOLUTE paths, and that is not a matter of style. `--web-results-dir` and
 # `--web-report-dir` end up in the environment variables read by the
@@ -115,8 +119,8 @@ echo
 echo "── Building the report ───────────────────────────────────────────────"
 # Deliberately not chained with `&&` to the above: a red suite is exactly when
 # the report is needed.
-node tool/allure/patrol_to_allure.mjs --platform web \
-  && npx --prefix tool/allure allure awesome "$OUT/allure/results" \
+node packages/sqa_l/tool/allure/patrol_to_allure.mjs --platform web \
+  && npx --prefix packages/sqa_l/tool/allure allure awesome "$OUT/allure/results" \
        --output "$OUT/allure/report" --report-name "Market E2E · Web" \
   || echo "The report could not be built (the suite exited with $status)." >&2
 

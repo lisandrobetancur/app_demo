@@ -108,32 +108,32 @@ melos:
     #
     # At the start and not at the end: cleaning up afterwards leaves the
     # machine tidy but takes the evidence of what just failed with it.
-    e2eWeb: bash tool/e2e/run_web.sh
-    e2eAndroid: bash tool/e2e/run_android.sh
+    e2eWeb: bash packages/sqa_l/tool/e2e/run_web.sh
+    e2eAndroid: bash packages/sqa_l/tool/e2e/run_android.sh
 
     # With a visible browser, to watch it drive the app.
-    e2eWebHeaded: bash tool/e2e/run_web.sh --headed
+    e2eWebHeaded: bash packages/sqa_l/tool/e2e/run_web.sh --headed
 
     # Filtering by tag. Patrol takes boolean expressions, not just names, and
     # the filter is applied while GENERATING the bundle: an excluded test is
     # never compiled into the binary — not compiled and then skipped. The
     # vocabulary lives in `Tags`, in the kit.
-    e2eWebSmoke: bash tool/e2e/run_web.sh --tags=smoke_test
-    e2eWebNegative: bash tool/e2e/run_web.sh --tags=negative
+    e2eWebSmoke: bash packages/sqa_l/tool/e2e/run_web.sh --tags=smoke_test
+    e2eWebNegative: bash packages/sqa_l/tool/e2e/run_web.sh --tags=negative
 
     # On a browser installed here rather than the Chromium Playwright ships.
     # Useful for the differences a bundled build hides — codecs, fonts, the
     # printing path — but both are Chromium: Patrol exposes no other engine, so
     # this is not cross-engine coverage and should not be mistaken for it.
     # Needs the browser present, which is why CI stays on the default.
-    e2eWebChrome: bash tool/e2e/run_web.sh --browser=chrome
-    e2eWebEdge: bash tool/e2e/run_web.sh --browser=msedge
+    e2eWebChrome: bash packages/sqa_l/tool/e2e/run_web.sh --browser=chrome
+    e2eWebEdge: bash packages/sqa_l/tool/e2e/run_web.sh --browser=msedge
 
     # Cleanup only, for when you want to zero a platform without running
     # anything.
-    e2eClean: bash tool/e2e/clean.sh web && bash tool/e2e/clean.sh android
-    e2eCleanWeb: bash tool/e2e/clean.sh web
-    e2eCleanAndroid: bash tool/e2e/clean.sh android
+    e2eClean: bash packages/sqa_l/tool/e2e/clean.sh web && bash packages/sqa_l/tool/e2e/clean.sh android
+    e2eCleanWeb: bash packages/sqa_l/tool/e2e/clean.sh web
+    e2eCleanAndroid: bash packages/sqa_l/tool/e2e/clean.sh android
 
     # Run and also OPEN the report. `e2eWeb` already builds it; this only adds
     # the local server on top.
@@ -161,10 +161,10 @@ melos:
     # `--history-path` to draw Status dynamics and Durations dynamics, but
     # that file is state surviving between runs, and here a report is meant to
     # describe one execution and nothing else.
-    # Regenerar el reporte a partir de los resultados que YA hay en disco,
-    # sin volver a correr la suite. `e2eWeb` y `e2eAndroid` ya lo generan; esto
-    # es para cuando cambias el convertidor y quieres ver el efecto.
-    allureWeb: rm -rf build/e2e/web/allure && node tool/allure/patrol_to_allure.mjs --platform web && npx --prefix tool/allure allure awesome build/e2e/web/allure/results --output build/e2e/web/allure/report --report-name "Market E2E · Web"
-    allureAndroid: rm -rf build/e2e/android/allure && node tool/allure/patrol_to_allure.mjs --input build/e2e/android/android_run.log --platform android && npx --prefix tool/allure allure awesome build/e2e/android/allure/results --output build/e2e/android/allure/report --report-name "Market E2E · Android"
-    allureServeWeb: npx --prefix tool/allure allure serve build/e2e/web/allure/results
-    allureServeAndroid: npx --prefix tool/allure allure serve build/e2e/android/allure/results
+    # Rebuild the report from the results ALREADY on disk, without running the
+    # suite again. `e2eWeb` and `e2eAndroid` already produce it; this is for
+    # when you change the converter and want to see the effect.
+    allureWeb: rm -rf build/e2e/web/allure && node packages/sqa_l/tool/allure/patrol_to_allure.mjs --platform web && npx --prefix packages/sqa_l/tool/allure allure awesome build/e2e/web/allure/results --output build/e2e/web/allure/report --report-name "Market E2E · Web"
+    allureAndroid: rm -rf build/e2e/android/allure && node packages/sqa_l/tool/allure/patrol_to_allure.mjs --input build/e2e/android/android_run.log --platform android && npx --prefix packages/sqa_l/tool/allure allure awesome build/e2e/android/allure/results --output build/e2e/android/allure/report --report-name "Market E2E · Android"
+    allureServeWeb: npx --prefix packages/sqa_l/tool/allure allure serve build/e2e/web/allure/results
+    allureServeAndroid: npx --prefix packages/sqa_l/tool/allure allure serve build/e2e/android/allure/results
