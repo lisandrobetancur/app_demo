@@ -143,6 +143,18 @@ h4 { font-weight: 400; font-size: 1.1em; margin: 0.75em 0 0.5em 0; color: var(--
 
 .test-count-title { font-size: 1.1em; color: #555; margin-bottom: 0.75em; }
 
+/* Said plainly rather than in alarm colours: an older run is a fact about
+   this report, not a fault in it. */
+.run-age {
+  background: #fdf8e8;
+  border: 1px solid #eee0b0;
+  border-radius: 4px;
+  color: #7a6420;
+  font-size: 0.85em;
+  margin: 0.5em 0;
+  padding: 0.4em 0.8em;
+}
+
 /* ── Menu and tabs ──────────────────────────────────────────────────── */
 
 .nav-tabs {

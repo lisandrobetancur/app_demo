@@ -31,19 +31,11 @@ void main(List<String> argv) {
     return;
   }
 
-  // A report is only as fresh as the run it was built from, and nothing else
-  // makes that visible: the output is stamped with generation time, not run
-  // time. Warn when the input is old enough to belong to an earlier run.
-  final int ageMinutes = DateTime.now()
-      .difference(input.lastModifiedSync())
-      .inMinutes;
-  if (ageMinutes >= 10) {
-    stderr.writeln(
-      'WARNING: ${args.input} is $ageMinutes minutes old — this report will '
-      'describe that run, not a newer one. Re-run the suite first.',
-    );
-  }
-
+  // No staleness warning here on purpose. Rebuilding from results already on
+  // disk is what `melos run sqaWeb` is *for*, so a warning on that path cries
+  // wolf on every deliberate use — and any stderr line reads as an error in
+  // the melos output. The fact still matters, so the report carries it: the
+  // page says when the run finished as well as when it was generated.
   final ParsedRun run = args.format == 'playwright'
       ? parsePlaywright(input)
       : parsePatrolLog(input);

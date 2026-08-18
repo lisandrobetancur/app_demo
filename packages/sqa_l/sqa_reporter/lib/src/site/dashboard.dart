@@ -91,6 +91,7 @@ String dashboardHtml(
     ..writeln('<div class="middlecontent">')
     ..writeln('<span class="breadcrumbs"><a href="index.html">Home</a></span>')
     ..write(menuBar(generatedAt, homeActive: true))
+    ..write(_runAgeNote(rows, generatedAt))
     ..writeln('<h2>Test Results: All Tests</h2>')
     ..writeln(
       '<div class="test-count-title">'
@@ -108,6 +109,45 @@ String dashboardHtml(
     ..writeln('</body>')
     ..writeln('</html>');
   return page.toString();
+}
+
+/// When the run and the report are not the same age, the page says so.
+///
+/// A report can be rebuilt from results already on disk — that is what the
+/// `sqa*` scripts are for — and then the generation stamp says today while
+/// the run it describes is from last week. Rather than warn on the command
+/// line, where it would fire on every deliberate rebuild, the page carries
+/// the difference to the person reading it.
+String _runAgeNote(List<_Row> rows, DateTime generatedAt) {
+  if (rows.isEmpty) {
+    return '';
+  }
+  final int latestStop = rows
+      .map((_Row row) => row.stopMs)
+      .reduce((int a, int b) => a > b ? a : b);
+  final DateTime finished = DateTime.fromMillisecondsSinceEpoch(
+    latestStop,
+    isUtc: true,
+  );
+  final Duration gap = generatedAt.difference(finished);
+  if (gap.inMinutes < 10) {
+    return '';
+  }
+  return '<p class="run-age">Describing a run that finished '
+      '${timestampOf(finished)}, ${_humanGap(gap)} before this report was '
+      'generated.</p>\n';
+}
+
+/// `58 minutes`, `3 hours`, `2 days` — enough to tell "just now" from "this
+/// is last week's run", which is the only question being asked.
+String _humanGap(Duration gap) {
+  if (gap.inHours < 1) {
+    return '${gap.inMinutes} minute${gap.inMinutes == 1 ? '' : 's'}';
+  }
+  if (gap.inDays < 1) {
+    return '${gap.inHours} hour${gap.inHours == 1 ? '' : 's'}';
+  }
+  return '${gap.inDays} day${gap.inDays == 1 ? '' : 's'}';
 }
 
 String _tabBar() => '''

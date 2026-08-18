@@ -164,6 +164,28 @@ void main() {
     });
   });
 
+  group('the run behind the report', () {
+    test('says so when the run is older than the report', () {
+      final String stale = dashboardHtml(
+        parsePlaywright(inputFile),
+        platform: 'web',
+        // The fixture's run ends at 10:01; this report is built two days on.
+        generatedAt: DateTime.utc(2026, 8, 20, 10, 5),
+      );
+      expect(stale, contains('class="run-age"'));
+      expect(stale, contains('2 days before this report'));
+    });
+
+    test('stays quiet when the two are minutes apart', () {
+      final String fresh = dashboardHtml(
+        parsePlaywright(inputFile),
+        platform: 'web',
+        generatedAt: DateTime.utc(2026, 8, 18, 10, 3),
+      );
+      expect(fresh, isNot(contains('class="run-age"')));
+    });
+  });
+
   group('the axis', () {
     test('rounds up to a step that divides it', () {
       expect(niceAxis(0), (top: 1, step: 1));
