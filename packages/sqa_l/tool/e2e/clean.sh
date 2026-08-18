@@ -2,8 +2,8 @@
 #
 # Deletes everything a run generates, for ONE platform.
 #
-#   tool/e2e/clean.sh web
-#   tool/e2e/clean.sh android
+#   packages/sqa_l/tool/e2e/clean.sh web
+#   packages/sqa_l/tool/e2e/clean.sh android
 #
 # Everything generated lives under a single root, one subfolder per platform:
 #
@@ -37,12 +37,16 @@
 # "now" carrying old data.
 set -euo pipefail
 
-cd "$(dirname "$0")/../.."
+# The repo root, asked of git rather than counted in `..` segments.
+# This directory has moved once already; a script that locates itself
+# by hop count breaks silently on the next move, and the failure lands
+# in CI as a missing file rather than as a wrong path.
+cd "$(git rev-parse --show-toplevel)"
 
 APP_DIR="packages/apps/market_app"
 
 usage() {
-  echo "usage: tool/e2e/clean.sh <web|android>" >&2
+  echo "usage: packages/sqa_l/tool/e2e/clean.sh <web|android>" >&2
   exit 2
 }
 

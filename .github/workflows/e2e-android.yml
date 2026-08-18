@@ -39,7 +39,31 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version-file: packages/sqa_l/tool/allure/.nvmrc
+
+      # corepack reads `packageManager` from the report tooling's package.json
+      # and provisions exactly that pnpm, so the version is pinned in one file
+      # instead of repeated in every workflow. `prepare --activate` is what
+      # makes it the default for the rest of the job: without it, a `pnpm` run
+      # from the repository root — where there is no `packageManager` to read —
+      # falls back to whichever version corepack ships with.
+      #
+      # Patrol's own web runner still uses npm inside the pub cache. That is
+      # its package, not ours, and it is left alone.
+      - name: Pin pnpm through corepack
+        working-directory: packages/sqa_l/tool/allure
+        run: |
+          corepack enable
+          corepack prepare --activate
+          pnpm --version
+
+      # `npx` used to install the Allure CLI on demand; `pnpm exec` does not,
+      # so the install is a step of its own. `--frozen-lockfile` makes it fail
+      # rather than quietly resolve something else when the lockfile and the
+      # manifest disagree.
+      - name: Install the report tooling
+        working-directory: packages/sqa_l/tool/allure
+        run: pnpm install --frozen-lockfile
 
       - name: Cache pub
         uses: actions/cache@v6
@@ -76,7 +100,7 @@ jobs:
           # 1080x2340, near the Samsung SM-A315G the suite was verified on.
           profile: pixel_5
           disable-animations: true
-          script: bash tool/e2e/run_android.sh
+          script: bash packages/sqa_l/tool/e2e/run_android.sh
 
       # Same guard as the web job: a green run whose assertions never reached
       # the report verifies nothing, and says so nowhere. On mobile the
@@ -88,7 +112,7 @@ jobs:
         # without it `tee` would return its own success and swallow the
         # script's exit code — quietly turning the check back into a notice.
         shell: bash
-        run: node tool/allure/summarize_assertions.mjs --platform android | tee -a "$GITHUB_STEP_SUMMARY"
+        run: node packages/sqa_l/tool/allure/summarize_assertions.mjs --platform android | tee -a "$GITHUB_STEP_SUMMARY"
 
       # The device log is the only place the step and screenshot markers exist
       # on mobile, so it is worth keeping when a run goes wrong.

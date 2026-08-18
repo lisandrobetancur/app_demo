@@ -32,21 +32,38 @@
 
 import { createHash, randomUUID } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { dirname, resolve } from "node:path";
 import { hostname } from "node:os";
 
-const REPO_ROOT = resolve(import.meta.dirname, "../..");
-// Todo lo que produce una ejecución vive bajo una sola raíz, una subcarpeta
-// por plataforma:
+// The repo root, found by walking up to the directory that holds `.git`,
+// rather than by counting `..` segments. This folder has moved once already;
+// a hop count survives that move only if someone remembers to re-count it, and
+// when they do not the failure is a path that silently resolves to the wrong
+// place instead of an error.
+function repoRoot(from) {
+  let dir = from;
+  while (!existsSync(resolve(dir, ".git"))) {
+    const parent = dirname(dir);
+    if (parent === dir) {
+      throw new Error(`no .git found above ${from}`);
+    }
+    dir = parent;
+  }
+  return dir;
+}
+
+const REPO_ROOT = repoRoot(import.meta.dirname);
+// Everything a run produces lives under a single root, one subfolder per
+// platform:
 //
 //   build/e2e/
 //   ├── web/{playwright,test-results,allure/{results,report}}
 //   └── android/{android_run.log,allure/{results,report}}
 //
-// Una raíz y no cuatro repartidas por el repositorio, porque la limpieza de
-// antes se olvidaba de lo que no recordaba que existía — `test-results/` no lo
-// borró nadie durante meses. Con una raíz por plataforma, borrarla entera es
-// una operación que no puede dejarse nada.
+// One root rather than four scattered around the repository, because the old
+// cleanup forgot what nobody remembered existed — `test-results/` went
+// undeleted for months. With one root per platform, deleting it whole is an
+// operation that cannot leave anything behind.
 const E2E_ROOT = resolve(REPO_ROOT, "build/e2e");
 const DEFAULTS = {
   input: resolve(E2E_ROOT, "web/playwright/results.json"),
