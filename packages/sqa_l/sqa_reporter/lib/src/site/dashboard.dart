@@ -15,21 +15,29 @@ import '../model.dart';
 import '../requirements.dart';
 import '../serenity_writer.dart';
 import 'charts.dart';
+import 'features_page.dart' show coverageOverview;
 import 'page_chrome.dart';
-import 'requirements_page.dart' show coverageOverview;
 import 'site_assets.dart';
 import 'tags_page.dart' show tagReportName;
 
-/// The one line naming what the report is of, when nothing was given: the
-/// report describes the E2E suite, not the app, and the platform is the only
-/// thing that distinguishes two runs of it.
+/// The one line naming what the report is of: the report describes the E2E
+/// suite, not the app, and the platform is the only thing that distinguishes
+/// two runs of it.
 ///
-/// Every page takes a `title` that overrides this, and the CLI exposes it as
-/// `--title`, so a project that wants its own wording sets it in one place —
-/// the melos script that builds the report — rather than editing the
-/// generator.
-String projectTitleFor(String platform) =>
-    'E2E test report ${platform == 'web' ? 'web' : 'mobile'}';
+/// Derived, not configurable, and that is the point — a title someone can set
+/// is a title that drifts between projects and CI jobs, and then two reports
+/// of the same suite cannot be told apart by their names. The three platforms
+/// the runner targets are named the way their own vendors write them; anything
+/// else is titled from the platform it was given, so an unexpected value is
+/// visible rather than quietly filed under one of the three.
+String projectTitleFor(String platform) => switch (platform) {
+  'web' => 'Web E2E Test Report',
+  'android' => 'Android E2E Test Report',
+  'ios' => 'iOS E2E Test Report',
+  _ =>
+    '${platform.isEmpty ? '' : '${platform[0].toUpperCase()}'
+              '${platform.substring(1)} '}E2E Test Report',
+};
 
 /// Writes `index.html` and `sqa-reporter.css` into [outputDir], beside the
 /// JSON results. Returns the `index.html` file.
@@ -37,7 +45,6 @@ File writeDashboard(
   ParsedRun run,
   Directory outputDir, {
   required String platform,
-  String? title,
   Duration offset = reportOffset,
   DateTime? generatedAt,
 }) {
@@ -54,7 +61,6 @@ File writeDashboard(
           dashboardHtml(
             run,
             platform: platform,
-            title: title,
             offset: offset,
             generatedAt: generatedAt ?? DateTime.now().toUtc(),
           ),
@@ -68,7 +74,6 @@ String dashboardHtml(
   ParsedRun run, {
   required String platform,
   required DateTime generatedAt,
-  String? title,
   Duration offset = reportOffset,
 }) {
   final List<_Row> rows = run.cases.map(_Row.of).toList()
@@ -88,9 +93,9 @@ String dashboardHtml(
   final StringBuffer page = StringBuffer()
     ..writeln('<!DOCTYPE html>')
     ..writeln('<html lang="en">')
-    ..write(pageHead())
+    ..write(pageHead(platform))
     ..writeln('<body>')
-    ..write(banner(platform, title: title))
+    ..write(banner(platform))
     ..writeln('<div class="middlecontent">')
     ..writeln('<span class="breadcrumbs"><a href="index.html">Home</a></span>')
     ..write(menuBar(generatedAt, homeActive: true, offset: offset))

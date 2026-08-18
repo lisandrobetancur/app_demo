@@ -15,8 +15,8 @@ import '../markers.dart';
 import '../model.dart';
 import '../serenity_writer.dart';
 import 'dashboard.dart' show escapeHtml, resultIcon;
+import 'features_page.dart' show featureReportNameOf;
 import 'page_chrome.dart';
-import 'requirements_page.dart' show featureReportNameOf;
 import 'site_assets.dart';
 
 /// `<digest>_screenshots.html` — the gallery for one test.
@@ -29,7 +29,6 @@ List<File> writeScreenshotPages(
   ParsedRun run,
   Directory outputDir, {
   required String platform,
-  String? title,
   Duration offset = reportOffset,
   DateTime? generatedAt,
 }) {
@@ -45,7 +44,6 @@ List<File> writeScreenshotPages(
           screenshotsPageHtml(
             testCase,
             platform: platform,
-            title: title,
             offset: offset,
             generatedAt: stamp,
           ),
@@ -59,7 +57,6 @@ String screenshotsPageHtml(
   RunCase testCase, {
   required String platform,
   required DateTime generatedAt,
-  String? title,
   Duration offset = reportOffset,
 }) {
   final RunStatus status = promoteStatus(testCase.status, testCase.steps);
@@ -71,9 +68,9 @@ String screenshotsPageHtml(
   final StringBuffer page = StringBuffer()
     ..writeln('<!DOCTYPE html>')
     ..writeln('<html lang="en">')
-    ..write(pageHead())
+    ..write(pageHead(platform))
     ..writeln('<body>')
-    ..write(banner(platform, title: title))
+    ..write(banner(platform))
     ..writeln('<div class="middlecontent">')
     ..writeln(
       '<span class="breadcrumbs"><a href="index.html">Home</a> &gt; '

@@ -4,54 +4,66 @@
 library;
 
 import 'dashboard.dart' show escapeHtml, projectTitleFor;
+import 'site_assets.dart' show wordmarkMark;
 
-/// The document head — same stylesheet, same icon, same title, every page.
-String pageHead() => '''
+/// The document head — same stylesheet, same icon, every page.
+///
+/// The tab says which report this is as well as which tool wrote it: a reader
+/// with the web and the Android report open at once tells them apart by their
+/// tabs, which is the only place both are visible at the same time.
+String pageHead(String platform) =>
+    '''
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SQA Reporter</title>
+<title>SQA Reporter · ${escapeHtml(projectTitleFor(platform))}</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="sqa-reporter.css"/>
 </head>
 ''';
 
-/// The banner: the report's own name on the left, linking home, and on the
-/// right the one line saying what this report is of — `E2E test report web`
-/// by default, or whatever [title] the run was given.
-String banner(String platform, {String? title}) =>
+/// The banner: the report's mark and name on the left, linking home, and on
+/// the right the one line saying what this report is of.
+///
+/// Both halves are derived, never given: the wording comes from the platform
+/// the suite ran on (see [projectTitleFor]) so two reports of the same suite
+/// are named the same way in every project that builds them.
+String banner(String platform) =>
     '''
 <div class="topheader">
   <div class="topbanner">
-    <a class="wordmark" href="index.html">SQA <span class="accent">Reporter</span></a>
+    <a class="wordmark" href="index.html">
+      $wordmarkMark
+      <span class="wordmark-text"><span class="wordmark-sqa">SQA</span><span class="wordmark-name">Reporter</span></span>
+    </a>
     <div class="projectname">
-      <span class="projecttitle">${escapeHtml(title ?? projectTitleFor(platform))}</span>
+      <span class="projecttitle">${escapeHtml(projectTitleFor(platform))}</span>
     </div>
   </div>
 </div>
 ''';
 
 /// The main menu with the generation stamp. [homeActive] is true on the
-/// dashboard itself and [requirementsActive] on the requirements pages; a
-/// page that is neither renders both as links back.
+/// dashboard itself and [featuresActive] on the features pages; a page that
+/// is neither renders both as links back.
 String menuBar(
   DateTime generatedAt, {
   required bool homeActive,
-  bool requirementsActive = false,
+  bool featuresActive = false,
   Duration offset = reportOffset,
 }) {
   final String home = homeActive
       ? '<li class="active"><a href="#">Overall Test Results</a></li>'
       : '<li><a href="index.html">Overall Test Results</a></li>';
-  final String requirements = requirementsActive
-      ? '<li class="active"><a href="#">Requirements</a></li>'
-      : '<li><a href="capabilities.html">Requirements</a></li>';
+  final String features = featuresActive
+      ? '<li class="active"><a href="#">Features</a></li>'
+      : '<li><a href="features.html">Features</a></li>';
   return '''
 <div>
   <span class="date-and-time">Report generated ${timestampOf(generatedAt, offset: offset)}</span>
   <ul class="nav nav-tabs">
     $home
-    $requirements
+    $features
   </ul>
 </div>
 ''';

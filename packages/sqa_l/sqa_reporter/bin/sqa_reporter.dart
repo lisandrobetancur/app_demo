@@ -4,7 +4,6 @@
 ///   dart run sqa_reporter [--input <file>] [--output <dir>]
 ///                         [--format playwright|patrol-log]
 ///                         [--platform web|android|ios]
-///                         [--title "E2E test report web"]
 ///                         [--utc-offset -05:00]
 library;
 
@@ -55,35 +54,30 @@ void main(List<String> argv) {
     run,
     Directory(args.output),
     platform: args.platform,
-    title: args.title,
     offset: args.offset!,
   );
   final List<File> pages = writeTestPages(
     run,
     Directory(args.output),
     platform: args.platform,
-    title: args.title,
     offset: args.offset!,
   );
   final List<File> galleries = writeScreenshotPages(
     run,
     Directory(args.output),
     platform: args.platform,
-    title: args.title,
     offset: args.offset!,
   );
-  final List<File> requirements = writeRequirementPages(
+  final List<File> features = writeFeaturePages(
     run,
     Directory(args.output),
     platform: args.platform,
-    title: args.title,
     offset: args.offset!,
   );
   final List<File> tags = writeTagPages(
     run,
     Directory(args.output),
     platform: args.platform,
-    title: args.title,
     offset: args.offset!,
   );
 
@@ -95,7 +89,7 @@ void main(List<String> argv) {
     ..writeln(
       'Dashboard: ${index.path} (${pages.length} test page(s), '
       '${galleries.length} gallery page(s), '
-      '${requirements.length} requirement page(s), '
+      '${features.length} feature page(s), '
       '${tags.length} tag page(s))',
     );
   if (written == 0) {
@@ -109,7 +103,6 @@ class _Args {
     required this.output,
     required this.format,
     required this.platform,
-    required this.title,
     required this.offset,
   });
 
@@ -118,7 +111,6 @@ class _Args {
     String? output;
     String? format;
     String? platform;
-    String? title;
     String? rawOffset;
     for (int i = 0; i + 1 < argv.length; i += 2) {
       switch (argv[i]) {
@@ -130,8 +122,6 @@ class _Args {
           format = argv[i + 1];
         case '--platform':
           platform = argv[i + 1];
-        case '--title':
-          title = argv[i + 1];
         case '--utc-offset':
           rawOffset = argv[i + 1];
       }
@@ -151,11 +141,10 @@ class _Args {
       output: output,
       format: format,
       platform: platform,
-      // Left null on purpose when not given: the pages fall back to the
-      // platform's own wording, so the default lives in one place.
-      title: title,
-      // Same rule for the clock: unset means the pages' own default, which
-      // is the one the suite runs on.
+      // Unset means the pages' own default clock, which is the one the suite
+      // runs on. The report's *name* has no such flag: it is derived from the
+      // platform, so two reports of the same suite are never named differently
+      // by two projects.
       offset: rawOffset == null ? reportOffset : parseOffset(rawOffset),
     );
   }
@@ -164,10 +153,6 @@ class _Args {
   final String output;
   final String format;
   final String platform;
-
-  /// What the banner says this report is of. Null means the default for the
-  /// platform.
-  final String? title;
 
   /// The clock the pages show their times in. Null means `--utc-offset` was
   /// given but could not be read.

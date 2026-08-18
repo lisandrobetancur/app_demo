@@ -74,6 +74,27 @@ const String siteFavicon = '''
 </svg>
 ''';
 
+/// The mark beside the wordmark in the banner, inline in every page.
+///
+/// The same idea as the favicon, drawn for the size it is read at: a navy
+/// tile, a clipboard, a green tick and a line of what was checked. A report
+/// of a test run is a checklist someone signed off, so that is the figure —
+/// and repeating the favicon's shapes means the tab icon and the banner read
+/// as one mark rather than two.
+///
+/// Inline rather than a second file: the banner is on every page, and an
+/// `<img>` would be one more request the offline report cannot count on. It
+/// is decorative — the wordmark beside it already carries the name — so it is
+/// hidden from screen readers.
+const String wordmarkMark = '''
+<svg class="wordmark-mark" viewBox="0 0 40 40" width="34" height="34" aria-hidden="true" focusable="false">
+<rect width="40" height="40" rx="10" fill="#0A1B3A"/>
+<rect x="9" y="7" width="22" height="27" rx="3.5" fill="#ffffff"/>
+<rect x="15" y="3.5" width="10" height="5.5" rx="2.2" fill="#0A1B3A"/>
+<path d="M14 19.6l3.9 3.9L26.4 15" fill="none" stroke="#99cc33" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="13.5" y="27" width="13" height="2.2" rx="1.1" fill="#d7dde6"/>
+</svg>''';
+
 /// The stylesheet, written to `sqa-reporter.css` beside `index.html`.
 const String siteCss = '''
 /* SQA Reporter — all rules authored for this generator. */
@@ -83,6 +104,12 @@ const String siteCss = '''
      the two must stay distinguishable. */
   --title: #0A1B3A;
   --link: #428bca;
+  /* The navy read back at a lower weight, for the second half of the
+     wordmark and anything else that must sit beside the title without
+     competing with it. */
+  --title-soft: #5a6b85;
+  --pass: #99cc33;
+  --rule: #e3e7ee;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -99,7 +126,20 @@ a:hover { text-decoration: underline; }
 
 /* ── Banner ─────────────────────────────────────────────────────────── */
 
-.topheader { background: #fff; }
+/* White, closed off from the page by a hairline and a two-colour rule — the
+   navy of the titles running into the green of a passing test. It is the one
+   piece of decoration in the report, and it is on the one band that is the
+   same on every page. The rule is painted as a background image rather than a
+   border so it needs no extra element to hang on. */
+.topheader {
+  background-color: #fff;
+  background-image: linear-gradient(90deg, var(--title) 0%, var(--title) 55%, var(--pass) 100%);
+  background-repeat: no-repeat;
+  background-size: 100% 3px;
+  background-position: bottom left;
+  border-bottom: 1px solid var(--rule);
+  box-shadow: 0 1px 3px rgba(10, 27, 58, 0.06);
+}
 
 /* The page fills the window, with a margin rather than a column: a report of
    fifty scenarios has long feature and scenario names, and capping the width
@@ -115,18 +155,45 @@ a:hover { text-decoration: underline; }
   align-items: center;
 }
 
+/* Mark and name on one baseline: the tile carries the colour, the name
+   carries the weight. `SQA` is the part people say, so it is the part set
+   solid; `Reporter` follows it lighter and spaced, which is what keeps a
+   two-word wordmark from reading as two words. */
 .wordmark {
-  font-size: 1.75em;
-  font-weight: 300;
-  color: #333;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
   text-decoration: none;
+  line-height: 1;
 }
 
 .wordmark:hover { text-decoration: none; }
-.wordmark .accent { color: var(--title); font-weight: 400; }
+.wordmark:hover .wordmark-name { color: var(--title); }
+.wordmark-mark { display: block; flex: none; }
 
+.wordmark-text { font-size: 1.55rem; letter-spacing: 0.02em; }
+.wordmark-sqa { font-weight: 700; color: var(--title); letter-spacing: 0.04em; }
+.wordmark-name {
+  font-weight: 300;
+  color: var(--title-soft);
+  margin-left: 0.28em;
+  transition: color 0.15s ease;
+}
+
+/* The right half answers "which report is this?" — one line, set in the
+   title navy at a weight that holds its own against the wordmark without
+   shouting over it, and with a hairline under it so the two halves of the
+   banner look deliberate rather than merely opposite. */
 .projectname { text-align: right; }
-.projecttitle { font-weight: normal; font-size: 2em; color: var(--title); }
+.projecttitle {
+  display: inline-block;
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--title);
+  padding-bottom: 0.25em;
+  border-bottom: 2px solid var(--pass);
+}
 
 /* ── Content frame ──────────────────────────────────────────────────── */
 
@@ -570,12 +637,12 @@ th.sortable.desc::after { content: " ↓"; color: #428bca; }
   .topbanner {
     flex-direction: column;
     align-items: flex-start;
-    gap: 0.25em;
+    gap: 0.6em;
   }
 
   .projectname { text-align: left; }
-  .projecttitle { font-size: 1.4em; }
-  .wordmark { font-size: 1.4em; }
+  .projecttitle { font-size: 1.15rem; }
+  .wordmark-text { font-size: 1.35rem; }
 
   .dashboard-charts { gap: 1.5em; }
   .chart-block, .chart-block.wide { flex: 1 1 100%; min-width: 0; }

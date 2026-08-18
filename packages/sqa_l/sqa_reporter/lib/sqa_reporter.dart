@@ -54,14 +54,10 @@ export 'src/site/dashboard.dart'
         projectTitleFor,
         resultIcon,
         writeDashboard;
+export 'src/site/features_page.dart'
+    show featurePageHtml, featureReportName, featuresHtml, writeFeaturePages;
 export 'src/site/page_chrome.dart'
     show offsetLabel, parseOffset, reportOffset, timestampOf;
-export 'src/site/requirements_page.dart'
-    show
-        capabilitiesHtml,
-        featurePageHtml,
-        featureReportName,
-        writeRequirementPages;
 export 'src/site/screenshots_page.dart'
     show screenshotsPageHtml, screenshotsReportName, writeScreenshotPages;
 export 'src/site/site_assets.dart' show resultColors, resultGlyphs;

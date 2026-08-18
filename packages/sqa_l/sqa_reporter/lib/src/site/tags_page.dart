@@ -40,7 +40,6 @@ List<File> writeTagPages(
   ParsedRun run,
   Directory outputDir, {
   required String platform,
-  String? title,
   Duration offset = reportOffset,
   DateTime? generatedAt,
 }) {
@@ -55,7 +54,6 @@ List<File> writeTagPages(
           entry.key,
           entry.value,
           platform: platform,
-          title: title,
           offset: offset,
           generatedAt: stamp,
         ),
@@ -70,7 +68,6 @@ String tagPageHtml(
   List<RunCase> cases, {
   required String platform,
   required DateTime generatedAt,
-  String? title,
   Duration offset = reportOffset,
 }) {
   final List<RunCase> sorted = List<RunCase>.of(cases)
@@ -102,9 +99,9 @@ String tagPageHtml(
   final StringBuffer page = StringBuffer()
     ..writeln('<!DOCTYPE html>')
     ..writeln('<html lang="en">')
-    ..write(pageHead())
+    ..write(pageHead(platform))
     ..writeln('<body>')
-    ..write(banner(platform, title: title))
+    ..write(banner(platform))
     ..writeln('<div class="middlecontent">')
     ..writeln(
       '<span class="breadcrumbs"><a href="index.html">Home</a> &gt; '

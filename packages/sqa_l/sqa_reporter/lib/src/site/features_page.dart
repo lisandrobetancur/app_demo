@@ -1,6 +1,12 @@
-/// The requirements pages: `capabilities.html` — the whole epic → feature
-/// tree with coverage rolled up — and one page per feature listing the
-/// scenarios under it.
+/// The features pages: `features.html` — the whole epic → feature tree with
+/// coverage rolled up — and one page per feature listing the scenarios under
+/// it.
+///
+/// "Features" rather than "Requirements" on purpose: what a Patrol suite
+/// declares in its metadata is a feature under an epic, and naming the page
+/// after what it lists is one less translation for a reader. The tree itself
+/// is still the requirements model (`requirements.dart`) — a feature is a
+/// requirement, which is why the types kept that name.
 ///
 /// The reference splits this across a page per requirement type and a page
 /// per requirement, because its trees run three levels deep and a single
@@ -32,13 +38,12 @@ String featureReportName(RequirementNode feature) =>
 String featureReportNameOf(String featureName) =>
     '${slugOf(featureName)}_feature.html';
 
-/// Writes `capabilities.html` and one page per feature. Returns the files
+/// Writes `features.html` and one page per feature. Returns the files
 /// written, the tree's own page first.
-List<File> writeRequirementPages(
+List<File> writeFeaturePages(
   ParsedRun run,
   Directory outputDir, {
   required String platform,
-  String? title,
   Duration offset = reportOffset,
   DateTime? generatedAt,
 }) {
@@ -47,12 +52,11 @@ List<File> writeRequirementPages(
   final List<RequirementNode> roots = requirementsOf(run);
 
   return <File>[
-    File('${outputDir.path}${Platform.pathSeparator}capabilities.html')
+    File('${outputDir.path}${Platform.pathSeparator}features.html')
       ..writeAsStringSync(
-        capabilitiesHtml(
+        featuresHtml(
           roots,
           platform: platform,
-          title: title,
           offset: offset,
           generatedAt: stamp,
         ),
@@ -65,7 +69,6 @@ List<File> writeRequirementPages(
         featurePageHtml(
           feature,
           platform: platform,
-          title: title,
           offset: offset,
           generatedAt: stamp,
         ),
@@ -73,12 +76,11 @@ List<File> writeRequirementPages(
   ];
 }
 
-/// The requirements overview: the whole tree, with each row's coverage.
-String capabilitiesHtml(
+/// The features overview: the whole tree, with each row's coverage.
+String featuresHtml(
   List<RequirementNode> roots, {
   required String platform,
   required DateTime generatedAt,
-  String? title,
   Duration offset = reportOffset,
 }) {
   final int featureCount = featuresIn(roots).length;
@@ -97,23 +99,23 @@ String capabilitiesHtml(
   final StringBuffer page = StringBuffer()
     ..writeln('<!DOCTYPE html>')
     ..writeln('<html lang="en">')
-    ..write(pageHead())
+    ..write(pageHead(platform))
     ..writeln('<body>')
-    ..write(banner(platform, title: title))
+    ..write(banner(platform))
     ..writeln('<div class="middlecontent">')
     ..writeln(
       '<span class="breadcrumbs"><a href="index.html">Home</a> &gt; '
-      'Requirements</span>',
+      'Features</span>',
     )
     ..write(
       menuBar(
         generatedAt,
         homeActive: false,
-        requirementsActive: true,
+        featuresActive: true,
         offset: offset,
       ),
     )
-    ..writeln('<h2>Requirements</h2>')
+    ..writeln('<h2>Features</h2>')
     ..writeln(
       '<div class="test-count-title">'
       '$epicCount epic${epicCount == 1 ? '' : 's'}, '
@@ -123,7 +125,9 @@ String capabilitiesHtml(
     ..writeln('<div class="table-scroll">')
     ..writeln('<table class="table requirements-table">')
     ..writeln(
-      '<thead><tr><th class="requirement-name-column">Requirement</th>'
+      // "Name" over a column that holds both epics and the features under
+      // them, with the Type column beside it saying which is which.
+      '<thead><tr><th class="requirement-name-column">Name</th>'
       '<th>Type</th><th>Tests</th><th>% Pass</th><th>Result</th>'
       '<th class="coverage-column">Coverage</th></tr></thead>',
     )
@@ -146,7 +150,6 @@ String featurePageHtml(
   RequirementNode feature, {
   required String platform,
   required DateTime generatedAt,
-  String? title,
   Duration offset = reportOffset,
 }) {
   final List<RunCase> cases = feature.allCases
@@ -180,20 +183,20 @@ String featurePageHtml(
   final StringBuffer page = StringBuffer()
     ..writeln('<!DOCTYPE html>')
     ..writeln('<html lang="en">')
-    ..write(pageHead())
+    ..write(pageHead(platform))
     ..writeln('<body>')
-    ..write(banner(platform, title: title))
+    ..write(banner(platform))
     ..writeln('<div class="middlecontent">')
     ..writeln(
       '<span class="breadcrumbs"><a href="index.html">Home</a> &gt; '
-      '<a href="capabilities.html">Requirements</a> &gt; '
+      '<a href="features.html">Features</a> &gt; '
       '${escapeHtml(feature.name)}</span>',
     )
     ..write(
       menuBar(
         generatedAt,
         homeActive: false,
-        requirementsActive: true,
+        featuresActive: true,
         offset: offset,
       ),
     )
@@ -287,7 +290,7 @@ String coverageOverview(List<RequirementNode> roots) {
   for (final RequirementNode root in roots) {
     rows.writeln(
       '<tr>'
-      '<td><a href="capabilities.html">${escapeHtml(root.name)}</a></td>'
+      '<td><a href="features.html">${escapeHtml(root.name)}</a></td>'
       '<td>${root.testCount}</td>'
       '<td>${root.passRate == null ? '—' : '${root.passRate!.round()}%'}</td>'
       '<td class="coverage-column">${_coverageBar(root)}</td>'
@@ -297,7 +300,7 @@ String coverageOverview(List<RequirementNode> roots) {
   return '''
 <h4>Functional Coverage</h4>
 <table class="table requirements-table">
-<thead><tr><th>Requirement</th><th>Tests</th><th>% Pass</th>
+<thead><tr><th>Name</th><th>Tests</th><th>% Pass</th>
 <th class="coverage-column">Coverage</th></tr></thead>
 <tbody>
 $rows</tbody>

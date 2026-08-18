@@ -5,15 +5,15 @@ import 'package:test/test.dart';
 
 import 'fixtures.dart';
 
-/// The requirements tree and its pages: how the epic → feature hierarchy is
-/// built from what `scenario()` declared, how coverage rolls up a branch, and
-/// what the pages do with a requirement nobody tested.
+/// The feature tree and its pages: how the epic → feature hierarchy is built
+/// from what `scenario()` declared, how coverage rolls up a branch, and what
+/// the pages do with a feature nobody tested.
 void main() {
   late Directory out;
   late Directory results;
   late ParsedRun run;
   late List<RequirementNode> roots;
-  late String capabilities;
+  late String featuresPage;
 
   setUpAll(() {
     out = Directory.systemTemp.createTempSync('sqa_requirements_test');
@@ -35,13 +35,13 @@ void main() {
       platform: 'web',
       generatedAt: DateTime.utc(2026, 8, 18, 10, 5),
     );
-    writeRequirementPages(
+    writeFeaturePages(
       run,
       results,
       platform: 'web',
       generatedAt: DateTime.utc(2026, 8, 18, 10, 5),
     );
-    capabilities = File('${results.path}/capabilities.html').readAsStringSync();
+    featuresPage = File('${results.path}/features.html').readAsStringSync();
   });
 
   tearDownAll(() => out.deleteSync(recursive: true));
@@ -100,7 +100,7 @@ void main() {
       expect(empty.passRate, isNull);
       expect(empty.result, 'UNDEFINED');
       expect(
-        capabilitiesHtml(
+        featuresHtml(
           <RequirementNode>[empty],
           platform: 'web',
           generatedAt: DateTime.utc(2026),
@@ -111,18 +111,18 @@ void main() {
     });
   });
 
-  group('capabilities.html', () {
+  group('features.html', () {
     test('lists the whole tree, features indented under their epic', () {
-      expect(capabilities, contains('>Access<'));
-      expect(capabilities, contains('Authentication'));
-      expect(capabilities, contains('class="requirement-row level-0"'));
-      expect(capabilities, contains('class="requirement-row level-1"'));
-      expect(capabilities, contains('1 epic, 2 features'));
+      expect(featuresPage, contains('>Access<'));
+      expect(featuresPage, contains('Authentication'));
+      expect(featuresPage, contains('class="requirement-row level-0"'));
+      expect(featuresPage, contains('class="requirement-row level-1"'));
+      expect(featuresPage, contains('1 epic, 2 features'));
     });
 
     test('every feature links to its own page, and the page exists', () {
       for (final RequirementNode feature in featuresIn(roots)) {
-        expect(capabilities, contains('href="${featureReportName(feature)}"'));
+        expect(featuresPage, contains('href="${featureReportName(feature)}"'));
         expect(
           File('${results.path}/${featureReportName(feature)}').existsSync(),
           isTrue,
@@ -130,10 +130,34 @@ void main() {
       }
     });
 
+    test('is called Features wherever the reader can see it', () {
+      expect(
+        File('${results.path}/capabilities.html').existsSync(),
+        isFalse,
+        reason: 'the page was renamed, not copied',
+      );
+      expect(featuresPage, contains('<h2>Features</h2>'));
+      expect(
+        featuresPage,
+        contains('<a href="index.html">Home</a> &gt; Features'),
+      );
+      expect(featuresPage, contains('<li class="active"><a href="#">Features'));
+      expect(
+        featuresPage,
+        isNot(contains('Requirements')),
+        reason: 'one word for it: menu, heading and breadcrumb alike',
+      );
+      final String featurePage = File(
+        '${results.path}/${featureReportName(featuresIn(roots).first)}',
+      ).readAsStringSync();
+      expect(featurePage, contains('<a href="features.html">Features</a>'));
+      expect(featurePage, isNot(contains('Requirements')));
+    });
+
     test('shows a coverage bar whose widths are the share of each verdict', () {
-      expect(capabilities, contains('class="progress-bar"'));
-      expect(capabilities, contains('width:100.0000%'));
-      expect(capabilities, contains('title="SUCCESS: 1 of 1"'));
+      expect(featuresPage, contains('class="progress-bar"'));
+      expect(featuresPage, contains('width:100.0000%'));
+      expect(featuresPage, contains('title="SUCCESS: 1 of 1"'));
     });
   });
 
@@ -202,15 +226,15 @@ void main() {
   });
 
   group('the menu and the dashboard', () {
-    test('Requirements is a live link now, not a disabled label', () {
+    test('Features is a live link now, not a disabled label', () {
       final String index = File(
         '${results.path}/index.html',
       ).readAsStringSync();
-      expect(index, contains('href="capabilities.html"'));
+      expect(index, contains('href="features.html"'));
       expect(index, isNot(contains('Available in a later phase')));
     });
 
-    test('the dashboard summarises coverage per root requirement', () {
+    test('the dashboard summarises coverage per root of the tree', () {
       final String index = File(
         '${results.path}/index.html',
       ).readAsStringSync();
@@ -220,9 +244,9 @@ void main() {
 
   group('branding', () {
     test('no design source name, and no external URL', () {
-      expect(capabilities.toLowerCase(), isNot(contains('serenity')));
-      expect(capabilities, isNot(contains('http://')));
-      expect(capabilities, isNot(contains('https://')));
+      expect(featuresPage.toLowerCase(), isNot(contains('serenity')));
+      expect(featuresPage, isNot(contains('http://')));
+      expect(featuresPage, isNot(contains('https://')));
     });
   });
 }

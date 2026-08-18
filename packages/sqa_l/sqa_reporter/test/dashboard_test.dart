@@ -52,19 +52,33 @@ void main() {
 
   group('the banner', () {
     test('names the report SQA Reporter, not the design source', () {
-      expect(html, contains('<title>SQA Reporter</title>'));
-      expect(html, contains('SQA <span class="accent">Reporter</span>'));
+      expect(
+        html,
+        contains('<title>SQA Reporter · Web E2E Test Report</title>'),
+      );
+      expect(html, contains('<span class="wordmark-sqa">SQA</span>'));
+      expect(html, contains('<span class="wordmark-name">Reporter</span>'));
     });
 
-    test('the wordmark links home', () {
+    test('the wordmark links home, mark and all', () {
       expect(html, contains('<a class="wordmark" href="index.html">'));
+      expect(
+        html,
+        contains('<svg class="wordmark-mark"'),
+        reason: 'the figure is drawn inline: no second request for a logo',
+      );
+      expect(
+        html,
+        contains('aria-hidden="true"'),
+        reason: 'decorative — the wordmark beside it already says the name',
+      );
     });
 
     test('carries one title line, worded by platform', () {
-      expect(html, contains('E2E test report web'));
-      expect(projectTitleFor('web'), 'E2E test report web');
-      expect(projectTitleFor('android'), 'E2E test report mobile');
-      expect(projectTitleFor('ios'), 'E2E test report mobile');
+      expect(html, contains('Web E2E Test Report'));
+      expect(projectTitleFor('web'), 'Web E2E Test Report');
+      expect(projectTitleFor('android'), 'Android E2E Test Report');
+      expect(projectTitleFor('ios'), 'iOS E2E Test Report');
       expect(
         html,
         isNot(contains('projectsubtitle')),
@@ -72,15 +86,10 @@ void main() {
       );
     });
 
-    test('a given title replaces the default everywhere', () {
-      final String custom = dashboardHtml(
-        parsePlaywright(inputFile),
-        platform: 'web',
-        title: 'Reporte E2E · Tyba',
-        generatedAt: DateTime.utc(2026, 8, 18, 10, 5),
-      );
-      expect(custom, contains('Reporte E2E · Tyba'));
-      expect(custom, isNot(contains('E2E test report web')));
+    test('an unexpected platform is named after itself, not filed under one '
+        'of the three', () {
+      expect(projectTitleFor('macos'), 'Macos E2E Test Report');
+      expect(projectTitleFor(''), 'E2E Test Report');
     });
   });
 
