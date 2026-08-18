@@ -30,7 +30,7 @@ reference repo inside the environment, or paste the prompt's content by hand
 
 An offline-first Flutter vehicle marketplace. A Melos monorepo with 36 packages
 under `packages/{apps,features,shared,ui,development}`. It runs on Android, iOS
-and web from a single shell. The E2E suite is built with **Patrol 4.6.1**, with
+and web from a single shell. The E2E suite is built with **Patrol 4.9.0**, with
 an Allure report and CI on GitHub Actions.
 
 **It is not a template to copy as-is.** It is a POC built without constraints,
