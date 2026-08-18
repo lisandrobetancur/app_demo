@@ -85,12 +85,17 @@ String donutChart(Map<String, int> counts, int total) {
   }
 
   final int passing = counts['SUCCESS'] ?? 0;
+  // The hole is where a reader's cursor goes first — it is where the number
+  // is, and with a single verdict it is most of what the chart looks like.
+  // Leaving it inert made the whole doughnut feel dead, so it leads to the
+  // table with nothing filtered out: the middle reads the whole run.
   return '<div class="donut-wrap">'
       '<div class="donut" '
       'style="background:conic-gradient(${segments.join(', ')})">'
       '$wedges'
       '$labels'
-      '<span class="donut-label">${(passing * 100 / total).round()}%</span>'
+      '<a class="donut-label" href="#tests" data-result="" '
+      'title="All tests">${(passing * 100 / total).round()}%</a>'
       '</div></div>';
 }
 

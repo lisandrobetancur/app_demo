@@ -16,6 +16,7 @@ import '../model.dart';
 import '../serenity_writer.dart';
 import 'dashboard.dart' show compoundDuration, escapeHtml, resultIcon, stepIcon;
 import 'page_chrome.dart';
+import 'requirements_page.dart' show featureReportNameOf;
 import 'screenshots_page.dart' show screenshotsReportName;
 import 'site_assets.dart';
 import 'tags_page.dart' show tagReportName;
@@ -86,7 +87,8 @@ String testPageHtml(
     ..writeln('<div class="middlecontent">')
     ..writeln(
       '<span class="breadcrumbs"><a href="index.html">Home</a> &gt; '
-      '${escapeHtml(feature)} &gt; '
+      '<a href="${featureReportNameOf(feature)}">'
+      '${escapeHtml(feature)}</a> &gt; '
       '<span class="truncate">${escapeHtml(testCase.name)}</span></span>',
     )
     ..write(menuBar(generatedAt, homeActive: false))
@@ -261,20 +263,22 @@ class _StepTable {
   ].join(' ');
 }
 
-/// The failure block, when the test carries one: the parsed error type, the
-/// first lines of the message, and the full trace behind a fold — the
-/// reference's stacktrace accordion, in one `<details>`.
+/// The failure block, when the test carries one: the parsed error type and
+/// the message.
+///
+/// No stack trace. A Patrol trace is frames of the test harness and the
+/// framework — `element.dart`, `binding.dart`, the runner — and the line that
+/// would name your own step is the step the tree already shows as broken. It
+/// took a fold on every failing test to say nothing the reader could act on.
+/// The full trace stays in the JSON result, for anything that wants it.
 String _failure(RunCase testCase, String result) {
   if (testCase.failureMessage == null) {
     return '';
   }
-  final String trace = testCase.failureTrace ?? testCase.failureMessage!;
   return '''
 <div class="failure-block test-$result">
   <h3 class="${result.toLowerCase()}-color">${escapeHtml(_errorTitle(testCase))}</h3>
   <div class="error-message"><pre>${escapeHtml(testCase.failureMessage!)}</pre></div>
-  <details class="stacktrace"><summary>Stack trace</summary>
-  <pre>${escapeHtml(trace)}</pre></details>
 </div>
 ''';
 }

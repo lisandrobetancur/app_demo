@@ -87,7 +87,8 @@ void main() {
   group('the summary', () {
     test('counts the run: two tests, half of them passing', () {
       expect(html, contains('2 tests'));
-      expect(html, contains('<span class="donut-label">50%</span>'));
+      expect(html, contains('class="donut-label"'));
+      expect(html, contains('>50%</a>'));
     });
 
     test('writes each share on its own segment of the doughnut', () {

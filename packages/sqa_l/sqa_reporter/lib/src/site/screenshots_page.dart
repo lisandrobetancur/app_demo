@@ -16,6 +16,7 @@ import '../model.dart';
 import '../serenity_writer.dart';
 import 'dashboard.dart' show escapeHtml, resultIcon;
 import 'page_chrome.dart';
+import 'requirements_page.dart' show featureReportNameOf;
 import 'site_assets.dart';
 
 /// `<digest>_screenshots.html` — the gallery for one test.
@@ -73,7 +74,8 @@ String screenshotsPageHtml(
     ..writeln('<div class="middlecontent">')
     ..writeln(
       '<span class="breadcrumbs"><a href="index.html">Home</a> &gt; '
-      '${escapeHtml(feature)} &gt; '
+      '<a href="${featureReportNameOf(feature)}">'
+      '${escapeHtml(feature)}</a> &gt; '
       '<a href="${htmlReportName(testCase)}">'
       '${escapeHtml(testCase.name)}</a> &gt; Screenshots</span>',
     )

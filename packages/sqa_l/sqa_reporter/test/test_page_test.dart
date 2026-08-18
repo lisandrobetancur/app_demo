@@ -164,11 +164,14 @@ void main() {
       );
     });
 
-    test('a failing test shows the error type, message and trace', () {
+    test('a failing test shows the error type and the message', () {
       expect(brokenPage, contains('StateError'));
       expect(brokenPage, contains('wrong locator?'));
-      expect(brokenPage, contains('<summary>Stack trace</summary>'));
-      expect(brokenPage, contains('element.dart:68'));
+    });
+
+    test('and no stack trace: the frames are the harness, not your step', () {
+      expect(brokenPage, isNot(contains('Stack trace')));
+      expect(brokenPage, isNot(contains('element.dart:68')));
     });
 
     test('a passing test has no failure block', () {

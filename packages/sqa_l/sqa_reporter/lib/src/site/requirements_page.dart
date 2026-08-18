@@ -24,7 +24,13 @@ import 'site_assets.dart';
 
 /// `<slug>_feature.html` — one feature's page.
 String featureReportName(RequirementNode feature) =>
-    '${feature.slug}_feature.html';
+    featureReportNameOf(feature.name);
+
+/// The same name from the feature's name alone, for the pages that know what
+/// feature a test belongs to but not the tree it sits in — a breadcrumb, for
+/// one. Both go through `slugOf`, so they cannot drift apart.
+String featureReportNameOf(String featureName) =>
+    '${slugOf(featureName)}_feature.html';
 
 /// Writes `capabilities.html` and one page per feature. Returns the files
 /// written, the tree's own page first.
