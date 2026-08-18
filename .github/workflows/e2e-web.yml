@@ -29,7 +29,31 @@ jobs:
       # `npx playwright install` inside the patrol package.
       - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version-file: packages/sqa_l/tool/allure/.nvmrc
+
+      # corepack reads `packageManager` from the report tooling's package.json
+      # and provisions exactly that pnpm, so the version is pinned in one file
+      # instead of repeated in every workflow. `prepare --activate` is what
+      # makes it the default for the rest of the job: without it, a `pnpm` run
+      # from the repository root — where there is no `packageManager` to read —
+      # falls back to whichever version corepack ships with.
+      #
+      # Patrol's own web runner still uses npm inside the pub cache. That is
+      # its package, not ours, and it is left alone.
+      - name: Pin pnpm through corepack
+        working-directory: packages/sqa_l/tool/allure
+        run: |
+          corepack enable
+          corepack prepare --activate
+          pnpm --version
+
+      # `npx` used to install the Allure CLI on demand; `pnpm exec` does not,
+      # so the install is a step of its own. `--frozen-lockfile` makes it fail
+      # rather than quietly resolve something else when the lockfile and the
+      # manifest disagree.
+      - name: Install the report tooling
+        working-directory: packages/sqa_l/tool/allure
+        run: pnpm install --frozen-lockfile
 
       # Chromium is a ~130 MB download on every cold run. The pub cache holds
       # the activated CLIs and the web runner's node_modules, which live inside

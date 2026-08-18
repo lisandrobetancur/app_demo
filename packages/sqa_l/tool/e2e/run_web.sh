@@ -120,7 +120,7 @@ echo "── Building the report ───────────────�
 # Deliberately not chained with `&&` to the above: a red suite is exactly when
 # the report is needed.
 node packages/sqa_l/tool/allure/patrol_to_allure.mjs --platform web \
-  && npx --prefix packages/sqa_l/tool/allure allure awesome "$OUT/allure/results" \
+  && pnpm --dir packages/sqa_l/tool/allure exec allure awesome "$OUT/allure/results" \
        --output "$OUT/allure/report" --report-name "Market E2E · Web" \
   || echo "The report could not be built (the suite exited with $status)." >&2
 

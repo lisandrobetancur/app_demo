@@ -1,0 +1,9 @@
+# `engines` in package.json is a wish until something enforces it. This is what
+# enforces it: without `engineStrict` the install succeeds under any Node and
+# the mismatch surfaces later, somewhere further from the cause.
+#
+# It lives here and not in `.npmrc` — pnpm 10 moved its own settings into this
+# file, and an `engine-strict=true` left in `.npmrc` is read by nobody:
+# `pnpm config get engine-strict` answers `undefined`. The line looks like a
+# guarantee and is not one.
+engineStrict: true
