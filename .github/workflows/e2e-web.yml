@@ -2,7 +2,11 @@ name: E2E web
 
 on:
   push:
-    branches: [main]
+    # `develop` is where pull requests land and `main` only receives
+    # `develop`, so both are integration points and both need the suite run
+    # on the merge result — a pull request is only ever tested against a
+    # snapshot of its base.
+    branches: [main, develop]
   pull_request:
   workflow_dispatch:
 

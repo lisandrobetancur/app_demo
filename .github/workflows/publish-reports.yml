@@ -4,6 +4,13 @@ name: Publish reports
 # the whole site and there is only one site per repository — so neither can
 # publish on its own without erasing the other. This runs after either of them
 # finishes, collects the latest report of *both* platforms, and deploys once.
+#
+# `main` only, and deliberately not `develop`. There is one Pages site, so
+# whichever branch publishes last is the one the URL shows; letting an
+# integration branch publish would mean the report at a stable address
+# sometimes describes released code and sometimes does not, with nothing on the
+# page saying which. The published report tracks `main`. A `develop` run's
+# report is still on its workflow run, as an artefact.
 on:
   workflow_run:
     workflows: ["E2E web", "E2E android"]
