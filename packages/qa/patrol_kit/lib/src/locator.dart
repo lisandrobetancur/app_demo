@@ -43,33 +43,77 @@ class Loc {
   /// way, so a renamed key still breaks at compile time.
   factory Loc.widgetKey(Key key) => Loc('key $key', find.byKey(key));
 
+  /// By the semantics identifier the app declares for the element.
+  ///
+  /// ```dart
+  /// Semantics(identifier: 'login_submit', child: AppButton(…))
+  /// ```
+  ///
+  /// Worth preferring over a [Key] on an app whose code you can change, for two
+  /// reasons a key cannot match.
+  ///
+  /// A `Key` exists only inside Flutter's widget tree. An identifier reaches the
+  /// platform's accessibility layer — `accessibilityIdentifier` on iOS,
+  /// `resource-id` on Android — so Appium, Maestro and the native harnesses can
+  /// address the same element. The identifiers survive a change of tool; keys do
+  /// not.
+  ///
+  /// And it is not [Loc.semanticsLabel]. A label is read aloud to the user, so
+  /// it is subject to translation and carries the fragility of [Loc.text]. An
+  /// identifier is shown to nobody and is never localized.
+  ///
+  /// It is still production code. It is easier to argue for than a key, since
+  /// the app arguably wanted the accessibility anyway — but it is asked for,
+  /// not added quietly.
+  ///
+  /// One sharp edge, unlike every other strategy here: the underlying finder
+  /// throws when it is **built**, not when it matches, so this cannot be
+  /// constructed at all without semantics enabled. [e2eTest] turns them on by
+  /// default and a page object's `static final` initialises lazily on first
+  /// use, so the ordinary path never meets it — but a `Loc.semantics` built
+  /// outside a running test fails with a bare `Bad state`, naming neither this
+  /// class nor the locator.
+  factory Loc.semantics(String identifier) => Loc(
+    "semantics identifier '$identifier'",
+    find.bySemanticsIdentifier(identifier),
+  );
+
+  /// By the semantics label — the text a screen reader announces.
+  ///
+  /// Reachable without the app declaring anything, which is its whole appeal on
+  /// code you cannot change. The cost is that a label is user-facing text: on a
+  /// localized app it moves with the language, exactly like [Loc.text]. Prefer
+  /// [Loc.semantics] wherever an identifier can be added.
+  factory Loc.semanticsLabel(Pattern label) =>
+      Loc("semantics label '$label'", find.bySemanticsLabel(label));
+
   /// By the exact text the user reads.
   ///
   /// The honest trade-off: it needs no cooperation from the app, and it
   /// breaks when the copy changes. On a localized app that also pins the test
   /// to one language — which is fine when the suite pins the locale, as this
   /// one does, and a liability when it does not.
-  factory Loc.text(String text) => Loc('texto "$text"', find.text(text));
+  factory Loc.text(String text) => Loc('text "$text"', find.text(text));
 
   /// By a fragment of the text, for composed or interpolated strings.
   factory Loc.textContaining(String fragment) =>
-      Loc('texto que contiene "$fragment"', find.textContaining(fragment));
+      Loc('text containing "$fragment"', find.textContaining(fragment));
 
   /// By widget type. Precise when the type is the app's own
   /// (`Loc.type(ProductCard)`), ambiguous when it is Flutter's
   /// (`Loc.type(TextField)`) — pair it with [at] or [within].
-  factory Loc.type(Type type) => Loc('widget $type', find.byType(type));
+  factory Loc.type(Type type) => Loc('$type widget', find.byType(type));
 
   /// By icon, for controls with no text at all.
   factory Loc.icon(IconData icon) =>
-      Loc('icono ${icon.codePoint}', find.byIcon(icon));
+      Loc('icon ${icon.codePoint}', find.byIcon(icon));
 
   /// Escape hatch: any `flutter_test` finder, named so the report still reads.
   factory Loc.custom(Finder finder, String description) =>
       Loc(description, finder);
 
   /// How this locator reads in an error message. Composed strategies build it
-  /// up ("texto \"Entrar\" dentro de key 'login_view'"), so a failure names
+  /// up ("text \"Entrar\" within key 'login_view'"), so a failure names
   /// the locator instead of dumping a finder.
   final String description;
 
@@ -81,21 +125,21 @@ class Loc {
   /// when the layout is rearranged. Prefer [within].
   Loc at(int index) => Loc('$description [#$index]', finder.at(index));
 
-  Loc get first => Loc('$description (primero)', finder.first);
+  Loc get first => Loc('$description (first)', finder.first);
 
   Loc get last => Loc('$description (last)', finder.last);
 
   /// Scoped to a container — the robust way to disambiguate a repeated
   /// widget, and the one that survives a redesign.
   Loc within(Loc ancestor) => Loc(
-    '$description dentro de ${ancestor.description}',
+    '$description within ${ancestor.description}',
     find.descendant(of: ancestor.finder, matching: finder),
   );
 
   /// The container that holds [descendant] — a row found by the text inside
   /// it, for instance.
   Loc containing(Loc descendant) => Loc(
-    '$description que contiene ${descendant.description}',
+    '$description containing ${descendant.description}',
     find.ancestor(of: descendant.finder, matching: finder),
   );
 
