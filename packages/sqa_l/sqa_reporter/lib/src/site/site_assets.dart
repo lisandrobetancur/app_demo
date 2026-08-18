@@ -126,19 +126,14 @@ a:hover { text-decoration: underline; }
 
 /* ── Banner ─────────────────────────────────────────────────────────── */
 
-/* White, closed off from the page by a hairline and a two-colour rule — the
-   navy of the titles running into the green of a passing test. It is the one
-   piece of decoration in the report, and it is on the one band that is the
-   same on every page. The rule is painted as a background image rather than a
-   border so it needs no extra element to hang on. */
+/* White, closed off from the page by a hairline and nothing else. A band of
+   colour across the full width was tried and dropped: everything else on the
+   page is inset and quiet, so a full-bleed rule read as a stripe laid over
+   the report rather than part of it. The one accent left in the banner is
+   under the report's own name, where it marks something. */
 .topheader {
   background-color: #fff;
-  background-image: linear-gradient(90deg, var(--title) 0%, var(--title) 55%, var(--pass) 100%);
-  background-repeat: no-repeat;
-  background-size: 100% 3px;
-  background-position: bottom left;
   border-bottom: 1px solid var(--rule);
-  box-shadow: 0 1px 3px rgba(10, 27, 58, 0.06);
 }
 
 /* The page fills the window, with a margin rather than a column: a report of
