@@ -1,6 +1,6 @@
 /// The marker-stream parser: one test's captured output in, the model out.
 ///
-/// This is a port of the parsing half of `tool/allure/patrol_to_allure.mjs`,
+/// This is the parsing half of the pipeline,
 /// which is the working reference for how the markers arrive. The semantics
 /// are kept identical on purpose — two consumers of one stream must agree on
 /// its edges — and where the original earned a rule the hard way, the rule

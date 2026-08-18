@@ -1,5 +1,5 @@
 name: patrol_kit
-description: "Reusable Patrol E2E scaffolding: declarative locators, an element API, soft assertions and Allure reporting. Carries nothing app-specific."
+description: "Reusable Patrol E2E scaffolding: declarative locators, an element API, soft assertions and the report markers. Carries nothing app-specific."
 version: 0.1.0
 publish_to: none
 

@@ -1,7 +1,7 @@
 # patrol_kit
 
 Reusable Patrol E2E scaffolding for Flutter apps: declarative locators, an
-element API, soft assertions and Allure reporting.
+element API, soft assertions and the report markers.
 
 Depends on Flutter and Patrol and on **nothing else** — no design system, no
 app package, no project constants. That is the property the whole package
@@ -168,8 +168,8 @@ that was compiled in, with nothing added to the asset manifest.
 
 ## The report
 
-The kit prints markers to stdout as the suite runs; a converter turns them into
-Allure results. Nothing here writes files or touches the network.
+The kit prints markers to stdout as the suite runs; SQA Reporter turns them
+into a report. Nothing here writes files or touches the network.
 
 | Marker | From | Becomes |
 |---|---|---|
@@ -177,7 +177,7 @@ Allure results. Nothing here writes files or touches the network.
 | `PATROL_ASSERT` | `reportAssertion` | A leaf carrying `expected` / `actual` |
 | `PATROL_SHOT` | `takeScreenshot` | An attachment on the step that produced it |
 | `PATROL_META` / `PATROL_PARAM` | `scenario()` / `testParam()` | Labels, description and case data |
-| `PATROL_TAGS` | `e2eTest(tags:)` | Allure `tag` labels |
+| `PATROL_TAGS` | `e2eTest(tags:)` | The test's tags, and a page per tag |
 | `PATROL_TRACE` | `Log.*` | The `run.log` attachment, plus rows for `warn`/`error` |
 
 A step that ends badly is reported as **failed** or **broken**, never just red:

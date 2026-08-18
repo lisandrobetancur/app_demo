@@ -11,10 +11,10 @@
 #   ├── web/
 #   │   ├── playwright/     results.json, results.xml, Playwright's HTML
 #   │   ├── test-results/   per-test traces and attachments
-#   │   └── allure/{results,report}
+#   │   └── sqa_reporter/report  the report and the results it reads
 #   └── android/
 #       ├── android_run.log the captured logcat
-#       └── allure/{results,report}
+#       └── sqa_reporter/report
 #
 # That is what makes this cleanup trustworthy. The artifacts used to be spread
 # across four places in the repository and this script had to enumerate them

@@ -13,7 +13,7 @@ import '../support/support.dart';
 ///    promises, so a test does not have to;
 ///  * a step never contains a locator — those live in the page objects;
 ///  * every step goes through [step], which names it, captures the screen it
-///    left behind and reports its outcome to the Allure report.
+///    left behind and reports its outcome to the report.
 class AuthSteps extends BaseSteps {
   AuthSteps(super.$)
     : _login = LoginPage($),

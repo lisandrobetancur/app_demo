@@ -1,5 +1,5 @@
 /// Fixtures shaped exactly like the two transports deliver them, marker by
-/// marker — the formats are the ones `patrol_to_allure.mjs` parses in
+/// marker — the formats are the ones the parsers read in
 /// production, so both consumers of the stream are tested against the same
 /// contract.
 library;

@@ -10,7 +10,7 @@ import 'package:patrol_finders/patrol_finders.dart' as finders;
 
 import 'log.dart';
 
-/// Marker the Allure converter reads to label a test with its tags.
+/// Marker the report generator reads to label a test with its tags.
 const String _marker = 'PATROL_TAGS';
 
 /// The tag vocabulary.
@@ -67,7 +67,7 @@ class Tags {
 ///    the test bundle is generated, so an excluded test is never built into
 ///    the binary — not built and then skipped.
 ///  * **The report**, through the `PATROL_TAGS` marker, which the converter
-///    turns into Allure `tag` labels so the same vocabulary filters the
+///    turns into report tags so the same vocabulary filters the
 ///    results.
 ///
 /// ```dart
@@ -119,7 +119,7 @@ void e2eTest(
   );
 }
 
-/// Prints the tag marker the converter turns into Allure labels.
+/// Prints the tag marker the report generator turns into tags.
 ///
 /// Exposed for the rare test that still calls `patrolTest` directly — the
 /// wrapper is the ordinary way in.

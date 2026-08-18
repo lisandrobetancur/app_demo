@@ -6,8 +6,9 @@ Everything in this document was read from `serenity-bdd/serenity-core` at commit
 specific class, the class is named. Where something could not be determined from
 the source that was read, it is marked **UNVERIFIED** rather than guessed.
 
-The input side — how our own marker stream arrives — was read from
-`packages/sqa_l/tool/allure/patrol_to_allure.mjs`, which already consumes it.
+The input side — how our own marker stream arrives — was read from the
+converter that consumed it at the time this was written; it now lives in
+`packages/sqa_l/sqa_reporter/lib/src/markers.dart`.
 
 ---
 
@@ -200,7 +201,8 @@ confirmed in the classes read. Phase 1 does not depend on it.
 
 ## 5 · Marker → schema mapping, field by field
 
-Input contract as implemented by `patrol_to_allure.mjs` (both transports).
+Input contract as implemented by `markers.dart` and `inputs.dart` (both
+transports).
 
 | Marker / source | TestOutcome field | Notes |
 |---|---|---|

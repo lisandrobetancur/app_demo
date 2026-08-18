@@ -1,5 +1,4 @@
-/// The command line, mirroring the Allure converter's flags so the two can be
-/// run side by side on the same input while they coexist:
+/// The command line:
 ///
 ///   dart run sqa_reporter [--input <file>] [--output <dir>]
 ///                         [--format playwright|patrol-log]
@@ -161,7 +160,7 @@ class _Args {
 
 /// The repo root, found by walking up to the directory that holds `.git`
 /// rather than by counting `..` segments — the same rule the shell scripts
-/// and the Allure converter already follow, for the same reason: this tree
+/// already follow, for the same reason: this tree
 /// has moved before, and a hop count breaks in silence when it moves again.
 String _repoRoot() {
   Directory dir = Directory.current;

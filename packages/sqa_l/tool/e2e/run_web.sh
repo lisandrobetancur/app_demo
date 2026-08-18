@@ -7,7 +7,7 @@
 # Three things in one command, in this order: clean up after the previous run,
 # run, and build the report. This is Serenity's `aggregate` model — the report
 # is part of running, not a step somebody has to remember to launch afterwards.
-# Opening it stays separate (`melos run allureServeWeb`): building and opening
+# Opening it stays separate (`melos run sqaOpenWeb`): building and opening
 # are different decisions, and in CI only the first one exists.
 #
 # THE DELICATE PART is the exit code. The report has to be built EVEN WHEN the
@@ -83,7 +83,7 @@ OUT="$PWD/build/e2e/web"
 # the machine happens to be.
 #
 # Three reporters, one per reader: `list` for the terminal, `json` for the
-# Allure converter and `junit` for CI. The `json` one is not optional:
+# report generator and `junit` for CI. The `json` one is not optional:
 # Playwright's per-test capture is the only channel carrying the screenshot
 # markers out of the browser.
 #
@@ -146,20 +146,10 @@ echo "── Building the reports ───────────────�
 # Deliberately not chained with `&&` to the above: a red suite is exactly when
 # the report is needed.
 #
-# Two reporters read the same run, and neither is allowed to stop the other:
-# they are separate `||` branches so a broken Allure toolchain still leaves an
-# SQA report, and a bug in the Dart reporter still leaves the Allure one. That
-# is the whole point of running both while one replaces the other.
-node packages/sqa_l/tool/allure/patrol_to_allure.mjs --platform web \
-  && pnpm --dir packages/sqa_l/tool/allure exec allure awesome "$OUT/allure/results" \
-       --output "$OUT/allure/report" --report-name "Market E2E · Web" \
-  || echo "The Allure report could not be built (the suite exited with $status)." >&2
-
 dart run sqa_reporter --input "$OUT/playwright/results.json" --platform web \
-  || echo "The SQA report could not be built (the suite exited with $status)." >&2
+  || echo "The report could not be built (the suite exited with $status)." >&2
 
 echo
-echo "Reports:"
-echo "  build/e2e/web/allure/report         ·  melos run allureServeWeb"
+echo "Report:"
 echo "  build/e2e/web/sqa_reporter/report   ·  melos run sqaOpenWeb"
 exit "$status"

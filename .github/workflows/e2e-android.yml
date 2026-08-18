@@ -39,31 +39,7 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          node-version-file: packages/sqa_l/tool/allure/.nvmrc
-
-      # corepack reads `packageManager` from the report tooling's package.json
-      # and provisions exactly that pnpm, so the version is pinned in one file
-      # instead of repeated in every workflow. `prepare --activate` is what
-      # makes it the default for the rest of the job: without it, a `pnpm` run
-      # from the repository root — where there is no `packageManager` to read —
-      # falls back to whichever version corepack ships with.
-      #
-      # Patrol's own web runner still uses npm inside the pub cache. That is
-      # its package, not ours, and it is left alone.
-      - name: Pin pnpm through corepack
-        working-directory: packages/sqa_l/tool/allure
-        run: |
-          corepack enable
-          corepack prepare --activate
-          pnpm --version
-
-      # `npx` used to install the Allure CLI on demand; `pnpm exec` does not,
-      # so the install is a step of its own. `--frozen-lockfile` makes it fail
-      # rather than quietly resolve something else when the lockfile and the
-      # manifest disagree.
-      - name: Install the report tooling
-        working-directory: packages/sqa_l/tool/allure
-        run: pnpm install --frozen-lockfile
+          node-version-file: packages/sqa_l/tool/e2e/.nvmrc
 
       - name: Cache pub
         uses: actions/cache@v6
@@ -112,7 +88,7 @@ jobs:
         # without it `tee` would return its own success and swallow the
         # script's exit code — quietly turning the check back into a notice.
         shell: bash
-        run: node packages/sqa_l/tool/allure/summarize_assertions.mjs --platform android | tee -a "$GITHUB_STEP_SUMMARY"
+        run: dart run sqa_reporter:assertion_summary --platform android | tee -a "$GITHUB_STEP_SUMMARY"
 
       # The device log is the only place the step and screenshot markers exist
       # on mobile, so it is worth keeping when a run goes wrong.
@@ -124,21 +100,14 @@ jobs:
           path: build/e2e/android/android_run.log
           retention-days: 7
 
+      # `melos run e2eAndroid` built the report in the step above; this only
+      # collects it. One directory holds the whole thing — the pages, the
+      # results they read and the screenshots — so the artifact is a report
+      # that opens from `index.html` with nothing else to fetch.
       - name: Upload the report
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: report-android
-          path: build/e2e/android/allure/report
-          retention-days: 14
-
-      # The second reporter, uploaded separately so the two can be compared
-      # run against run while one replaces the other. `melos run e2eAndroid`
-      # built it in the step above; this only collects it.
-      - name: Upload the SQA report
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: sqa-report-android
           path: build/e2e/android/sqa_reporter/report
           retention-days: 14

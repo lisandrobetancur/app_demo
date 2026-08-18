@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Runs the Patrol suite on a connected Android device and captures the device
-# log, which is what the Allure converter reads.
+# log, which is what the report generator reads.
 #
 # The capture is the whole point of this script. `patrol_cli` parses
 # `PATROL_LOG` lines to pretty-print them and drops every other line, so its
@@ -11,10 +11,9 @@
 # read in parallel with the run.
 #
 # Like the web run, it does three things in one command: clean up after the
-# previous run, run, and build the report — Serenity's `aggregate` model, where
-# the report is part of running rather than a separate step somebody has to
-# remember. Opening it stays a different thing
-# (`melos run allureServeAndroid`).
+# previous run, run, and build the report, so the report is part of running
+# rather than a separate step somebody has to remember. Opening it stays a
+# different thing (`melos run sqaOpenAndroid`).
 #
 # The report is built EVEN WHEN the suite fails, which is when somebody is
 # going to open it, but the script still exits red so CI does not accept a run
@@ -80,20 +79,11 @@ trap - EXIT
 echo "Device log captured at $LOG ($(wc -l < "$LOG" | tr -d ' ') lines)"
 
 echo
-echo "── Building the reports ──────────────────────────────────────────────"
-# Two reporters over the same device log, each in its own `||` branch: neither
-# can stop the other from being built. See run_web.sh for why that matters
-# while one is replacing the other.
-node packages/sqa_l/tool/allure/patrol_to_allure.mjs --input "$LOG" --platform android \
-  && pnpm --dir packages/sqa_l/tool/allure exec allure awesome "$OUT/allure/results" \
-       --output "$OUT/allure/report" --report-name "Market E2E · Android" \
-  || echo "The Allure report could not be built (the suite exited with $status)." >&2
-
+echo "── Building the report ───────────────────────────────────────────────"
 dart run sqa_reporter --input "$LOG" --format patrol-log --platform android \
-  || echo "The SQA report could not be built (the suite exited with $status)." >&2
+  || echo "The report could not be built (the suite exited with $status)." >&2
 
 echo
-echo "Reports:"
-echo "  build/e2e/android/allure/report        ·  melos run allureServeAndroid"
+echo "Report:"
 echo "  build/e2e/android/sqa_reporter/report  ·  melos run sqaOpenAndroid"
 exit "$status"

@@ -9,13 +9,13 @@ import 'package:flutter/foundation.dart';
 /// failures matter most, or with what data a case ran — which is what anyone
 /// outside the team actually opens a report to find out.
 ///
-/// Both helpers print a marker that the Allure converter picks up from the
+/// Both helpers print a marker that the report generator picks up from the
 /// test's stdout, the same channel the steps and screenshots already travel
 /// through. Nothing here touches the app.
 
 /// How much a failure of this scenario matters.
 ///
-/// Mirrors Allure's own scale, so the report's severity filter works without
+/// The four levels the report's severity filter offers, so a severity works without
 /// translation.
 enum Severity {
   blocker,
@@ -42,10 +42,10 @@ const String _paramMarker = 'PATROL_PARAM';
 /// );
 /// ```
 ///
-/// [epic] and [feature] are what Allure groups by in its *Behaviors* view,
+/// [epic] and [feature] are what the report groups by on its Features page,
 /// which reads by functionality instead of by file.
 ///
-/// There is deliberately no `story`. Allure's taxonomy offers one, but a story
+/// There is deliberately no `story`. The taxonomy this borrows from offers one, but a story
 /// is a unit of work while a test is a unit of verification: the level pays
 /// for itself only when one story holds several tests. Declared one-to-one
 /// with the tests, as it was here, it is a second name for each of them and
