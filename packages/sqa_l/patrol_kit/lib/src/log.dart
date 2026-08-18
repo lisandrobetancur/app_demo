@@ -36,8 +36,8 @@ const String _marker = 'PATROL_TRACE';
 /// The suite's logger.
 ///
 /// ```dart
-/// Log.info('Comprando como ${user.email}');
-/// Log.debug('Carrito', data: {'items': 3, 'total': 71400});
+/// Log.info('Buying as ${user.email}');
+/// Log.debug('Cart', data: {'items': 3, 'total': 71400});
 /// Log.warn('The coupon was already applied, not applying it again');
 /// ```
 class Log {

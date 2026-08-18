@@ -626,9 +626,13 @@ The converter carries the verdict up: Playwright reports one `failed` for both
 cases, so a test whose only casualty was a stale locator is promoted to
 *broken* rather than being read as a product defect.
 
-`scenario()` supplies the business taxonomy: `epic`, `feature` and `story`
-drive Allure's **Behaviors** view, which groups by functionality instead of by
-file, and `severity` drives its filter. `testParam()` records the data a case
+`scenario()` supplies the business taxonomy. `epic` and `feature` drive
+Allure's **Behaviors** view, which groups by functionality instead of by file,
+and `severity` drives its filter. There is deliberately no `story`: Allure's
+taxonomy offers one, but a story is a unit of work while a test is a unit of
+verification, so the level pays for itself only when one story holds several
+tests. Declared one-to-one with the tests, as it was here, it was a second name
+for each of them and grouped nothing. The test's own name is the leaf. `testParam()` records the data a case
 ran with — user, coupon, amounts — so a failure can be reproduced without
 opening the test. Neither touches the app: both just print to stdout.
 

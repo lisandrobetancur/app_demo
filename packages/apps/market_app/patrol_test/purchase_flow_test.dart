@@ -16,7 +16,6 @@ void main() {
       scenario(
         epic: 'Purchase',
         feature: 'Cart and checkout',
-        story: 'Buy a product from the catalog through to a confirmed order',
         severity: Severity.blocker,
         description:
             'The critical path of the application. It also checks that the '
@@ -61,7 +60,6 @@ void main() {
       scenario(
         epic: 'Purchase',
         feature: 'Catalog',
-        story: 'Offer seller actions on a publication of your own',
         severity: Severity.normal,
         description:
             'Your own publication is not something you buy: the detail screen '
@@ -92,7 +90,6 @@ void main() {
       scenario(
         epic: 'Purchase',
         feature: 'Coupons',
-        story: 'Reject an expired coupon with its own specific message',
         severity: Severity.minor,
         description:
             'The error must tell expired apart from non-existent, and the '
