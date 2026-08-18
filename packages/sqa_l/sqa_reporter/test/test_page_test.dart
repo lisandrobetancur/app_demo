@@ -131,10 +131,14 @@ void main() {
     });
   });
 
-  group('the run log and the failure', () {
-    test('the log rides the last step as foldable evidence', () {
-      expect(passingPage, contains('<summary>Run log</summary>'));
-      expect(passingPage, contains('[WARN] Coupon already applied'));
+  group('the log and the failure', () {
+    test('there is no run log block: warn and error are steps already', () {
+      expect(passingPage, isNot(contains('Run log')));
+      expect(
+        passingPage,
+        contains('Coupon already applied'),
+        reason: 'the warn line survives as its own step',
+      );
     });
 
     test('a failing test shows the error type, message and trace', () {

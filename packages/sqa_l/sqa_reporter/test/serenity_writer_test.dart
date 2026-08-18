@@ -183,15 +183,21 @@ void main() {
       expect('${assertion['description']}', contains('verified: Hola, Ana'));
     });
 
-    test('the run log rides the last top-level step as evidence', () {
+    test('carries no run log: what mattered in it is already a step', () {
       final List<Object?> steps = passing['testSteps']! as List<Object?>;
-      final Map<String, Object?> last = steps.last! as Map<String, Object?>;
-      final List<Object?> reportData = last['reportData']! as List<Object?>;
-      final Map<String, Object?> log =
-          reportData.single! as Map<String, Object?>;
-      expect(log['title'], 'Run log');
-      expect(log['isEvidence'], true);
-      expect('${log['contents']}', contains('[WARN] Coupon already applied'));
+      for (final Object? raw in steps) {
+        expect((raw! as Map<String, Object?>)['reportData'], isNull);
+      }
+      // The warn line is not lost — it is a step of its own, which is what
+      // made the log itself redundant.
+      expect(
+        steps
+            .map(
+              (Object? s) => '${(s! as Map<String, Object?>)['description']}',
+            )
+            .join('\n'),
+        contains('Coupon already applied'),
+      );
     });
   });
 

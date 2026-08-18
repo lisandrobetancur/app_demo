@@ -18,6 +18,7 @@ import 'dashboard.dart' show compoundDuration, escapeHtml, resultIcon;
 import 'page_chrome.dart';
 import 'screenshots_page.dart' show screenshotsReportName;
 import 'site_assets.dart';
+import 'tags_page.dart' show tagReportName;
 
 /// Writes one detail page per case into [outputDir], beside the JSON results
 /// and the screenshots they reference. Returns the files written.
@@ -74,7 +75,6 @@ String testPageHtml(
     shotNames: shotNames,
     slideOf: slideOf,
     gallery: screenshotsReportName(testCase),
-    runLog: testCase.logLines,
   );
 
   final StringBuffer page = StringBuffer()
@@ -123,9 +123,15 @@ String _titleBar(
     if (name == null) {
       return;
     }
+    final String label =
+        '${escapeHtml(name)}'
+        '${type == 'context' || type == 'tag' ? '' : ' ($type)'}';
+    // A declared tag leads to the other tests that carry it; the rest name
+    // this test's own taxonomy and have nowhere else to go.
     badges.write(
-      '<span class="tag-badge">${escapeHtml(name)}'
-      '${type == 'context' || type == 'tag' ? '' : ' ($type)'}</span> ',
+      type == 'tag'
+          ? '<a class="tag-badge" href="${tagReportName(name)}">$label</a> '
+          : '<span class="tag-badge">$label</span> ',
     );
   }
 
@@ -169,14 +175,12 @@ class _StepTable {
     required this.shotNames,
     required this.slideOf,
     required this.gallery,
-    required this.runLog,
   });
 
   final bool hasShots;
   final Map<CapturedShot, String> shotNames;
   final Map<CapturedShot, int> slideOf;
   final String gallery;
-  final List<String> runLog;
   int _section = 0;
 
   String render(List<StepNode> steps) {
@@ -192,25 +196,13 @@ class _StepTable {
         '</tr>',
       );
     for (int i = 0; i < steps.length; i += 1) {
-      table.write(
-        _stepRows(
-          steps[i],
-          level: 0,
-          columns: columns,
-          evidence: i == steps.length - 1 ? runLog : const <String>[],
-        ),
-      );
+      table.write(_stepRows(steps[i], level: 0, columns: columns));
     }
     table.writeln('</table>');
     return table.toString();
   }
 
-  String _stepRows(
-    StepNode step, {
-    required int level,
-    required int columns,
-    List<String> evidence = const <String>[],
-  }) {
+  String _stepRows(StepNode step, {required int level, required int columns}) {
     final String result = serenityResult[step.status]!;
     final bool isGroup = step.children.isNotEmpty;
     final int indent = level * 20;
@@ -223,16 +215,11 @@ class _StepTable {
         ? '<button class="caret" data-toggle="step-section-$section" '
               'title="Show the steps inside">▸</button> '
         : '';
-    final String evidenceBlock = evidence.isEmpty
-        ? ''
-        : '<details class="evidence"><summary>Run log</summary>'
-              '<pre>${escapeHtml('${evidence.join('\n')}\n')}</pre></details>';
-
     rows.writeln(
       '<tr class="test-$result">'
       '<td class="step-description-column">'
       '<div class="step-description" style="padding-left:${indent}px">'
-      '$caret${escapeHtml(stepDescription(step))}$evidenceBlock</div></td>'
+      '$caret${escapeHtml(stepDescription(step))}</div></td>'
       '${hasShots ? '<td class="shot-column">${_thumbs(step)}</td>' : ''}'
       '<td class="outcome-column ${result.toLowerCase()}-color">$result</td>'
       '<td class="duration-column">'

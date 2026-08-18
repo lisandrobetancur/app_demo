@@ -18,6 +18,7 @@ import 'charts.dart';
 import 'page_chrome.dart';
 import 'requirements_page.dart' show coverageOverview;
 import 'site_assets.dart';
+import 'tags_page.dart' show tagReportName;
 
 /// The one line naming what the report is of, when nothing was given: the
 /// report describes the E2E suite, not the app, and the platform is the only
@@ -259,9 +260,13 @@ String _tagCloud(List<_Row> rows) {
   final List<String> names = tally.keys.toList()..sort();
   final StringBuffer cloud = StringBuffer('<h3>Tags</h3><p class="tag-cloud">');
   for (final String name in names) {
+    // Each tag leads to the scenarios that carried it: the tag vocabulary is
+    // what the runner filters on, so the question worth answering is which
+    // tests that selection covers.
     cloud.write(
-      '<span class="tag-badge cloud">${escapeHtml(name)}'
-      '<span class="tag-count">${tally[name]}</span></span> ',
+      '<a class="tag-badge cloud" href="${tagReportName(name)}">'
+      '${escapeHtml(name)}'
+      '<span class="tag-count">${tally[name]}</span></a> ',
     );
   }
   cloud.write('</p>');

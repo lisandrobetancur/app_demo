@@ -102,19 +102,11 @@ Map<String, Object?> _outcomeFor(
   final List<Map<String, Object?>> testSteps = <Map<String, Object?>>[
     for (final StepNode step in steps) stepWriter.write(step, level: 0),
   ];
-  // The run log reads top to bottom when something already went wrong; it is
-  // evidence on the tree's last top-level step, Serenity's slot for "a blob a
-  // step wants to show you" (`ReportData`, rendered as an accordion).
-  if (testCase.logLines.isNotEmpty && testSteps.isNotEmpty) {
-    testSteps.last['reportData'] = <Map<String, Object?>>[
-      <String, Object?>{
-        'id': 'run-log',
-        'title': 'Run log',
-        'contents': '${testCase.logLines.join('\n')}\n',
-        'isEvidence': true,
-      },
-    ];
-  }
+  // The run log is deliberately not carried here. Every line worth acting on
+  // — warn and error — is already a step of its own in the tree above, so the
+  // log could only ever add the `info` narration: a blob nobody opens, on
+  // every test. `logLines` stays on the model, so a surface that wants it can
+  // have it without re-parsing anything.
 
   final Map<String, Object?> featureTag = _featureTag(meta, storyTitle);
 

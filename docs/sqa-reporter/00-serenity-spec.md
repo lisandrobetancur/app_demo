@@ -218,7 +218,7 @@ Input contract as implemented by `patrol_to_allure.mjs` (both transports).
 | `PATROL_META.description` | `description` | |
 | `PATROL_TAGS` | `tags[]` as `{name, type: "tag"}` | |
 | `PATROL_PARAM` | `testData` (joined `name=value`) | Serenity has no per-test parameter list; `testData` is its slot for "the data this ran with" |
-| `PATROL_TRACE` | step-level `reportData` ("evidence") for the run log | warn/error keep their leaf-step behaviour |
+| `PATROL_TRACE` | leaf steps for `warn` and `error`; `info` is not written | The step-level `reportData` slot was used for a full run log at first and then dropped: every line worth acting on is already a step, so the log could only add `info` narration nobody opens. The lines stay on the model (`RunCase.logLines`) for a surface that wants them. |
 | platform | `context` | also becomes a context tag, as Serenity does |
 
 ### Gaps — fields we cannot fill, and what it would take

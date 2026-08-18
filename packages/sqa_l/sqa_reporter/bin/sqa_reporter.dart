@@ -76,6 +76,12 @@ void main(List<String> argv) {
     platform: args.platform,
     title: args.title,
   );
+  final List<File> tags = writeTagPages(
+    run,
+    Directory(args.output),
+    platform: args.platform,
+    title: args.title,
+  );
 
   stdout
     ..writeln(
@@ -85,7 +91,8 @@ void main(List<String> argv) {
     ..writeln(
       'Dashboard: ${index.path} (${pages.length} test page(s), '
       '${galleries.length} gallery page(s), '
-      '${requirements.length} requirement page(s))',
+      '${requirements.length} requirement page(s), '
+      '${tags.length} tag page(s))',
     );
   if (written == 0) {
     exitCode = 1;
