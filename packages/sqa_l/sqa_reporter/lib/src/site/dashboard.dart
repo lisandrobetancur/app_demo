@@ -44,6 +44,9 @@ File writeDashboard(
   File(
     '${outputDir.path}${Platform.pathSeparator}sqa-reporter.css',
   ).writeAsStringSync(siteCss);
+  File(
+    '${outputDir.path}${Platform.pathSeparator}favicon.svg',
+  ).writeAsStringSync(siteFavicon);
   final File index =
       File('${outputDir.path}${Platform.pathSeparator}index.html')
         ..writeAsStringSync(
@@ -280,10 +283,9 @@ String _testsPane(List<_Row> rows, ParsedRun run) {
     // what a column *means* — a duration by milliseconds, a result by
     // severity — rather than on the text that happens to render it.
     body.writeln(
-      '<tr>'
+      '<tr data-result="${row.result}">'
       '<td>${escapeHtml(row.feature)}</td>'
       '<td><a href="${row.href}">${escapeHtml(row.name)}</a></td>'
-      '<td>${escapeHtml(row.context)}</td>'
       '<td data-order="${row.stepCount}">${row.stepCount}</td>'
       '<td data-order="${row.startMs}">'
       '${timestampOf(DateTime.fromMillisecondsSinceEpoch(row.startMs, isUtc: true))}</td>'
@@ -300,6 +302,7 @@ String _testsPane(List<_Row> rows, ParsedRun run) {
     ..write(_keyStatistics(rows, run, twoColumn: true))
     ..writeln('<h3>Automated Scenarios</h3>')
     ..writeln('<div class="data-table">')
+    ..writeln('<p class="active-filter" hidden></p>')
     ..writeln('<div class="table-controls">')
     ..writeln(
       '<label class="entries">'
@@ -314,12 +317,12 @@ String _testsPane(List<_Row> rows, ParsedRun run) {
       '</label>',
     )
     ..writeln('</div>')
+    ..writeln('<div class="table-scroll">')
     ..writeln('<table class="table table-striped scenario-result-table">')
     ..writeln(
       '<thead><tr>'
       '<th class="sortable" data-sort="text">Feature</th>'
       '<th class="sortable test-name-column" data-sort="text">Scenario</th>'
-      '<th class="sortable" data-sort="text">Context</th>'
       '<th class="sortable" data-sort="number">Steps</th>'
       '<th class="sortable" data-sort="number">Started</th>'
       '<th class="sortable" data-sort="number">Total Duration</th>'
@@ -330,6 +333,7 @@ String _testsPane(List<_Row> rows, ParsedRun run) {
     ..write(body)
     ..writeln('</tbody>')
     ..writeln('</table>')
+    ..writeln('</div>')
     ..writeln('<div class="table-footer">')
     ..writeln('<span class="table-info"></span>')
     ..writeln('<span class="pagination"></span>')
@@ -392,7 +396,6 @@ class _Row {
   const _Row({
     required this.feature,
     required this.name,
-    required this.context,
     required this.stepCount,
     required this.startMs,
     required this.stopMs,
@@ -409,7 +412,6 @@ class _Row {
     return _Row(
       feature: testCase.meta?.feature ?? testCase.suite,
       name: testCase.name,
-      context: testCase.thread,
       stepCount: testCase.steps.length,
       startMs: bounds.start,
       stopMs: bounds.stop,
@@ -421,7 +423,6 @@ class _Row {
 
   final String feature;
   final String name;
-  final String context;
   final int stepCount;
   final int startMs;
   final int stopMs;

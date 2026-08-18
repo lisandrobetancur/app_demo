@@ -57,9 +57,33 @@ const Map<String, String> resultGlyphs = <String, String>{
   'UNDEFINED': '?',
 };
 
+/// The favicon, written to `favicon.svg` beside `index.html`.
+///
+/// What the report is, in sixteen pixels: a checked-off result on a clipboard,
+/// in the report's own navy with the verdict green it uses everywhere else.
+/// Drawn here rather than fetched, so the site still asks the network for
+/// nothing, and as SVG so it stays sharp on any tab.
+const String siteFavicon = '''
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="7" fill="#0A1B3A"/>
+  <rect x="8" y="5" width="16" height="22" rx="2.5" fill="#ffffff"/>
+  <rect x="12" y="3" width="8" height="4" rx="1.5" fill="#0A1B3A"/>
+  <path d="M11.5 16.5l3 3 6-6.5" fill="none" stroke="#99cc33"
+        stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="11.5" y="22" width="9" height="1.8" rx="0.9" fill="#d7dde6"/>
+</svg>
+''';
+
 /// The stylesheet, written to `sqa-reporter.css` beside `index.html`.
 const String siteCss = '''
 /* SQA Reporter — all rules authored for this generator. */
+
+:root {
+  /* The colour titles and subtitles are set in. Links keep their own blue:
+     the two must stay distinguishable. */
+  --title: #0A1B3A;
+  --link: #428bca;
+}
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -70,7 +94,7 @@ body {
   color: #333;
 }
 
-a { text-decoration: none; color: #428bca; }
+a { text-decoration: none; color: var(--link); }
 a:hover { text-decoration: underline; }
 
 /* ── Banner ─────────────────────────────────────────────────────────── */
@@ -79,11 +103,11 @@ a:hover { text-decoration: underline; }
 
 /* The page fills the window, with a margin rather than a column: a report of
    fifty scenarios has long feature and scenario names, and capping the width
-   is what was wrapping them onto three lines while the screen sat empty on
-   both sides. `min-width` keeps the tables readable on a narrow window by
-   scrolling instead of squeezing. */
+   was wrapping them onto three lines while the screen sat empty on both
+   sides. Nothing is pinned to a minimum width — what is too wide for the
+   window scrolls inside its own box (see `.table-scroll`) instead of forcing
+   the whole page sideways. */
 .topbanner {
-  min-width: 1024px;
   margin: 0 auto;
   padding: 1em 1.5em;
   display: flex;
@@ -99,24 +123,23 @@ a:hover { text-decoration: underline; }
 }
 
 .wordmark:hover { text-decoration: none; }
-.wordmark .accent { color: #428bca; font-weight: 400; }
+.wordmark .accent { color: var(--title); font-weight: 400; }
 
 .projectname { text-align: right; }
-.projecttitle { font-weight: normal; font-size: 2em; color: #428bca; }
+.projecttitle { font-weight: normal; font-size: 2em; color: var(--title); }
 
 /* ── Content frame ──────────────────────────────────────────────────── */
 
 .middlecontent {
-  min-width: 1024px;
   margin: 0 auto;
   padding: 0 1.5em 2em 1.5em;
 }
 
 .breadcrumbs { color: #777; padding: 0.5em 0; display: block; }
 
-h2 { font-weight: 300; font-size: 1.75em; margin: 0.5em 0; }
-h3 { font-weight: 300; font-size: 1.4em; margin: 1em 0 0.5em 0; }
-h4 { font-weight: 400; font-size: 1.1em; margin: 0.75em 0 0.5em 0; }
+h2 { font-weight: 300; font-size: 1.75em; margin: 0.5em 0; color: var(--title); }
+h3 { font-weight: 300; font-size: 1.4em; margin: 1em 0 0.5em 0; color: var(--title); }
+h4 { font-weight: 400; font-size: 1.1em; margin: 0.75em 0 0.5em 0; color: var(--title); }
 
 .test-count-title { font-size: 1.1em; color: #555; margin-bottom: 0.75em; }
 
@@ -135,7 +158,7 @@ h4 { font-weight: 400; font-size: 1.1em; margin: 0.75em 0 0.5em 0; }
   padding: 0.5em 1em;
   border: 1px solid transparent;
   border-radius: 4px 4px 0 0;
-  color: #428bca;
+  color: var(--link);
 }
 
 .nav-tabs li.active a, .nav-tabs li.active span {
@@ -213,6 +236,17 @@ h4 { font-weight: 400; font-size: 1.1em; margin: 0.75em 0 0.5em 0; }
   color: #444;
   z-index: 2;
 }
+
+/* One transparent ring sector per segment, sitting over the gradient: this
+   is what a click on "the passing slice" actually hits. */
+.donut-wedge {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  cursor: pointer;
+}
+
+.donut-wedge:hover { background: rgba(255, 255, 255, 0.25); }
 
 .donut-slice-label {
   position: absolute;
@@ -293,7 +327,15 @@ h4 { font-weight: 400; font-size: 1.1em; margin: 0.75em 0 0.5em 0; }
   justify-content: flex-end;
   align-items: center;
   position: relative;
+  color: inherit;
 }
+
+a.bar-column { cursor: pointer; }
+a.bar-column:hover { text-decoration: none; }
+a.bar-column:hover .bar-fill { filter: brightness(0.92); }
+
+.chart-legend a { color: inherit; }
+.chart-legend a:hover { text-decoration: underline; }
 
 .bar-fill {
   width: 60%;
@@ -380,7 +422,7 @@ table.table-striped tbody tr:nth-child(odd) { background: #f9f9f9; }
 
 /* ── The scenario table's controls ──────────────────────────────────── */
 
-.test-count { color: #0d78ae; font-weight: 600; }
+.test-count { color: var(--title); font-weight: 600; }
 
 .table-controls {
   display: flex;
@@ -439,6 +481,25 @@ th.sortable.desc::after { content: " ↓"; color: #428bca; }
 
 .empty-note { color: #777; font-size: 0.9em; }
 
+.active-filter {
+  background: #eef3f8;
+  border: 1px solid #cfe0ee;
+  border-radius: 4px;
+  color: #38617f;
+  font-size: 0.85em;
+  margin: 0.5em 0;
+  padding: 0.4em 0.8em;
+}
+
+.clear-filter {
+  background: none;
+  border: none;
+  color: var(--link);
+  cursor: pointer;
+  font: inherit;
+  text-decoration: underline;
+}
+
 .key-statistics td:nth-child(2), .key-statistics td:nth-child(4) {
   white-space: nowrap;
 }
@@ -464,8 +525,79 @@ th.sortable.desc::after { content: " ↓"; color: #428bca; }
   padding: 0 0.4em;
 }
 
+/* A table wider than the window scrolls here, not on <body>: the banner,
+   the charts and the menus stay where they are. */
+.table-scroll { overflow-x: auto; }
+.table-scroll > table { min-width: 44em; }
+
 .version { color: gray; font-size: 0.85em; }
-.footer { min-width: 1024px; margin: 1em auto; padding: 0 1.5em; }
+.footer { margin: 1em auto; padding: 0 1.5em; }
+
+/* ── Narrow screens ─────────────────────────────────────────────────── */
+
+/* Two breakpoints, and both are about the same thing: panels that sit side by
+   side on a desktop have nothing to gain from sharing a phone's width, so
+   they stack, and the type and padding come down with them. */
+@media (max-width: 900px) {
+  .topbanner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25em;
+  }
+
+  .projectname { text-align: left; }
+  .projecttitle { font-size: 1.4em; }
+  .wordmark { font-size: 1.4em; }
+
+  .dashboard-charts { gap: 1.5em; }
+  .chart-block, .chart-block.wide { flex: 1 1 100%; min-width: 0; }
+
+  .summary-columns > .coverage-panel,
+  .summary-columns > .statistics-panel {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .story-header-row { flex-direction: column; align-items: flex-start; }
+  .tags { text-align: left; }
+
+  .date-and-time { float: none; display: block; }
+
+  .table-controls { flex-direction: column; align-items: stretch; }
+  .table-controls input { min-width: 0; width: 100%; }
+
+  h2 { font-size: 1.4em; }
+  h3 { font-size: 1.2em; }
+}
+
+@media (max-width: 600px) {
+  body { font-size: 15px; }
+
+  .middlecontent, .topbanner, .footer { padding-left: 0.75em; }
+  .middlecontent, .topbanner, .footer { padding-right: 0.75em; }
+
+  .card { padding: 1em 0.75em; }
+
+  .nav-tabs { flex-wrap: wrap; }
+
+  /* The two-column statistics table folds to one pair per line — the four
+     cells of a row flow into two — rather than hiding half of itself. */
+  .key-statistics tr {
+    display: grid;
+    grid-template-columns: 1fr auto;
+  }
+
+  .key-statistics td:empty { display: none; }
+
+  .donut { width: 180px; height: 180px; }
+  .chart-legend { grid-template-columns: 1fr; }
+
+  /* Eight duration buckets do not fit a phone. The chart scrolls inside its
+     own block rather than losing its last columns off the edge. */
+  .chart-block { overflow-x: auto; }
+  .plot { min-width: 340px; }
+  .bar-label { font-size: 0.62em; }
+}
 
 /* ── Test detail page ───────────────────────────────────────────────── */
 
@@ -480,7 +612,7 @@ th.sortable.desc::after { content: " ↓"; color: #428bca; }
   gap: 1em;
 }
 
-.story-header-title { font-weight: 300; color: #555; margin: 0; }
+.story-header-title { font-weight: 300; color: var(--title); margin: 0; }
 
 .tags { text-align: right; }
 
@@ -534,7 +666,7 @@ table.step-table th {
   text-align: left;
   padding: 0.5em 0.75em;
   border-bottom: 2px solid #ddd;
-  color: #6d9b3a;
+  color: var(--title);
   font-weight: 600;
 }
 
@@ -774,10 +906,12 @@ document.querySelectorAll(".data-table").forEach(function (wrapper) {
   var pageSize = wrapper.querySelector(".page-size");
   var info = wrapper.querySelector(".table-info");
   var pagination = wrapper.querySelector(".pagination");
+  var chip = wrapper.querySelector(".active-filter");
   var all = Array.prototype.slice.call(body.querySelectorAll("tr"));
   var page = 1;
   var sortIndex = -1;
   var ascending = true;
+  var resultFilter = "";
 
   function keyOf(row, index) {
     var cell = row.children[index];
@@ -788,6 +922,7 @@ document.querySelectorAll(".data-table").forEach(function (wrapper) {
   function render() {
     var needle = (filter && filter.value || "").trim().toLowerCase();
     var rows = all.filter(function (row) {
+      if (resultFilter && row.dataset.result !== resultFilter) { return false; }
       return !needle || row.textContent.toLowerCase().indexOf(needle) >= 0;
     });
 
@@ -853,7 +988,57 @@ document.querySelectorAll(".data-table").forEach(function (wrapper) {
   if (pageSize) {
     pageSize.addEventListener("change", function () { page = 1; render(); });
   }
+
+  // How a chart hands its selection to the table: the chart knows the verdict
+  // it was clicked on, the table knows how to show only those rows, and this
+  // is the seam between them.
+  wrapper.showOnlyResult = function (result, label) {
+    resultFilter = result || "";
+    page = 1;
+    if (chip) {
+      chip.hidden = !resultFilter;
+      chip.textContent = "";
+      if (resultFilter) {
+        chip.appendChild(
+          document.createTextNode("Showing only " + label + " ")
+        );
+        var clear = document.createElement("button");
+        clear.className = "clear-filter";
+        clear.textContent = "Show all";
+        clear.addEventListener("click", function () {
+          wrapper.showOnlyResult("", "");
+        });
+        chip.appendChild(clear);
+      }
+    }
+    render();
+  };
+
   render();
+});
+
+// Clicking a segment, a bar or a legend entry opens the Test Results tab
+// showing only the tests behind it. A chart that cannot be asked "which ones
+// were those?" is a picture; this makes it a way in.
+document.querySelectorAll("[data-result]").forEach(function (target) {
+  if (target.tagName !== "A") { return; }
+  target.addEventListener("click", function (event) {
+    event.preventDefault();
+    var result = target.dataset.result;
+    var label = (target.getAttribute("title") || result).split(":")[0];
+
+    var tab = document.querySelector('[data-tab="tests"]');
+    if (tab) { tab.click(); }
+
+    document.querySelectorAll(".data-table").forEach(function (wrapper) {
+      if (wrapper.showOnlyResult) { wrapper.showOnlyResult(result, label); }
+    });
+
+    var pane = document.getElementById("tests");
+    if (pane && pane.scrollIntoView) {
+      pane.scrollIntoView({block: "start"});
+    }
+  });
 });
 
 document.querySelectorAll(".carousel").forEach(function (carousel) {

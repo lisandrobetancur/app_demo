@@ -5,12 +5,13 @@ library;
 
 import 'dashboard.dart' show escapeHtml, projectTitleFor;
 
-/// The document head — same stylesheet, same title, every page.
+/// The document head — same stylesheet, same icon, same title, every page.
 String pageHead() => '''
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SQA Reporter</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="sqa-reporter.css"/>
 </head>
 ''';

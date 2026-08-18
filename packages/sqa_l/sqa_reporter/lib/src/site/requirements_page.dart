@@ -103,6 +103,7 @@ String capabilitiesHtml(
       '$featureCount feature${featureCount == 1 ? '' : 's'}</div>',
     )
     ..writeln('<div class="card standalone">')
+    ..writeln('<div class="table-scroll">')
     ..writeln('<table class="table requirements-table">')
     ..writeln(
       '<thead><tr><th class="requirement-name-column">Requirement</th>'
@@ -113,6 +114,7 @@ String capabilitiesHtml(
     ..write(rows)
     ..writeln('</tbody>')
     ..writeln('</table>')
+    ..writeln('</div>')
     ..writeln('</div>')
     ..writeln('</div>')
     ..write(pageFooter())

@@ -41,6 +41,7 @@ String donutChart(Map<String, int> counts, int total) {
   }
 
   final List<String> segments = <String>[];
+  final StringBuffer wedges = StringBuffer();
   final StringBuffer labels = StringBuffer();
   double from = 0;
   for (final String result in chartOrder) {
@@ -53,6 +54,16 @@ String donutChart(Map<String, int> counts, int total) {
     segments.add(
       '${resultColors[result]!.fill} '
       '${from.toStringAsFixed(2)}deg ${to.toStringAsFixed(2)}deg',
+    );
+
+    // A gradient cannot be clicked segment by segment, so each segment also
+    // gets a transparent ring sector on top of it: the same arc, as a
+    // polygon, which is what makes "click the passing slice" possible without
+    // a charting library.
+    wedges.write(
+      '<a class="donut-wedge" href="#tests" data-result="$result" '
+      'title="${chartLabels[result]}: $count of $total" '
+      'style="clip-path:${_ringSector(from, to)}"></a>',
     );
 
     // The share is written on the segment itself, as the reference does, and
@@ -77,9 +88,36 @@ String donutChart(Map<String, int> counts, int total) {
   return '<div class="donut-wrap">'
       '<div class="donut" '
       'style="background:conic-gradient(${segments.join(', ')})">'
+      '$wedges'
       '$labels'
       '<span class="donut-label">${(passing * 100 / total).round()}%</span>'
       '</div></div>';
+}
+
+/// One segment of the ring as a `clip-path` polygon: out along the rim from
+/// [fromDegrees] to [toDegrees], back along the inside of the hole. Stepping
+/// the arc every few degrees is close enough that the edge reads as a curve
+/// and the click lands where the colour is.
+String _ringSector(double fromDegrees, double toDegrees) {
+  const double outer = 50;
+  const double inner = 26; // the hole, matching `.donut::before`'s inset
+  final int steps = math.max(2, ((toDegrees - fromDegrees) / 4).ceil());
+  final List<String> points = <String>[];
+
+  String at(double degrees, double radius) {
+    final double a = degrees * math.pi / 180;
+    final double x = 50 + radius * math.sin(a);
+    final double y = 50 - radius * math.cos(a);
+    return '${x.toStringAsFixed(2)}% ${y.toStringAsFixed(2)}%';
+  }
+
+  for (int i = 0; i <= steps; i += 1) {
+    points.add(at(fromDegrees + (toDegrees - fromDegrees) * i / steps, outer));
+  }
+  for (int i = steps; i >= 0; i -= 1) {
+    points.add(at(fromDegrees + (toDegrees - fromDegrees) * i / steps, inner));
+  }
+  return 'polygon(${points.join(', ')})';
 }
 
 /// The legend under the doughnut: every verdict the vocabulary has, present
@@ -91,12 +129,17 @@ String chartLegend(Map<String, int> counts) {
     final int count = counts[result] ?? 0;
     final ({String fill, String border, String solid}) color =
         resultColors[result]!;
+    // A verdict nobody hit is listed but not clickable: there is nothing to
+    // show, and a link that lands on an empty table is worse than no link.
+    final String label =
+        '<span class="swatch" style="background:${color.fill};'
+        'border-color:${color.border}"></span>'
+        '${chartLabels[result]} Test Cases'
+        '${count == 0 ? '' : ' ($count)'}';
     legend.write(
-      '<li${count == 0 ? ' class="empty"' : ''}>'
-      '<span class="swatch" style="background:${color.fill};'
-      'border-color:${color.border}"></span>'
-      '${chartLabels[result]} Test Cases'
-      '${count == 0 ? '' : ' ($count)'}</li>',
+      count == 0
+          ? '<li class="empty">$label</li>'
+          : '<li><a href="#tests" data-result="$result">$label</a></li>',
     );
   }
   legend.write('</ul>');
@@ -118,14 +161,19 @@ String outcomesChart(Map<String, int> counts) {
     final ({String fill, String border, String solid}) color =
         resultColors[result]!;
     final double height = axis.top == 0 ? 0 : count * 100 / axis.top;
+    // Clicking a bar shows the tests behind it, so the chart is a way into
+    // the table rather than a picture beside it.
+    final String column =
+        '<div class="bar-fill" style="height:${height.toStringAsFixed(2)}%;'
+        'background:${color.fill};border-color:${color.border}">'
+        '${count == 0 ? '' : '<span class="bar-value">$count</span>'}'
+        '</div>'
+        '<div class="bar-label">${chartLabels[result]}</div>';
     bars.write(
-      '<div class="bar-column">'
-      '<div class="bar-fill" style="height:${height.toStringAsFixed(2)}%;'
-      'background:${color.fill};border-color:${color.border}">'
-      '${count == 0 ? '' : '<span class="bar-value">$count</span>'}'
-      '</div>'
-      '<div class="bar-label">${chartLabels[result]}</div>'
-      '</div>',
+      count == 0
+          ? '<div class="bar-column">$column</div>'
+          : '<a class="bar-column" href="#tests" data-result="$result" '
+                'title="${chartLabels[result]}: $count">$column</a>',
     );
   }
 

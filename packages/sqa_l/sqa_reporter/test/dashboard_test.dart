@@ -35,9 +35,11 @@ void main() {
   tearDownAll(() => out.deleteSync(recursive: true));
 
   group('the site files', () {
-    test('land beside the JSON results, with the stylesheet', () {
+    test('land beside the JSON results, with the stylesheet and icon', () {
       expect(File('${out.path}/results/index.html').existsSync(), isTrue);
       expect(File('${out.path}/results/sqa-reporter.css').existsSync(), isTrue);
+      expect(File('${out.path}/results/favicon.svg').existsSync(), isTrue);
+      expect(html, contains('<link rel="icon" href="favicon.svg"'));
       expect(
         Directory('${out.path}/results').listSync().whereType<File>().where(
           (File f) => f.path.endsWith('.json'),
@@ -132,6 +134,36 @@ void main() {
     });
   });
 
+  group('the charts lead into the table', () {
+    test('each doughnut segment is a clickable ring sector', () {
+      expect(html, contains('class="donut-wedge"'));
+      expect(html, contains('data-result="SUCCESS"'));
+      expect(
+        html,
+        contains('clip-path:polygon('),
+        reason: 'a gradient cannot be clicked segment by segment',
+      );
+    });
+
+    test('bars and legend entries link to the same selection', () {
+      expect(html, contains('<a class="bar-column" href="#tests"'));
+      expect(html, contains('<li><a href="#tests" data-result="ERROR">'));
+    });
+
+    test('a verdict nobody hit is shown but not clickable', () {
+      expect(html, contains('<li class="empty">'));
+      expect(
+        html,
+        isNot(contains('data-result="FAILURE"')),
+        reason: 'no test failed in this run, so nothing links to that view',
+      );
+    });
+
+    test('the table has somewhere to say a selection is in force', () {
+      expect(html, contains('class="active-filter"'));
+    });
+  });
+
   group('the axis', () {
     test('rounds up to a step that divides it', () {
       expect(niceAxis(0), (top: 1, step: 1));
@@ -161,6 +193,16 @@ void main() {
       );
     });
 
+    test('has no Context column: which worker ran it says nothing', () {
+      expect(html, isNot(contains('>Context<')));
+      expect(html, isNot(contains('worker-0')));
+    });
+
+    test('every row carries its verdict, for a chart to filter on', () {
+      expect(html, contains('<tr data-result="SUCCESS">'));
+      expect(html, contains('<tr data-result="ERROR">'));
+    });
+
     test('carries a filter, a page size and sortable headers', () {
       expect(html, contains('class="table-filter"'));
       expect(html, contains('class="page-size"'));
@@ -187,6 +229,35 @@ void main() {
       expect(compoundDuration(2600), '2s 600ms');
       expect(compoundDuration(65000), '1m 5s');
       expect(compoundDuration(3660000), '1h 1m');
+    });
+  });
+
+  group('the layout', () {
+    test('titles are set in the report\'s own blue, links keep theirs', () {
+      final String css = File(
+        '${out.path}/results/sqa-reporter.css',
+      ).readAsStringSync();
+      expect(css, contains('--title: #0A1B3A'));
+      expect(css, contains('color: var(--title)'));
+      expect(css, contains('--link: #428bca'));
+    });
+
+    test('nothing is pinned to a minimum width, and wide tables scroll', () {
+      final String css = File(
+        '${out.path}/results/sqa-reporter.css',
+      ).readAsStringSync();
+      expect(css, isNot(contains('min-width: 1024px')));
+      expect(css, contains('.table-scroll { overflow-x: auto; }'));
+      expect(html, contains('<div class="table-scroll">'));
+    });
+
+    test('narrow screens get their own rules', () {
+      final String css = File(
+        '${out.path}/results/sqa-reporter.css',
+      ).readAsStringSync();
+      expect(css, contains('@media (max-width: 900px)'));
+      expect(css, contains('@media (max-width: 600px)'));
+      expect(html, contains('width=device-width, initial-scale=1'));
     });
   });
 
