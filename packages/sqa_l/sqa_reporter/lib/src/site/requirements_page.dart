@@ -39,6 +39,7 @@ List<File> writeRequirementPages(
   Directory outputDir, {
   required String platform,
   String? title,
+  Duration offset = reportOffset,
   DateTime? generatedAt,
 }) {
   outputDir.createSync(recursive: true);
@@ -52,6 +53,7 @@ List<File> writeRequirementPages(
           roots,
           platform: platform,
           title: title,
+          offset: offset,
           generatedAt: stamp,
         ),
       ),
@@ -64,6 +66,7 @@ List<File> writeRequirementPages(
           feature,
           platform: platform,
           title: title,
+          offset: offset,
           generatedAt: stamp,
         ),
       ),
@@ -76,6 +79,7 @@ String capabilitiesHtml(
   required String platform,
   required DateTime generatedAt,
   String? title,
+  Duration offset = reportOffset,
 }) {
   final int featureCount = featuresIn(roots).length;
   final int epicCount = roots
@@ -101,7 +105,14 @@ String capabilitiesHtml(
       '<span class="breadcrumbs"><a href="index.html">Home</a> &gt; '
       'Requirements</span>',
     )
-    ..write(menuBar(generatedAt, homeActive: false, requirementsActive: true))
+    ..write(
+      menuBar(
+        generatedAt,
+        homeActive: false,
+        requirementsActive: true,
+        offset: offset,
+      ),
+    )
     ..writeln('<h2>Requirements</h2>')
     ..writeln(
       '<div class="test-count-title">'
@@ -136,6 +147,7 @@ String featurePageHtml(
   required String platform,
   required DateTime generatedAt,
   String? title,
+  Duration offset = reportOffset,
 }) {
   final List<RunCase> cases = feature.allCases
     ..sort((RunCase a, RunCase b) => a.name.compareTo(b.name));
@@ -177,7 +189,14 @@ String featurePageHtml(
       '<a href="capabilities.html">Requirements</a> &gt; '
       '${escapeHtml(feature.name)}</span>',
     )
-    ..write(menuBar(generatedAt, homeActive: false, requirementsActive: true))
+    ..write(
+      menuBar(
+        generatedAt,
+        homeActive: false,
+        requirementsActive: true,
+        offset: offset,
+      ),
+    )
     ..writeln('<h2>${escapeHtml(feature.name)}</h2>')
     ..writeln('<div class="test-count-title">Feature · ${_summary(feature)}')
     ..writeln('</div>')

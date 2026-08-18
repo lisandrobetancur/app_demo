@@ -207,6 +207,62 @@ void main() {
     });
   });
 
+  group('the clock the report reads in', () {
+    test('shows times in UTC-5 by default: Bogotá, Lima, Quito', () {
+      // The run's first test starts at 10:00:00Z, which is 05:00 there.
+      expect(html, contains('2026-08-18 05:00:00 UTC-5'));
+      expect(
+        html,
+        isNot(contains('10:00:00 UTC')),
+        reason: 'a report in UTC read five hours off the suite it describes',
+      );
+    });
+
+    test('the whole page moves together when the offset does', () {
+      final String utc = dashboardHtml(
+        parsePlaywright(inputFile),
+        platform: 'web',
+        offset: Duration.zero,
+        generatedAt: DateTime.utc(2026, 8, 18, 10, 5),
+      );
+      expect(utc, contains('2026-08-18 10:00:00 UTC'));
+      expect(utc, isNot(contains('UTC-5')));
+
+      final String india = dashboardHtml(
+        parsePlaywright(inputFile),
+        platform: 'web',
+        offset: const Duration(hours: 5, minutes: 30),
+        generatedAt: DateTime.utc(2026, 8, 18, 10, 5),
+      );
+      expect(india, contains('2026-08-18 15:30:00 UTC+5:30'));
+    });
+
+    test('labels an offset the way a reader writes it', () {
+      expect(offsetLabel(const Duration(hours: -5)), 'UTC-5');
+      expect(offsetLabel(Duration.zero), 'UTC');
+      expect(offsetLabel(const Duration(hours: 2)), 'UTC+2');
+      expect(offsetLabel(const Duration(hours: 5, minutes: 30)), 'UTC+5:30');
+    });
+
+    test('reads the forms a person would type, and refuses the rest', () {
+      expect(parseOffset('-05:00'), const Duration(hours: -5));
+      expect(parseOffset('-5'), const Duration(hours: -5));
+      expect(parseOffset('+0530'), const Duration(hours: 5, minutes: 30));
+      expect(parseOffset('0'), Duration.zero);
+      expect(parseOffset('America/Bogota'), isNull);
+      expect(parseOffset('-25:00'), isNull);
+      expect(parseOffset(''), isNull);
+    });
+
+    test('the JSON keeps UTC: a machine wants one unambiguous instant', () {
+      final File result = Directory('${out.path}/results')
+          .listSync()
+          .whereType<File>()
+          .firstWhere((File f) => f.path.endsWith('.json'));
+      expect(result.readAsStringSync(), contains('Z"'));
+    });
+  });
+
   group('the axis', () {
     test('rounds up to a step that divides it', () {
       expect(niceAxis(0), (top: 1, step: 1));

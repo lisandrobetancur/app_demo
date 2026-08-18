@@ -38,6 +38,7 @@ File writeDashboard(
   Directory outputDir, {
   required String platform,
   String? title,
+  Duration offset = reportOffset,
   DateTime? generatedAt,
 }) {
   outputDir.createSync(recursive: true);
@@ -54,6 +55,7 @@ File writeDashboard(
             run,
             platform: platform,
             title: title,
+            offset: offset,
             generatedAt: generatedAt ?? DateTime.now().toUtc(),
           ),
         );
@@ -67,6 +69,7 @@ String dashboardHtml(
   required String platform,
   required DateTime generatedAt,
   String? title,
+  Duration offset = reportOffset,
 }) {
   final List<_Row> rows = run.cases.map(_Row.of).toList()
     ..sort((_Row a, _Row b) {
@@ -90,8 +93,8 @@ String dashboardHtml(
     ..write(banner(platform, title: title))
     ..writeln('<div class="middlecontent">')
     ..writeln('<span class="breadcrumbs"><a href="index.html">Home</a></span>')
-    ..write(menuBar(generatedAt, homeActive: true))
-    ..write(_runAgeNote(rows, generatedAt))
+    ..write(menuBar(generatedAt, homeActive: true, offset: offset))
+    ..write(_runAgeNote(rows, generatedAt, offset))
     ..writeln('<h2>Test Results: All Tests</h2>')
     ..writeln(
       '<div class="test-count-title">'
@@ -100,8 +103,8 @@ String dashboardHtml(
     )
     ..write(_tabBar())
     ..writeln('<div class="card">')
-    ..write(_summaryPane(rows, counts, total, run))
-    ..write(_testsPane(rows, run))
+    ..write(_summaryPane(rows, counts, total, run, offset))
+    ..write(_testsPane(rows, run, offset))
     ..writeln('</div>')
     ..writeln('</div>')
     ..write(pageFooter())
@@ -118,7 +121,7 @@ String dashboardHtml(
 /// the run it describes is from last week. Rather than warn on the command
 /// line, where it would fire on every deliberate rebuild, the page carries
 /// the difference to the person reading it.
-String _runAgeNote(List<_Row> rows, DateTime generatedAt) {
+String _runAgeNote(List<_Row> rows, DateTime generatedAt, Duration offset) {
   if (rows.isEmpty) {
     return '';
   }
@@ -134,7 +137,8 @@ String _runAgeNote(List<_Row> rows, DateTime generatedAt) {
     return '';
   }
   return '<p class="run-age">Describing a run that finished '
-      '${timestampOf(finished)}, ${_humanGap(gap)} before this report was '
+      '${timestampOf(finished, offset: offset)}, ${_humanGap(gap)} before '
+      'this report was '
       'generated.</p>\n';
 }
 
@@ -162,6 +166,7 @@ String _summaryPane(
   Map<String, int> counts,
   int total,
   ParsedRun run,
+  Duration offset,
 ) {
   final StringBuffer pane = StringBuffer()
     ..writeln('<div id="summary" class="tab-pane active">')
@@ -188,7 +193,7 @@ String _summaryPane(
     ..write(coverageOverview(requirementsOf(run)))
     ..writeln('</div>')
     ..writeln('<div class="statistics-panel">')
-    ..write(_keyStatistics(rows, run))
+    ..write(_keyStatistics(rows, run, offset))
     ..writeln('</div>')
     ..writeln('</div>')
     ..write(_tagCloud(rows))
@@ -198,7 +203,8 @@ String _summaryPane(
 
 String _keyStatistics(
   List<_Row> rows,
-  ParsedRun run, {
+  ParsedRun run,
+  Duration offset, {
   bool twoColumn = false,
 }) {
   final List<int> durations = rows.map((_Row row) => row.durationMs).toList()
@@ -231,6 +237,7 @@ String _keyStatistics(
           ? '—'
           : timestampOf(
               DateTime.fromMillisecondsSinceEpoch(earliestStart, isUtc: true),
+              offset: offset,
             ),
     ),
     (
@@ -239,6 +246,7 @@ String _keyStatistics(
           ? '—'
           : timestampOf(
               DateTime.fromMillisecondsSinceEpoch(latestStop, isUtc: true),
+              offset: offset,
             ),
     ),
     (
@@ -316,7 +324,7 @@ String _tagCloud(List<_Row> rows) {
   return cloud.toString();
 }
 
-String _testsPane(List<_Row> rows, ParsedRun run) {
+String _testsPane(List<_Row> rows, ParsedRun run, Duration offset) {
   final StringBuffer body = StringBuffer();
   for (final _Row row in rows) {
     // Every sortable cell carries the value to sort by, so the table sorts on
@@ -328,7 +336,7 @@ String _testsPane(List<_Row> rows, ParsedRun run) {
       '<td><a href="${row.href}">${escapeHtml(row.name)}</a></td>'
       '<td data-order="${row.stepCount}">${row.stepCount}</td>'
       '<td data-order="${row.startMs}">'
-      '${timestampOf(DateTime.fromMillisecondsSinceEpoch(row.startMs, isUtc: true))}</td>'
+      '${timestampOf(DateTime.fromMillisecondsSinceEpoch(row.startMs, isUtc: true), offset: offset)}</td>'
       '<td data-order="${row.durationMs}">'
       '${compoundDuration(row.durationMs)}</td>'
       '<td data-order="${_severityRank(row.result)}">'
@@ -339,7 +347,7 @@ String _testsPane(List<_Row> rows, ParsedRun run) {
 
   final StringBuffer pane = StringBuffer()
     ..writeln('<div id="tests" class="tab-pane">')
-    ..write(_keyStatistics(rows, run, twoColumn: true))
+    ..write(_keyStatistics(rows, run, offset, twoColumn: true))
     ..writeln('<h3>Automated Scenarios</h3>')
     ..writeln('<div class="data-table">')
     ..writeln('<p class="active-filter" hidden></p>')

@@ -28,6 +28,7 @@ List<File> writeTestPages(
   Directory outputDir, {
   required String platform,
   String? title,
+  Duration offset = reportOffset,
   DateTime? generatedAt,
 }) {
   outputDir.createSync(recursive: true);
@@ -42,6 +43,7 @@ List<File> writeTestPages(
           testCase,
           platform: platform,
           title: title,
+          offset: offset,
           generatedAt: stamp,
         ),
       ),
@@ -55,6 +57,7 @@ String testPageHtml(
   required String platform,
   required DateTime generatedAt,
   String? title,
+  Duration offset = reportOffset,
 }) {
   final RunStatus status = promoteStatus(testCase.status, testCase.steps);
   final String result = serenityResult[status]!;
@@ -91,7 +94,7 @@ String testPageHtml(
       '${escapeHtml(feature)}</a> &gt; '
       '<span class="truncate">${escapeHtml(testCase.name)}</span></span>',
     )
-    ..write(menuBar(generatedAt, homeActive: false))
+    ..write(menuBar(generatedAt, homeActive: false, offset: offset))
     ..write(_titleBar(testCase, result, feature, platform))
     ..writeln('<div class="card standalone">')
     ..write(

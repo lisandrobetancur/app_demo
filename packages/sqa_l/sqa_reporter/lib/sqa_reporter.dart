@@ -54,7 +54,8 @@ export 'src/site/dashboard.dart'
         projectTitleFor,
         resultIcon,
         writeDashboard;
-export 'src/site/page_chrome.dart' show timestampOf;
+export 'src/site/page_chrome.dart'
+    show offsetLabel, parseOffset, reportOffset, timestampOf;
 export 'src/site/requirements_page.dart'
     show
         capabilitiesHtml,

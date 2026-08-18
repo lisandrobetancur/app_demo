@@ -30,6 +30,7 @@ List<File> writeScreenshotPages(
   Directory outputDir, {
   required String platform,
   String? title,
+  Duration offset = reportOffset,
   DateTime? generatedAt,
 }) {
   outputDir.createSync(recursive: true);
@@ -45,6 +46,7 @@ List<File> writeScreenshotPages(
             testCase,
             platform: platform,
             title: title,
+            offset: offset,
             generatedAt: stamp,
           ),
         ),
@@ -58,6 +60,7 @@ String screenshotsPageHtml(
   required String platform,
   required DateTime generatedAt,
   String? title,
+  Duration offset = reportOffset,
 }) {
   final RunStatus status = promoteStatus(testCase.status, testCase.steps);
   final String result = serenityResult[status]!;
@@ -79,7 +82,7 @@ String screenshotsPageHtml(
       '<a href="${htmlReportName(testCase)}">'
       '${escapeHtml(testCase.name)}</a> &gt; Screenshots</span>',
     )
-    ..write(menuBar(generatedAt, homeActive: false))
+    ..write(menuBar(generatedAt, homeActive: false, offset: offset))
     ..writeln('<div class="titlebar">')
     ..writeln('<div class="test-title-bar test-$result">')
     ..writeln(resultIcon(result))

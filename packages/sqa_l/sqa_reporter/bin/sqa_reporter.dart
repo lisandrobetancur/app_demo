@@ -5,6 +5,7 @@
 ///                         [--format playwright|patrol-log]
 ///                         [--platform web|android|ios]
 ///                         [--title "E2E test report web"]
+///                         [--utc-offset -05:00]
 library;
 
 import 'dart:io';
@@ -13,6 +14,12 @@ import 'package:sqa_reporter/sqa_reporter.dart';
 
 void main(List<String> argv) {
   final _Args args = _Args.parse(argv);
+
+  if (args.offset == null) {
+    stderr.writeln('Unreadable --utc-offset. Give it as -05:00, +02:00 or 0.');
+    exitCode = 2;
+    return;
+  }
 
   final File input = File(args.input);
   if (!input.existsSync()) {
@@ -49,30 +56,35 @@ void main(List<String> argv) {
     Directory(args.output),
     platform: args.platform,
     title: args.title,
+    offset: args.offset!,
   );
   final List<File> pages = writeTestPages(
     run,
     Directory(args.output),
     platform: args.platform,
     title: args.title,
+    offset: args.offset!,
   );
   final List<File> galleries = writeScreenshotPages(
     run,
     Directory(args.output),
     platform: args.platform,
     title: args.title,
+    offset: args.offset!,
   );
   final List<File> requirements = writeRequirementPages(
     run,
     Directory(args.output),
     platform: args.platform,
     title: args.title,
+    offset: args.offset!,
   );
   final List<File> tags = writeTagPages(
     run,
     Directory(args.output),
     platform: args.platform,
     title: args.title,
+    offset: args.offset!,
   );
 
   stdout
@@ -98,6 +110,7 @@ class _Args {
     required this.format,
     required this.platform,
     required this.title,
+    required this.offset,
   });
 
   factory _Args.parse(List<String> argv) {
@@ -106,6 +119,7 @@ class _Args {
     String? format;
     String? platform;
     String? title;
+    String? rawOffset;
     for (int i = 0; i + 1 < argv.length; i += 2) {
       switch (argv[i]) {
         case '--input':
@@ -118,6 +132,8 @@ class _Args {
           platform = argv[i + 1];
         case '--title':
           title = argv[i + 1];
+        case '--utc-offset':
+          rawOffset = argv[i + 1];
       }
     }
     final String root = _repoRoot();
@@ -138,6 +154,9 @@ class _Args {
       // Left null on purpose when not given: the pages fall back to the
       // platform's own wording, so the default lives in one place.
       title: title,
+      // Same rule for the clock: unset means the pages' own default, which
+      // is the one the suite runs on.
+      offset: rawOffset == null ? reportOffset : parseOffset(rawOffset),
     );
   }
 
@@ -149,6 +168,10 @@ class _Args {
   /// What the banner says this report is of. Null means the default for the
   /// platform.
   final String? title;
+
+  /// The clock the pages show their times in. Null means `--utc-offset` was
+  /// given but could not be read.
+  final Duration? offset;
 }
 
 /// The repo root, found by walking up to the directory that holds `.git`

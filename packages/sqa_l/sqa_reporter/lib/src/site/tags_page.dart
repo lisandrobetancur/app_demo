@@ -41,6 +41,7 @@ List<File> writeTagPages(
   Directory outputDir, {
   required String platform,
   String? title,
+  Duration offset = reportOffset,
   DateTime? generatedAt,
 }) {
   outputDir.createSync(recursive: true);
@@ -55,6 +56,7 @@ List<File> writeTagPages(
           entry.value,
           platform: platform,
           title: title,
+          offset: offset,
           generatedAt: stamp,
         ),
       ),
@@ -69,6 +71,7 @@ String tagPageHtml(
   required String platform,
   required DateTime generatedAt,
   String? title,
+  Duration offset = reportOffset,
 }) {
   final List<RunCase> sorted = List<RunCase>.of(cases)
     ..sort((RunCase a, RunCase b) => a.name.compareTo(b.name));
@@ -107,7 +110,7 @@ String tagPageHtml(
       '<span class="breadcrumbs"><a href="index.html">Home</a> &gt; '
       'Tag &gt; ${escapeHtml(tag)}</span>',
     )
-    ..write(menuBar(generatedAt, homeActive: false))
+    ..write(menuBar(generatedAt, homeActive: false, offset: offset))
     ..writeln('<h2>${escapeHtml(tag)}</h2>')
     ..writeln(
       '<div class="test-count-title">Tag · ${sorted.length} '
