@@ -34,8 +34,8 @@ not break it on your own.
    living outside the test folder (`lib/`, `android/`, `ios/`, widgets, models,
    services) requires me to approve that particular file, having seen the diff
    first.
-4. **You never add a `Key` to a widget on your own initiative.** See the locator
-   protocol.
+4. **You never add a `Key` or a semantics identifier to a widget on your own
+   initiative.** Both are production code. See the locator protocol.
 5. **Introducing test-only behaviour branches in production is forbidden.** No
    `if (isTest)`, no global "test mode" flags, no speeding up animations from
    the app's code. If a test needs a state, it gets it from the test.
@@ -76,24 +76,67 @@ Valid forms I may give you (Patrol accepts them all — I do not need `Key`s):
 
 | Form | Syntax | When I use it |
 |---|---|---|
+| Semantics identifier | `find.bySemanticsIdentifier('login_submit')` | **Preferred** when the app's code can change |
 | Key | `$(const Key('login_email'))` | If the screen already has keys |
+| Semantics label | `find.bySemanticsLabel('Sign in')` | Reachable without touching the app — but see below |
 | Visible text | `$('Sign in')` | The most common when starting out |
 | Partial text | `$(RichText).containing('Welcome')` | Composite text |
 | Widget type | `$(TextField)`, `$(MyCustomButton)` | Unique custom widgets |
 | Type + position | `$(TextField).at(1)` | Last resort, brittle |
 | Descendant | `$(#formCard).$(TextField)` | Narrowing by container |
 | Filter | `$(ListTile).which<ListTile>((w) => ...)` | Complex cases |
-| Tooltip / semantics | `$(#tooltipKey)`, `$(Semantics)` | Icons with no text |
+
+### Why the identifier sits above the key
+
+```dart
+Semantics(identifier: 'login_submit', child: SubmitButton(…))
+```
+
+A `Key` exists only inside Flutter's widget tree. A semantics identifier reaches
+the platform: `resource-id` on Android, `accessibilityIdentifier` on iOS, and a
+`flt-semantics-identifier` DOM attribute on web. Appium, Maestro and the native
+harnesses address it; none of them can see a `Key`. **The identifiers survive a
+change of tool.**
+
+It also argues better with whoever owns the app. Adding a `Key` is asking for
+scaffolding that serves only the suite. Adding an identifier is asking for
+accessibility the app arguably wanted anyway — the same diff, a different
+conversation.
+
+Both are still production code, and both are still my decision to make.
+
+### Why the label is not the identifier
+
+An identifier is announced to nobody and is never translated. A **label is read
+aloud to the user**, so it is localized: on a multi-language app, finding by
+label is as brittle as finding by visible text, and it breaks the day someone
+runs the suite in another locale.
+
+Use the label when you cannot get an identifier added. Do not treat them as
+interchangeable because both say "semantics".
+
+### The order to propose in
+
+**If the app's code can be changed:** identifier → key (for a screen root or a
+container with no accessible meaning) → anything else, and anything else is a
+bridge with an expiry date, not a destination.
+
+**If it cannot:** label → visible text → type, narrowed with a descendant
+instead of `.at(n)` wherever a container exists.
+
+Not every element needs its own identifier. When the container carries one, its
+children can be reached through it — putting an identifier on all two hundred
+widgets of an app is the mass sweep of keys again, wearing a better suit.
 
 Rules around this:
 
 - If I give you a locator that turns out to be ambiguous or non-existent at
   runtime, **you do not replace it with another one**: you report the error and
   ask me for the corrected one.
-- If there truly is no way to locate an element without adding a `Key`, you tell
-  me and propose the exact diff (file, line, suggested key). I decide. Adding a
-  `Key` to a widget changes neither layout nor behaviour, but it is production
-  code and the decision is mine.
+- If there truly is no way to locate an element without changing the app, you
+  tell me and propose the exact diff (file, line, and the identifier or key you
+  suggest). I decide. Neither a `Key` nor a `Semantics(identifier:)` changes
+  layout or behaviour, but both are production code and the decision is mine.
 - Locators live **only** in page objects. Neither tests nor steps ever contain a
   finder.
 
@@ -145,6 +188,10 @@ Investigate and report back:
 9. Is there CI? What does it run, and on which triggers?
 10. Does the app support Flutter **web**? *(If so, that is the way in with zero
     native footprint.)*
+11. **Accessibility.** Does the app already declare `Semantics`, and does
+    anything carry an `identifier`? Are the labels localized? This decides
+    whether elements can be reached without changing production code at all,
+    and it is the first thing the locator protocol asks about.
 
 **Deliverable:** a report at `docs/e2e/00-reconnaissance.md` with the above and
 a **risk traffic light** (🔴 blocking / 🟡 needs a decision / 🟢 clear) plus your
@@ -265,13 +312,16 @@ to capture, you are doing it wrong — stop and tell me.
 
 ---
 
-### Phase 5 — Incremental keys *(only if they turned out to be needed)*
+### Phase 5 — Incremental identifiers or keys *(only if they turned out to be needed)*
 
-If Phase 3 surfaced elements genuinely unreachable without a `Key`:
+If Phase 3 surfaced elements genuinely unreachable without changing the app:
 
 - **One commit per screen**, never a mass sweep.
-- Each one: only adds `key:` to existing widgets. Nothing else in the diff.
-- Keys are declared centrally (one constants file per feature), not as loose
+- Each one: only adds `Semantics(identifier:)` around, or `key:` to, existing
+  widgets. Nothing else in the diff.
+- Identifiers first, for the reasons in the locator protocol; a key where the
+  element has no accessible meaning of its own.
+- Either is declared centrally (one constants file per feature), not as loose
   literals, so that a rename breaks at compile time rather than at runtime.
 - You show me the complete diff before committing.
 - After each commit, the project's existing suite must still be green.
