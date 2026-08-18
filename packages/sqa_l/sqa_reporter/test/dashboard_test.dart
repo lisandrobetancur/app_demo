@@ -61,21 +61,66 @@ void main() {
   });
 
   group('the summary', () {
-    test('counts the run: two cases, half of them passing', () {
-      expect(html, contains('2 test cases'));
+    test('counts the run: two tests, half of them passing', () {
+      expect(html, contains('2 tests'));
       expect(html, contains('<span class="donut-label">50%</span>'));
     });
 
-    test('legend and bars carry only the verdicts that occurred', () {
-      expect(html, contains('Passing (1)'));
-      expect(html, contains('Broken (1)'));
-      expect(html, isNot(contains('Failed (0)')));
+    test('writes each share on its own segment of the doughnut', () {
+      expect(
+        RegExp('donut-slice-label').allMatches(html).length,
+        2,
+        reason: 'one label per verdict that occurred',
+      );
+      expect(html, contains('>50%</span>'));
+    });
+
+    test('the legend names every verdict, counting the ones that occurred', () {
+      expect(html, contains('Passing Test Cases (1)'));
+      expect(html, contains('Broken Test Cases (1)'));
+      expect(
+        html,
+        contains('Failed Test Cases</li>'),
+        reason: 'a verdict with no tests is listed without a count, not hidden',
+      );
+    });
+
+    test('the outcomes chart has a labelled axis', () {
+      expect(html, contains('class="y-tick"'));
+      expect(html, contains('class="gridline"'));
+      expect(html, contains('class="bar-value"'));
+    });
+
+    test('the performance chart buckets tests by how long they took', () {
+      expect(html, contains('Test Performance'));
+      expect(html, contains('Number of tests per duration'));
+      expect(html, contains('1 to 10 seconds'));
+      expect(html, contains('10 minutes or over'));
     });
 
     test('key statistics include the run clock and durations', () {
       expect(html, contains('Key Statistics'));
       expect(html, contains('Tests started'));
       expect(html, contains('Cumulative test time'));
+    });
+
+    test('the tags the run declared are shown with their counts', () {
+      expect(html, contains('smoke_test'));
+      expect(html, contains('class="tag-count">1</span>'));
+    });
+  });
+
+  group('the axis', () {
+    test('rounds up to a step that divides it', () {
+      expect(niceAxis(0), (top: 1, step: 1));
+      expect(niceAxis(1), (top: 1, step: 1));
+      expect(niceAxis(6), (top: 6, step: 1));
+      expect(niceAxis(45), (top: 45, step: 5), reason: '0..45 in nine steps');
+      expect(
+        niceAxis(51),
+        (top: 60, step: 10),
+        reason: 'step 5 would need eleven ticks, so the step grows instead',
+      );
     });
   });
 
@@ -92,6 +137,26 @@ void main() {
         escapeHtml('<b>bold</b> & "quoted"'),
         '&lt;b&gt;bold&lt;/b&gt; &amp; &quot;quoted&quot;',
       );
+    });
+
+    test('carries a filter, a page size and sortable headers', () {
+      expect(html, contains('class="table-filter"'));
+      expect(html, contains('class="page-size"'));
+      expect(html, contains('class="sortable"'));
+      expect(html, contains('class="table-info"'));
+      expect(html, contains('class="pagination"'));
+    });
+
+    test('sorts each column by what it means, not by how it reads', () {
+      // A duration sorts by milliseconds and a result by severity, so "2s"
+      // does not sort after "10s" and FAILURE comes before SUCCESS.
+      expect(html, contains('data-order="2600"'));
+      expect(html, contains('data-order="2"'), reason: 'ERROR ranks second');
+    });
+
+    test('says so where the reference would list manual tests', () {
+      expect(html, contains('Manual Tests'));
+      expect(html, contains('No manual tests were recorded'));
     });
   });
 

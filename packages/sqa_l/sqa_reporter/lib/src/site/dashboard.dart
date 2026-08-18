@@ -14,6 +14,7 @@ import '../markers.dart';
 import '../model.dart';
 import '../requirements.dart';
 import '../serenity_writer.dart';
+import 'charts.dart';
 import 'page_chrome.dart';
 import 'requirements_page.dart' show coverageOverview;
 import 'site_assets.dart';
@@ -67,10 +68,6 @@ String dashboardHtml(
     counts[row.result] = (counts[row.result] ?? 0) + 1;
   }
   final int total = rows.length;
-  final int passing = counts['SUCCESS'] ?? 0;
-  final String successLabel = total == 0
-      ? '—'
-      : '${(passing * 100 / total).round()}%';
 
   final StringBuffer page = StringBuffer()
     ..writeln('<!DOCTYPE html>')
@@ -82,11 +79,15 @@ String dashboardHtml(
     ..writeln('<span class="breadcrumbs"><a href="index.html">Home</a></span>')
     ..write(menuBar(generatedAt, homeActive: true))
     ..writeln('<h2>Test Results: All Tests</h2>')
-    ..writeln('<div class="test-count-title">$total test cases</div>')
+    ..writeln(
+      '<div class="test-count-title">'
+      '<span class="test-count">$total test${total == 1 ? '' : 's'}</span>'
+      '</div>',
+    )
     ..write(_tabBar())
     ..writeln('<div class="card">')
-    ..write(_summaryPane(rows, counts, total, successLabel, run))
-    ..write(_testsPane(rows))
+    ..write(_summaryPane(rows, counts, total, run))
+    ..write(_testsPane(rows, run))
     ..writeln('</div>')
     ..writeln('</div>')
     ..write(pageFooter())
@@ -107,7 +108,6 @@ String _summaryPane(
   List<_Row> rows,
   Map<String, int> counts,
   int total,
-  String successLabel,
   ParsedRun run,
 ) {
   final StringBuffer pane = StringBuffer()
@@ -115,90 +115,39 @@ String _summaryPane(
     ..writeln('<div class="dashboard-charts">')
     ..writeln('<div class="chart-block">')
     ..writeln('<h4>Overview</h4>')
-    ..write(_donut(counts, total, successLabel))
-    ..write(_legend(counts))
+    ..write(donutChart(counts, total))
+    ..write(chartLegend(counts))
     ..writeln('</div>')
     ..writeln('<div class="chart-block">')
     ..writeln('<h4>Test Outcomes</h4>')
-    ..write(_bars(counts))
+    ..write(outcomesChart(counts))
     ..writeln('</div>')
-    ..writeln('<div class="chart-block">')
+    ..writeln('<div class="chart-block wide">')
+    ..writeln('<h4>Test Performance</h4>')
+    ..writeln('<div class="chart-caption">Number of tests per duration</div>')
+    ..write(durationChart(rows.map((_Row row) => row.durationMs).toList()))
+    ..writeln('</div>')
+    ..writeln('</div>')
+    // Coverage and the statistics share a row, as they do in the reference:
+    // what the run covered on the left, what it cost on the right.
+    ..writeln('<div class="summary-columns">')
+    ..writeln('<div class="coverage-panel">')
+    ..write(coverageOverview(requirementsOf(run)))
+    ..writeln('</div>')
+    ..writeln('<div class="statistics-panel">')
     ..write(_keyStatistics(rows, run))
     ..writeln('</div>')
     ..writeln('</div>')
-    ..write(coverageOverview(requirementsOf(run)))
+    ..write(_tagCloud(rows))
     ..writeln('</div>');
   return pane.toString();
 }
 
-/// The overview donut, as a conic-gradient: one segment per verdict that has
-/// at least one test, with the overall pass percentage in the hole.
-String _donut(Map<String, int> counts, int total, String successLabel) {
-  if (total == 0) {
-    return '<div class="donut" style="background:#eee">'
-        '<span class="donut-label">—</span></div>';
-  }
-  final List<String> segments = <String>[];
-  double from = 0;
-  for (final MapEntry<String, int> entry in counts.entries) {
-    if (entry.value == 0) {
-      continue;
-    }
-    final double to = from + entry.value * 360 / total;
-    segments.add(
-      '${resultColors[entry.key]!.fill} ${from.round()}deg ${to.round()}deg',
-    );
-    from = to;
-  }
-  return '<div class="donut" '
-      'style="background:conic-gradient(${segments.join(', ')})">'
-      '<span class="donut-label">$successLabel</span></div>';
-}
-
-String _legend(Map<String, int> counts) {
-  final StringBuffer legend = StringBuffer('<ul class="chart-legend">');
-  for (final MapEntry<String, int> entry in counts.entries) {
-    if (entry.value == 0) {
-      continue;
-    }
-    final ({String fill, String border, String solid}) color =
-        resultColors[entry.key]!;
-    legend.write(
-      '<li><span class="swatch" style="background:${color.fill};'
-      'border-color:${color.border}"></span>'
-      '${_displayName(entry.key)} (${entry.value})</li>',
-    );
-  }
-  legend.write('</ul>');
-  return legend.toString();
-}
-
-/// The outcomes bar chart: one bar per verdict, height proportional to its
-/// count against the largest.
-String _bars(Map<String, int> counts) {
-  final int max = counts.values.fold(
-    0,
-    (int carried, int count) => count > carried ? count : carried,
-  );
-  final StringBuffer bars = StringBuffer('<div class="bars">');
-  for (final MapEntry<String, int> entry in counts.entries) {
-    final ({String fill, String border, String solid}) color =
-        resultColors[entry.key]!;
-    final int height = max == 0 ? 0 : (entry.value * 150 / max).round();
-    bars.write(
-      '<div class="bar">'
-      '<div class="count">${entry.value}</div>'
-      '<div class="fill" style="height:${height}px;background:${color.fill};'
-      'border-color:${color.border}"></div>'
-      '<div class="result-label">${_displayName(entry.key)}</div>'
-      '</div>',
-    );
-  }
-  bars.write('</div>');
-  return bars.toString();
-}
-
-String _keyStatistics(List<_Row> rows, ParsedRun run) {
+String _keyStatistics(
+  List<_Row> rows,
+  ParsedRun run, {
+  bool twoColumn = false,
+}) {
   final List<int> durations = rows.map((_Row row) => row.durationMs).toList()
     ..sort();
   final int cumulative = durations.fold(
@@ -216,56 +165,182 @@ String _keyStatistics(List<_Row> rows, ParsedRun run) {
             .map((_Row row) => row.stopMs)
             .reduce((int a, int b) => a > b ? a : b);
 
-  String row(String label, String value) =>
-      '<tr><td>$label</td><td>$value</td></tr>';
+  // The statistics themselves are the same on both tabs; only the shape
+  // differs — one column beside the charts, two where the table needs the
+  // width.
+  final List<({String label, String value})>
+  stats = <({String label, String value})>[
+    (label: 'Number of scenarios', value: '${rows.length}'),
+    (label: 'Total number of test cases', value: '${rows.length}'),
+    (
+      label: 'Tests started',
+      value: rows.isEmpty
+          ? '—'
+          : timestampOf(
+              DateTime.fromMillisecondsSinceEpoch(earliestStart, isUtc: true),
+            ),
+    ),
+    (
+      label: 'Tests finished',
+      value: rows.isEmpty
+          ? '—'
+          : timestampOf(
+              DateTime.fromMillisecondsSinceEpoch(latestStop, isUtc: true),
+            ),
+    ),
+    (
+      label: 'Total duration',
+      value: rows.isEmpty ? '—' : compoundDuration(latestStop - earliestStart),
+    ),
+    (
+      label: 'Fastest test',
+      value: durations.isEmpty ? '—' : compoundDuration(durations.first),
+    ),
+    (
+      label: 'Slowest test',
+      value: durations.isEmpty ? '—' : compoundDuration(durations.last),
+    ),
+    (
+      label: 'Average execution time',
+      value: durations.isEmpty
+          ? '—'
+          : compoundDuration(cumulative ~/ durations.length),
+    ),
+    (label: 'Cumulative test time', value: compoundDuration(cumulative)),
+  ];
+
+  final StringBuffer body = StringBuffer();
+  if (twoColumn) {
+    for (int i = 0; i < stats.length; i += 2) {
+      final ({String label, String value})? second = i + 1 < stats.length
+          ? stats[i + 1]
+          : null;
+      body.writeln(
+        '<tr><td>${stats[i].label}</td><td>${stats[i].value}</td>'
+        '<td>${second?.label ?? ''}</td><td>${second?.value ?? ''}</td></tr>',
+      );
+    }
+  } else {
+    for (final ({String label, String value}) stat in stats) {
+      body.writeln('<tr><td>${stat.label}</td><td>${stat.value}</td></tr>');
+    }
+  }
 
   return '''
-<h4>Key Statistics</h4>
-<table class="table table-striped">
+<h3>Key Statistics</h3>
+<table class="table table-striped key-statistics">
 <tbody>
-${row('Number of test cases', '${rows.length}')}
-${row('Tests started', rows.isEmpty ? '—' : timestampOf(DateTime.fromMillisecondsSinceEpoch(earliestStart, isUtc: true)))}
-${row('Tests finished', rows.isEmpty ? '—' : timestampOf(DateTime.fromMillisecondsSinceEpoch(latestStop, isUtc: true)))}
-${row('Total duration', rows.isEmpty ? '—' : compoundDuration(latestStop - earliestStart))}
-${row('Fastest test', durations.isEmpty ? '—' : compoundDuration(durations.first))}
-${row('Slowest test', durations.isEmpty ? '—' : compoundDuration(durations.last))}
-${row('Average execution time', durations.isEmpty ? '—' : compoundDuration(cumulative ~/ durations.length))}
-${row('Cumulative test time', compoundDuration(cumulative))}
-</tbody>
+$body</tbody>
 </table>
 ''';
 }
 
-String _testsPane(List<_Row> rows) {
-  final StringBuffer pane = StringBuffer()
-    ..writeln('<div id="tests" class="tab-pane">')
-    ..writeln('<h3>Automated Scenarios</h3>')
-    ..writeln('<table class="table table-striped scenario-result-table">')
-    ..writeln(
-      '<thead><tr><th>Feature</th><th>Scenario</th><th>Context</th>'
-      '<th>Steps</th><th>Started</th><th>Total Duration</th>'
-      '<th>Result</th></tr></thead>',
-    )
-    ..writeln('<tbody>');
+/// Every tag the run declared, with how many tests carried it — the same
+/// vocabulary the runner filters on, so a reader can reproduce a selection.
+String _tagCloud(List<_Row> rows) {
+  final Map<String, int> tally = <String, int>{};
   for (final _Row row in rows) {
-    pane.writeln(
+    for (final String tag in row.tags) {
+      tally[tag] = (tally[tag] ?? 0) + 1;
+    }
+  }
+  if (tally.isEmpty) {
+    return '';
+  }
+  final List<String> names = tally.keys.toList()..sort();
+  final StringBuffer cloud = StringBuffer('<h3>Tags</h3><p class="tag-cloud">');
+  for (final String name in names) {
+    cloud.write(
+      '<span class="tag-badge cloud">${escapeHtml(name)}'
+      '<span class="tag-count">${tally[name]}</span></span> ',
+    );
+  }
+  cloud.write('</p>');
+  return cloud.toString();
+}
+
+String _testsPane(List<_Row> rows, ParsedRun run) {
+  final StringBuffer body = StringBuffer();
+  for (final _Row row in rows) {
+    // Every sortable cell carries the value to sort by, so the table sorts on
+    // what a column *means* — a duration by milliseconds, a result by
+    // severity — rather than on the text that happens to render it.
+    body.writeln(
       '<tr>'
       '<td>${escapeHtml(row.feature)}</td>'
       '<td><a href="${row.href}">${escapeHtml(row.name)}</a></td>'
       '<td>${escapeHtml(row.context)}</td>'
-      '<td>${row.stepCount}</td>'
-      '<td>${timestampOf(DateTime.fromMillisecondsSinceEpoch(row.startMs, isUtc: true))}</td>'
-      '<td>${compoundDuration(row.durationMs)}</td>'
-      '<td><a href="${row.href}">${resultIcon(row.result)}</a></td>'
+      '<td data-order="${row.stepCount}">${row.stepCount}</td>'
+      '<td data-order="${row.startMs}">'
+      '${timestampOf(DateTime.fromMillisecondsSinceEpoch(row.startMs, isUtc: true))}</td>'
+      '<td data-order="${row.durationMs}">'
+      '${compoundDuration(row.durationMs)}</td>'
+      '<td data-order="${_severityRank(row.result)}">'
+      '<a href="${row.href}">${resultIcon(row.result)}</a></td>'
       '</tr>',
     );
   }
-  pane
+
+  final StringBuffer pane = StringBuffer()
+    ..writeln('<div id="tests" class="tab-pane">')
+    ..write(_keyStatistics(rows, run, twoColumn: true))
+    ..writeln('<h3>Automated Scenarios</h3>')
+    ..writeln('<div class="data-table">')
+    ..writeln('<div class="table-controls">')
+    ..writeln(
+      '<label class="entries">'
+      '<select class="page-size">'
+      '<option>10</option><option>25</option><option>50</option>'
+      '<option>100</option><option value="0">All</option>'
+      '</select> entries per page</label>',
+    )
+    ..writeln(
+      '<label class="filter">'
+      '<input type="search" class="table-filter" placeholder="Filter"/>'
+      '</label>',
+    )
+    ..writeln('</div>')
+    ..writeln('<table class="table table-striped scenario-result-table">')
+    ..writeln(
+      '<thead><tr>'
+      '<th class="sortable" data-sort="text">Feature</th>'
+      '<th class="sortable test-name-column" data-sort="text">Scenario</th>'
+      '<th class="sortable" data-sort="text">Context</th>'
+      '<th class="sortable" data-sort="number">Steps</th>'
+      '<th class="sortable" data-sort="number">Started</th>'
+      '<th class="sortable" data-sort="number">Total Duration</th>'
+      '<th class="sortable" data-sort="number">Result</th>'
+      '</tr></thead>',
+    )
+    ..writeln('<tbody>')
+    ..write(body)
     ..writeln('</tbody>')
     ..writeln('</table>')
+    ..writeln('<div class="table-footer">')
+    ..writeln('<span class="table-info"></span>')
+    ..writeln('<span class="pagination"></span>')
+    ..writeln('</div>')
+    ..writeln('</div>')
+    // The reference reports manual tests here and says so when there are
+    // none. Ours has no way to declare one — every test in this suite is
+    // automated — so the section states that rather than pretending the
+    // question was never asked.
+    ..writeln('<h3>Manual Tests</h3>')
+    ..writeln('<p class="empty-note">No manual tests were recorded</p>')
+    ..write(_tagCloud(rows))
     ..writeln('</div>');
   return pane.toString();
 }
+
+/// Worst first, so sorting the Result column ascending puts what needs
+/// attention at the top — the order the reference sorts by.
+int _severityRank(String result) => switch (result) {
+  'FAILURE' => 1,
+  'ERROR' => 2,
+  'SKIPPED' => 3,
+  'UNDEFINED' => 4,
+  _ => 5,
+};
 
 /// The coloured round marker a result cell shows, with the verdict spelled
 /// out in the `title` attribute.
@@ -303,14 +378,6 @@ String escapeHtml(String text) => text
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;');
 
-String _displayName(String result) => switch (result) {
-  'SUCCESS' => 'Passing',
-  'FAILURE' => 'Failed',
-  'ERROR' => 'Broken',
-  'SKIPPED' => 'Skipped',
-  _ => 'Undefined',
-};
-
 /// One table row's worth of a case, with the same widening and promotion the
 /// JSON writer applies, so the two surfaces never disagree about a verdict.
 class _Row {
@@ -323,19 +390,24 @@ class _Row {
     required this.stopMs,
     required this.result,
     required this.href,
+    required this.tags,
   });
 
   factory _Row.of(RunCase testCase) {
     final RunStatus status = promoteStatus(testCase.status, testCase.steps);
+    // The widened clock, the same one the JSON writer and the detail page
+    // use: the row must not report a test as shorter than the steps it holds.
+    final ({int start, int stop}) bounds = widenedBoundsOf(testCase);
     return _Row(
       feature: testCase.meta?.feature ?? testCase.suite,
       name: testCase.name,
       context: testCase.thread,
       stepCount: testCase.steps.length,
-      startMs: testCase.start,
-      stopMs: testCase.stop,
+      startMs: bounds.start,
+      stopMs: bounds.stop,
       result: serenityResult[status]!,
       href: htmlReportName(testCase),
+      tags: testCase.tags,
     );
   }
 
@@ -349,6 +421,9 @@ class _Row {
 
   /// The detail page this row links to.
   final String href;
+
+  /// What the test declared to `e2eTest`, for the tag cloud.
+  final List<String> tags;
 
   int get durationMs => stopMs - startMs;
 }

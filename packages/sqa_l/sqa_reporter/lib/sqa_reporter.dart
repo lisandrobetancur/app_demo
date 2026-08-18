@@ -37,6 +37,15 @@ export 'src/serenity_writer.dart'
         stepDescription,
         widenedBoundsOf,
         writeSerenityResults;
+export 'src/site/charts.dart'
+    show
+        chartLabels,
+        chartLegend,
+        chartOrder,
+        donutChart,
+        durationChart,
+        niceAxis,
+        outcomesChart;
 export 'src/site/dashboard.dart'
     show
         compoundDuration,

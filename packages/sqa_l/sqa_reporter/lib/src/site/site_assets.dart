@@ -161,25 +161,38 @@ h4 { font-weight: 400; font-size: 1.1em; margin: 0.75em 0 0.5em 0; }
 
 .dashboard-charts {
   display: flex;
-  gap: 3em;
+  gap: 2.5em;
   align-items: flex-start;
   flex-wrap: wrap;
+  margin-bottom: 2em;
 }
 
-.chart-block { min-width: 280px; }
+.chart-block { flex: 1 1 300px; min-width: 300px; }
+.chart-block.wide { flex: 1 1 380px; min-width: 380px; }
+
+.chart-caption {
+  font-size: 0.8em;
+  color: #777;
+  text-align: center;
+  margin-bottom: 0.5em;
+}
+
+/* ── Doughnut ───────────────────────────────────────────────────────── */
+
+.donut-wrap { display: flex; justify-content: center; }
 
 .donut {
-  width: 200px;
-  height: 200px;
+  width: 220px;
+  height: 220px;
   border-radius: 50%;
-  margin: 1em auto;
+  margin: 0.5em 0 1em;
   position: relative;
 }
 
 .donut::before {
   content: "";
   position: absolute;
-  inset: 25%;
+  inset: 26%;
   border-radius: 50%;
   background: #fff;
 }
@@ -190,36 +203,142 @@ h4 { font-weight: 400; font-size: 1.1em; margin: 0.75em 0 0.5em 0; }
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5em;
+  font-size: 2em;
+  color: #444;
+  z-index: 2;
+}
+
+.donut-slice-label {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-size: 0.8em;
+  font-weight: 600;
   color: #444;
   z-index: 1;
 }
 
-.chart-legend { list-style: none; font-size: 0.85em; color: #555; }
-.chart-legend li { display: inline-block; margin-right: 1em; }
+.chart-legend {
+  list-style: none;
+  font-size: 0.8em;
+  color: #555;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.25em 1em;
+}
+
+.chart-legend li.empty { color: #b0b0b0; }
+
 .chart-legend .swatch {
   display: inline-block;
   width: 0.9em;
   height: 0.9em;
   border: 1px solid;
-  margin-right: 0.35em;
+  margin-right: 0.4em;
   vertical-align: -0.1em;
 }
 
-.bars {
+/* ── Bar charts with an axis ────────────────────────────────────────── */
+
+/* The padding is where a full-height bar's own value label sits: without it
+   the number would ride over whatever the chart is captioned with. */
+.plot { display: flex; height: 220px; margin: 0.5em 0 2em; padding-top: 1.2em; }
+.plot.slanted-axis { margin-bottom: 5em; }
+
+.y-axis {
   display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   align-items: flex-end;
-  gap: 1.25em;
-  height: 200px;
-  margin: 1em 0;
-  padding: 0 0.5em;
-  border-bottom: 1px solid #ddd;
+  padding-right: 0.4em;
+  font-size: 0.75em;
+  color: #888;
+  /* Half a line up and down, so each number sits ON its gridline. */
+  margin: -0.5em 0;
 }
 
-.bars .bar { width: 3em; text-align: center; }
-.bars .bar .fill { border: 1px solid; }
-.bars .bar .count { font-size: 0.9em; color: #444; }
-.bars .bar .result-label { font-size: 0.75em; color: #777; }
+.y-tick { line-height: 1em; }
+
+.plot-area { position: relative; flex: 1; }
+
+.gridlines {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.gridlines .gridline { border-top: 1px solid #eee; }
+
+.bars {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  gap: 0.5em;
+}
+
+.bar-column {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  position: relative;
+}
+
+.bar-fill {
+  width: 60%;
+  min-height: 1px;
+  border: 1px solid;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.bar-fill.duration-fill {
+  background: rgba(120, 165, 230, 0.55);
+  border-color: rgba(120, 165, 230, 1);
+}
+
+.bar-value {
+  font-size: 0.75em;
+  color: #444;
+  margin-top: -1.4em;
+}
+
+.bar-label {
+  position: absolute;
+  top: 100%;
+  padding-top: 0.35em;
+  font-size: 0.7em;
+  color: #777;
+  white-space: nowrap;
+}
+
+/* Slanted labels hang BELOW the axis and rise towards their own column: the
+   anchor is the label's right end, sitting under the bar it names, so the
+   text runs down-left into empty space instead of up-right across the bars. */
+.bar-label.slanted {
+  left: 50%;
+  font-size: 0.65em;
+  text-align: right;
+  transform-origin: 100% 0;
+  transform: translateX(-100%) rotate(-35deg);
+}
+
+/* The two panels the reference puts side by side under the charts. */
+.summary-columns {
+  display: flex;
+  gap: 2.5em;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.summary-columns > .coverage-panel { flex: 2 1 420px; min-width: 420px; }
+.summary-columns > .statistics-panel { flex: 1 1 320px; min-width: 320px; }
 
 /* ── Tables ─────────────────────────────────────────────────────────── */
 
@@ -251,6 +370,92 @@ table.table-striped tbody tr:nth-child(odd) { background: #f9f9f9; }
   text-align: center;
   font-weight: bold;
   font-size: 0.9em;
+}
+
+/* ── The scenario table's controls ──────────────────────────────────── */
+
+.test-count { color: #0d78ae; font-weight: 600; }
+
+.table-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1em;
+  margin: 0.5em 0;
+  font-size: 0.85em;
+  color: #555;
+}
+
+.table-controls select, .table-controls input {
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  padding: 0.25em 0.4em;
+  font: inherit;
+}
+
+.table-controls input { min-width: 14em; }
+
+th.sortable { cursor: pointer; user-select: none; white-space: nowrap; }
+th.sortable::after { content: " ⇅"; color: #bbb; font-size: 0.85em; }
+th.sortable.asc::after { content: " ↑"; color: #428bca; }
+th.sortable.desc::after { content: " ↓"; color: #428bca; }
+
+.table-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.75em;
+  font-size: 0.85em;
+  color: #666;
+}
+
+.pagination { display: flex; gap: 0.25em; }
+
+.pagination button {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  color: #428bca;
+  cursor: pointer;
+  font: inherit;
+  min-width: 2em;
+  padding: 0.25em 0.5em;
+}
+
+.pagination button.active {
+  background: #333;
+  border-color: #333;
+  color: #fff;
+  cursor: default;
+}
+
+.pagination button:disabled { color: #ccc; cursor: default; }
+
+.empty-note { color: #777; font-size: 0.9em; }
+
+.key-statistics td:nth-child(2), .key-statistics td:nth-child(4) {
+  white-space: nowrap;
+}
+
+/* ── Tag cloud ──────────────────────────────────────────────────────── */
+
+.tag-cloud { display: flex; flex-wrap: wrap; gap: 0.4em; margin-top: 0.5em; }
+
+.tag-badge.cloud {
+  background: #eef6e3;
+  border-color: #cfe3b4;
+  color: #4a6b28;
+  font-size: 0.8em;
+  padding: 0.25em 0.7em;
+}
+
+.tag-count {
+  background: #fff;
+  border-radius: 8px;
+  color: #6b8f42;
+  font-size: 0.9em;
+  margin-left: 0.5em;
+  padding: 0 0.4em;
 }
 
 .version { color: gray; font-size: 0.85em; }
@@ -549,6 +754,100 @@ document.querySelectorAll(".caret").forEach(function (caret) {
     section.hidden = !section.hidden;
     caret.classList.toggle("open", !section.hidden);
   });
+});
+
+// The scenario table's filter, sort and pagination. The reference gets these
+// from a table plugin; this is the same three behaviours over the rows the
+// page already carries, so the table works with the file opened straight off
+// disk and the page still ships no libraries.
+document.querySelectorAll(".data-table").forEach(function (wrapper) {
+  var table = wrapper.querySelector("table");
+  var body = table.querySelector("tbody");
+  var headers = table.querySelectorAll("th.sortable");
+  var filter = wrapper.querySelector(".table-filter");
+  var pageSize = wrapper.querySelector(".page-size");
+  var info = wrapper.querySelector(".table-info");
+  var pagination = wrapper.querySelector(".pagination");
+  var all = Array.prototype.slice.call(body.querySelectorAll("tr"));
+  var page = 1;
+  var sortIndex = -1;
+  var ascending = true;
+
+  function keyOf(row, index) {
+    var cell = row.children[index];
+    var order = cell.getAttribute("data-order");
+    return order === null ? cell.textContent.trim().toLowerCase() : +order;
+  }
+
+  function render() {
+    var needle = (filter && filter.value || "").trim().toLowerCase();
+    var rows = all.filter(function (row) {
+      return !needle || row.textContent.toLowerCase().indexOf(needle) >= 0;
+    });
+
+    if (sortIndex >= 0) {
+      rows = rows.slice().sort(function (a, b) {
+        var left = keyOf(a, sortIndex);
+        var right = keyOf(b, sortIndex);
+        var order = left < right ? -1 : left > right ? 1 : 0;
+        return ascending ? order : -order;
+      });
+    }
+
+    var size = pageSize ? +pageSize.value : 10;
+    var pages = size === 0 ? 1 : Math.max(1, Math.ceil(rows.length / size));
+    if (page > pages) { page = pages; }
+    var from = size === 0 ? 0 : (page - 1) * size;
+    var to = size === 0 ? rows.length : Math.min(from + size, rows.length);
+
+    body.textContent = "";
+    rows.slice(from, to).forEach(function (row) { body.appendChild(row); });
+
+    if (info) {
+      info.textContent = rows.length === 0
+        ? "No matching entries"
+        : "Showing " + (from + 1) + " to " + to + " of " + rows.length +
+          " entries";
+    }
+
+    if (pagination) {
+      pagination.textContent = "";
+      if (pages > 1) {
+        for (var p = 1; p <= pages; p += 1) {
+          var button = document.createElement("button");
+          button.textContent = p;
+          if (p === page) { button.className = "active"; }
+          button.addEventListener("click", (function (target) {
+            return function () { page = target; render(); };
+          })(p));
+          pagination.appendChild(button);
+        }
+      }
+    }
+  }
+
+  headers.forEach(function (header, index) {
+    header.addEventListener("click", function () {
+      // Clicking the sorted column again reverses it; clicking another one
+      // starts that column ascending.
+      ascending = sortIndex === index ? !ascending : true;
+      sortIndex = index;
+      headers.forEach(function (other) {
+        other.classList.remove("asc", "desc");
+      });
+      header.classList.add(ascending ? "asc" : "desc");
+      page = 1;
+      render();
+    });
+  });
+
+  if (filter) {
+    filter.addEventListener("input", function () { page = 1; render(); });
+  }
+  if (pageSize) {
+    pageSize.addEventListener("change", function () { page = 1; render(); });
+  }
+  render();
 });
 
 document.querySelectorAll(".carousel").forEach(function (carousel) {
