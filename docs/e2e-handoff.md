@@ -50,7 +50,7 @@ between what Patrol **requires** and what this POC merely **chose**.
 | `packages/apps/market_app/pubspec.yaml` | The `patrol:` block and the `dev_dependency` |
 | `android/app/build.gradle.kts` | Runner + orchestrator, with the reasoning in comments |
 | `pubspec.yaml` (root) | Melos scripts: `e2eWeb`, `e2eAndroid`, `allureWeb` |
-| `packages/sqa_l/tool/allure/`, `packages/sqa_l/tool/e2e/` | Allure conversion and logcat capture |
+| `packages/sqa_l/tool/sqa_reporter/`, `packages/sqa_l/tool/e2e/` | Allure conversion and logcat capture |
 | `.github/workflows/e2e-*.yml` | Web and Android CI |
 
 ## Conclusion of the analysis: Patrol's real footprint

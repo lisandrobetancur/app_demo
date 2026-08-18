@@ -164,7 +164,7 @@ melos:
     # Rebuild the report from the results ALREADY on disk, without running the
     # suite again. `e2eWeb` and `e2eAndroid` already produce it; this is for
     # when you change the converter and want to see the effect.
-    allureWeb: rm -rf build/e2e/web/allure && node packages/sqa_l/tool/allure/patrol_to_allure.mjs --platform web && pnpm --dir packages/sqa_l/tool/allure exec allure awesome build/e2e/web/allure/results --output build/e2e/web/allure/report --report-name "Market E2E · Web"
-    allureAndroid: rm -rf build/e2e/android/allure && node packages/sqa_l/tool/allure/patrol_to_allure.mjs --input build/e2e/android/android_run.log --platform android && pnpm --dir packages/sqa_l/tool/allure exec allure awesome build/e2e/android/allure/results --output build/e2e/android/allure/report --report-name "Market E2E · Android"
-    allureServeWeb: pnpm --dir packages/sqa_l/tool/allure exec allure serve build/e2e/web/allure/results
-    allureServeAndroid: pnpm --dir packages/sqa_l/tool/allure exec allure serve build/e2e/android/allure/results
+    allureWeb: rm -rf build/e2e/web/allure && node packages/sqa_l/tool/sqa_reporter/patrol_to_allure.mjs --platform web && pnpm --dir packages/sqa_l/tool/sqa_reporter exec allure awesome build/e2e/web/allure/results --output build/e2e/web/allure/report --report-name "Market E2E · Web"
+    allureAndroid: rm -rf build/e2e/android/allure && node packages/sqa_l/tool/sqa_reporter/patrol_to_allure.mjs --input build/e2e/android/android_run.log --platform android && pnpm --dir packages/sqa_l/tool/sqa_reporter exec allure awesome build/e2e/android/allure/results --output build/e2e/android/allure/report --report-name "Market E2E · Android"
+    allureServeWeb: pnpm --dir packages/sqa_l/tool/sqa_reporter exec allure serve build/e2e/web/allure/results
+    allureServeAndroid: pnpm --dir packages/sqa_l/tool/sqa_reporter exec allure serve build/e2e/android/allure/results

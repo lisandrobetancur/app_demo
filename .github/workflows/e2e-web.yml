@@ -29,7 +29,7 @@ jobs:
       # `npx playwright install` inside the patrol package.
       - uses: actions/setup-node@v7
         with:
-          node-version-file: packages/sqa_l/tool/allure/.nvmrc
+          node-version-file: packages/sqa_l/tool/sqa_reporter/.nvmrc
 
       # corepack reads `packageManager` from the report tooling's package.json
       # and provisions exactly that pnpm, so the version is pinned in one file
@@ -41,7 +41,7 @@ jobs:
       # Patrol's own web runner still uses npm inside the pub cache. That is
       # its package, not ours, and it is left alone.
       - name: Pin pnpm through corepack
-        working-directory: packages/sqa_l/tool/allure
+        working-directory: packages/sqa_l/tool/sqa_reporter
         run: |
           corepack enable
           corepack prepare --activate
@@ -52,7 +52,7 @@ jobs:
       # rather than quietly resolve something else when the lockfile and the
       # manifest disagree.
       - name: Install the report tooling
-        working-directory: packages/sqa_l/tool/allure
+        working-directory: packages/sqa_l/tool/sqa_reporter
         run: pnpm install --frozen-lockfile
 
       # Chromium is a ~130 MB download on every cold run. The pub cache holds
@@ -127,7 +127,7 @@ jobs:
         # without it `tee` would return its own success and swallow the
         # script's exit code — quietly turning the check back into a notice.
         shell: bash
-        run: node packages/sqa_l/tool/allure/summarize_assertions.mjs --platform web | tee -a "$GITHUB_STEP_SUMMARY"
+        run: node packages/sqa_l/tool/sqa_reporter/summarize_assertions.mjs --platform web | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Publish the JUnit results as a check
         if: always()

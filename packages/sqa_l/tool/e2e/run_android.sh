@@ -81,8 +81,8 @@ echo "Device log captured at $LOG ($(wc -l < "$LOG" | tr -d ' ') lines)"
 
 echo
 echo "── Building the report ───────────────────────────────────────────────"
-node packages/sqa_l/tool/allure/patrol_to_allure.mjs --input "$LOG" --platform android \
-  && pnpm --dir packages/sqa_l/tool/allure exec allure awesome "$OUT/allure/results" \
+node packages/sqa_l/tool/sqa_reporter/patrol_to_allure.mjs --input "$LOG" --platform android \
+  && pnpm --dir packages/sqa_l/tool/sqa_reporter exec allure awesome "$OUT/allure/results" \
        --output "$OUT/allure/report" --report-name "Market E2E · Android" \
   || echo "The report could not be built (the suite exited with $status)." >&2
 

@@ -567,7 +567,7 @@ allure/
 └── android/{results,report}
 ```
 
-Why a converter (`packages/sqa_l/tool/allure/patrol_to_allure.mjs`) instead of the usual
+Why a converter (`packages/sqa_l/tool/sqa_reporter/patrol_to_allure.mjs`) instead of the usual
 `allure-playwright` reporter: Patrol owns the Playwright config that runs the
 web suite, and its `mapReporters` accepts only a whitelist — `html`, `json`,
 `junit`, `list`, `dot`, `line`, `github`, `null` — and throws on anything else.
@@ -643,7 +643,7 @@ browser console — or from logcat, on a device — through the per-test capture
 and into the converter, and a break anywhere along that chain is silent: the
 tests still pass, the report just holds nothing behind them.
 
-So both CI jobs run `packages/sqa_l/tool/allure/summarize_assertions.mjs` after building the
+So both CI jobs run `packages/sqa_l/tool/sqa_reporter/summarize_assertions.mjs` after building the
 report and write the count into the job summary, where it is readable from the
 pull request without downloading an artifact:
 

@@ -15,7 +15,7 @@
 ///    They hold neither locators nor assertions.
 ///
 /// The report is built from markers printed to stdout while the suite runs;
-/// `packages/sqa_l/tool/allure/patrol_to_allure.mjs` turns them into Allure results. Nothing
+/// `packages/sqa_l/tool/sqa_reporter/patrol_to_allure.mjs` turns them into Allure results. Nothing
 /// here writes files or talks to the network.
 library;
 
