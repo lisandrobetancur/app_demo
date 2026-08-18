@@ -425,7 +425,7 @@ Node.js is required (the first run installs Playwright and its browsers
 automatically).
 
 ```bash
-dart pub global activate patrol_cli 4.4.0
+dart pub global activate patrol_cli 4.7.0
 ```
 
 ```bash
@@ -438,9 +438,9 @@ To watch it drive a real browser instead of running headless:
 melos run e2eWebHeaded
 ```
 
-> The flag behind it is `--web-headless=false`, with the `=` spelled out. On
-> patrol_cli 4.4.0 a bare `--web-headless` prints the help text instead of
-> running anything.
+> The flag behind it is `--no-web-headless`. Passing a value —
+> `--web-headless=false` — still parses, but patrol_cli 4.7.0 warns that it is
+> deprecated in favour of the boolean pair.
 
 Building and opening the report is a separate step on purpose, so a run does
 not force a browser window on you:
@@ -532,11 +532,17 @@ waits on a shimmer.
 
 ### Version pinning
 
-`patrol` is pinned to **4.6.1**, not the latest 4.9.0: from 4.7.0 onwards it
-requires `equatable ^2.1.0`, which would break the `equatable: 2.0.7` pin this
-workspace mandates. `patrol_cli` must match — the CLI refuses to run on a
-mismatch — so use **4.4.0**, per the
-[compatibility table](https://patrol.leancode.co/documentation/compatibility-table).
+`patrol` is pinned to **4.9.0** and `patrol_cli` to **4.7.0**.
+
+Reaching 4.9.0 meant moving `equatable` from `2.0.7` to `2.1.0` in the seven
+`*_typing` packages, because every patrol from 4.7.0 on requires
+`equatable ^2.1.0`. That is a production dependency of the model layer, which is
+why it was its own change rather than a line inside another one.
+
+The CLI is versioned separately from the framework and drifted behind for a
+while; the pairing above is the one CI runs. Check the
+[compatibility table](https://patrol.leancode.co/documentation/compatibility-table)
+before moving either.
 
 ### Allure report
 

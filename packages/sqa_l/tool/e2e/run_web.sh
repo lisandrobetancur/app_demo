@@ -30,7 +30,10 @@ cd "$(git rev-parse --show-toplevel)"
 
 APP_DIR="packages/apps/market_app"
 
-HEADLESS=true
+# A flag, not a value. `--web-headless=false` still parses on patrol_cli
+# 4.7.0 but warns that it is deprecated; the boolean pair is what the CLI
+# wants now.
+HEADLESS_FLAG=--web-headless
 TAGS=()
 BROWSER=""
 
@@ -42,7 +45,7 @@ CHANNELS="chrome chrome-beta chrome-dev chrome-canary msedge msedge-beta msedge-
 
 for arg in "$@"; do
   case "$arg" in
-    --headed) HEADLESS=false ;;
+    --headed) HEADLESS_FLAG=--no-web-headless ;;
     --tags=*) TAGS=(--tags "${arg#--tags=}") ;;
     --browser=*)
       BROWSER="${arg#--browser=}"
@@ -108,7 +111,7 @@ set +e
     "${TAGS[@]+"${TAGS[@]}"}" \
     --web-report-dir="$OUT/playwright" \
     --web-results-dir="$OUT/test-results" \
-    --web-headless="$HEADLESS" \
+    "$HEADLESS_FLAG" \
     --web-locale=es-ES \
     --web-timezone=America/Bogota \
     --web-reporter='["list","json","junit"]'
