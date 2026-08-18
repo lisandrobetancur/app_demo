@@ -109,6 +109,29 @@ void main() {
       expect(passingPage, contains('verified: Hola, Ana'));
     });
 
+    test('marks every step with its own verdict, not just the far column', () {
+      expect(passingPage, contains('class="result-icon step-icon"'));
+      expect(
+        RegExp('step-icon').allMatches(passingPage).length,
+        greaterThan(2),
+        reason: 'one mark per step, so a bad one is a glance down the edge',
+      );
+    });
+
+    test('carries the depth on the row, for the tree to read as one', () {
+      expect(passingPage, contains('class="test-SUCCESS step-row level-0"'));
+      expect(passingPage, contains('step-row level-1'));
+    });
+
+    test('offers to open or close the whole tree at once', () {
+      expect(passingPage, contains('class="expand-all"'));
+      expect(passingPage, contains('class="collapse-all"'));
+    });
+
+    test('a leaf keeps the caret\'s width, so the marks stay in a column', () {
+      expect(passingPage, contains('class="caret-spacer"'));
+    });
+
     test('a broken step reads ERROR on the page too', () {
       expect(brokenPage, contains('Open the catalog'));
       expect(brokenPage, contains('>ERROR<'));

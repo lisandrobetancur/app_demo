@@ -354,6 +354,16 @@ int _severityRank(String result) => switch (result) {
   _ => 5,
 };
 
+/// The same marker at step size: small enough to sit in front of a sentence
+/// without pushing it around, big enough to scan a column of them.
+String stepIcon(String result) {
+  final ({String fill, String border, String solid}) color =
+      resultColors[result] ?? resultColors['UNDEFINED']!;
+  final String glyph = resultGlyphs[result] ?? '?';
+  return '<span class="result-icon step-icon" '
+      'style="background:${color.solid}" title="$result">$glyph</span>';
+}
+
 /// The coloured round marker a result cell shows, with the verdict spelled
 /// out in the `title` attribute.
 String resultIcon(String result) {

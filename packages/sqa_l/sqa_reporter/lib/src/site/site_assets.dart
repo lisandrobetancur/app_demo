@@ -671,15 +671,16 @@ table.step-table th {
 }
 
 table.step-table td {
-  padding: 0.5em 0.75em;
-  border-bottom: 1px solid #eee;
-  vertical-align: top;
+  padding: 0.35em 0.75em;
+  border-bottom: 1px solid #f0f0f0;
+  vertical-align: middle;
 }
 
-/* A group's children live in a nested table inside a spanning cell. Zeroing
-   that cell's padding keeps the child columns on the parent's grid instead of
-   drifting right by one cell's worth of padding at every level. */
-.step-section > td { padding: 0; }
+/* A group's children live in a nested table inside a spanning cell. The left
+   rule is the hierarchy made visible: it runs the height of everything that
+   belongs to the step above it. */
+.step-section > td { padding: 0 0 0 1.6em; }
+.step-section > td > table { border-left: 2px solid #e8eef4; }
 
 table.step-table.nested { margin: 0; }
 table.step-table.nested td { border-bottom: 1px solid #f2f2f2; }
@@ -693,19 +694,61 @@ table.step-table.nested td { border-bottom: 1px solid #f2f2f2; }
 .outcome-column { width: 130px; font-size: 0.85em; }
 .duration-column { width: 100px; color: #666; font-size: 0.9em; }
 
-.step-description { line-height: 1.5; }
+.step-description {
+  line-height: 1.5;
+  display: flex;
+  align-items: baseline;
+  gap: 0.4em;
+}
+
+/* Depth reads as weight: a business step is plain, what happens inside it is
+   lighter and italic, the way the reference distinguishes them. */
+.step-row.level-0 .step-text { color: #333; }
+.step-row.level-1 .step-text { color: #444; font-style: italic; }
+.step-row.level-2 .step-text,
+.step-row.level-3 .step-text { color: #666; font-style: italic; }
+
+.step-icon {
+  width: 1.05em;
+  height: 1.05em;
+  line-height: 1.05em;
+  font-size: 0.8em;
+  flex: none;
+}
+
+.caret-spacer { display: inline-block; width: 1em; flex: none; }
+
+.step-tools { display: flex; gap: 0.5em; margin-bottom: 0.5em; }
+
+.step-tools button {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  color: var(--link);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8em;
+  padding: 0.25em 0.7em;
+}
+
+.step-tools button:hover { background: #f0f6fb; }
 
 .caret {
   background: none;
   border: none;
-  color: #0e78ad;
   cursor: pointer;
   font-size: 1em;
+  line-height: 1;
   padding: 0;
-  margin-right: 0.2em;
+  width: 1em;
+  flex: none;
 }
 
 .caret.open { transform: rotate(90deg); display: inline-block; }
+
+/* A business step is the header of what it contains, so it carries the
+   weight; everything nested under it reads as detail. */
+.step-row.level-0 > td:first-child { font-weight: 500; }
 
 .screenshot {
   border: 1px solid #ddd;
@@ -892,6 +935,25 @@ document.querySelectorAll(".caret").forEach(function (caret) {
     section.hidden = !section.hidden;
     caret.classList.toggle("open", !section.hidden);
   });
+});
+
+// Opening a forty-step tree one caret at a time is the tedious part of
+// reading a failed run.
+function setAllStepSections(open) {
+  document.querySelectorAll(".step-section").forEach(function (section) {
+    section.hidden = !open;
+  });
+  document.querySelectorAll(".caret").forEach(function (caret) {
+    caret.classList.toggle("open", open);
+  });
+}
+
+document.querySelectorAll(".expand-all").forEach(function (button) {
+  button.addEventListener("click", function () { setAllStepSections(true); });
+});
+
+document.querySelectorAll(".collapse-all").forEach(function (button) {
+  button.addEventListener("click", function () { setAllStepSections(false); });
 });
 
 // The scenario table's filter, sort and pagination. The reference gets these

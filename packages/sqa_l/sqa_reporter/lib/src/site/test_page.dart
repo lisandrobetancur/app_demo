@@ -14,7 +14,7 @@ import 'dart:io';
 import '../markers.dart';
 import '../model.dart';
 import '../serenity_writer.dart';
-import 'dashboard.dart' show compoundDuration, escapeHtml, resultIcon;
+import 'dashboard.dart' show compoundDuration, escapeHtml, resultIcon, stepIcon;
 import 'page_chrome.dart';
 import 'screenshots_page.dart' show screenshotsReportName;
 import 'site_assets.dart';
@@ -186,13 +186,19 @@ class _StepTable {
   String render(List<StepNode> steps) {
     final int columns = hasShots ? 4 : 3;
     final StringBuffer table = StringBuffer()
+      // Opening a deep tree one caret at a time is the tedious part of
+      // reading a failed run, so the whole tree can be opened at once.
+      ..writeln('<div class="step-tools">')
+      ..writeln('<button class="expand-all">Expand all</button>')
+      ..writeln('<button class="collapse-all">Collapse all</button>')
+      ..writeln('</div>')
       ..writeln('<table class="step-table">')
       ..writeln(
         '<tr class="step-titles">'
         '<th class="step-description-column">Steps</th>'
         '${hasShots ? '<th class="shot-column">Screenshots</th>' : ''}'
         '<th class="outcome-column">Outcome</th>'
-        '<th class="duration-column">Duration</th>'
+        '<th class="duration-column" title="Duration">Duration</th>'
         '</tr>',
       );
     for (int i = 0; i < steps.length; i += 1) {
@@ -205,21 +211,27 @@ class _StepTable {
   String _stepRows(StepNode step, {required int level, required int columns}) {
     final String result = serenityResult[step.status]!;
     final bool isGroup = step.children.isNotEmpty;
-    final int indent = level * 20;
     final StringBuffer rows = StringBuffer();
 
     _section += 1;
     final int section = _section;
 
+    // Every row carries its own verdict as a mark, not only as a word in a
+    // far column: scanning a tree of forty steps for the one that went wrong
+    // should be a glance down the left edge, not a read across each line.
+    final String mark = stepIcon(result);
     final String caret = isGroup
-        ? '<button class="caret" data-toggle="step-section-$section" '
-              'title="Show the steps inside">▸</button> '
-        : '';
+        ? '<button class="caret ${result.toLowerCase()}-color" '
+              'data-toggle="step-section-$section" '
+              'title="Show the steps inside">▸</button>'
+        : '<span class="caret-spacer"></span>';
+
     rows.writeln(
-      '<tr class="test-$result">'
+      '<tr class="test-$result step-row level-$level">'
       '<td class="step-description-column">'
-      '<div class="step-description" style="padding-left:${indent}px">'
-      '$caret${escapeHtml(stepDescription(step))}</div></td>'
+      '<div class="step-description">'
+      '$caret$mark<span class="step-text">'
+      '${escapeHtml(stepDescription(step))}</span></div></td>'
       '${hasShots ? '<td class="shot-column">${_thumbs(step)}</td>' : ''}'
       '<td class="outcome-column ${result.toLowerCase()}-color">$result</td>'
       '<td class="duration-column">'
