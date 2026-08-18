@@ -14,36 +14,49 @@ library;
 
 /// The result palette, one entry per verdict the writer emits.
 ///
-/// The rgba values are the ones the reference report uses for the same
-/// verdicts (documented in `docs/sqa-reporter/00-serenity-spec.md` §6) — kept
-/// identical on purpose, because matching the colours is what makes a report
-/// readable by someone who already knows how to read the original.
+/// These are the report's own colours, not the reference's. The first cut
+/// reused the reference's values on the theory that a familiar palette reads
+/// faster; in practice that palette is a bright acid green against a pure
+/// red and an orange, which
+/// clash beside each other and — worse — fail contrast as text: the green
+/// spelling out SUCCESS on white sat near 1.9:1, well under the 4.5:1 a
+/// reader with low vision needs.
+///
+/// So: the same five meanings, in tones chosen to sit together, to hold
+/// contrast as text on white, and to be recognisably this report's rather
+/// than an imitation of the one whose layout it learned from. Skipped moves
+/// from mustard to a neutral slate, because "not run" is an absence, not a
+/// warning.
+///
+/// `solid` is the tone used where colour carries meaning at full strength (a
+/// verdict icon, a coverage bar) and is the one that must hold contrast;
+/// `fill` and `border` are the softened pair the charts paint with.
 const Map<String, ({String fill, String border, String solid})> resultColors =
     <String, ({String fill, String border, String solid})>{
       'SUCCESS': (
-        fill: 'rgba(153,204,51,0.5)',
-        border: 'rgba(153,204,51,1)',
-        solid: '#99cc33',
+        fill: 'rgba(46,158,91,0.85)',
+        border: 'rgba(46,158,91,1)',
+        solid: '#2e9e5b',
       ),
       'FAILURE': (
-        fill: 'rgba(255,22,49,0.5)',
-        border: 'rgba(255,22,49,1)',
-        solid: '#ff1631',
+        fill: 'rgba(217,45,63,0.85)',
+        border: 'rgba(217,45,63,1)',
+        solid: '#d92d3f',
       ),
       'ERROR': (
-        fill: 'rgba(255,97,8,0.5)',
-        border: 'rgba(255,97,8,1)',
-        solid: '#ff6108',
+        fill: 'rgba(224,122,31,0.85)',
+        border: 'rgba(224,122,31,1)',
+        solid: '#e07a1f',
       ),
       'SKIPPED': (
-        fill: 'rgba(238,224,152,0.75)',
-        border: 'rgba(238,224,152,1)',
-        solid: '#b8860b',
+        fill: 'rgba(148,163,184,0.85)',
+        border: 'rgba(148,163,184,1)',
+        solid: '#94a3b8',
       ),
       'UNDEFINED': (
-        fill: 'rgba(83,50,168,0.5)',
-        border: 'rgba(83,50,168,1)',
-        solid: '#5332a8',
+        fill: 'rgba(124,92,214,0.85)',
+        border: 'rgba(124,92,214,1)',
+        solid: '#7c5cd6',
       ),
     };
 
@@ -68,7 +81,7 @@ const String siteFavicon = '''
   <rect width="32" height="32" rx="7" fill="#0A1B3A"/>
   <rect x="8" y="5" width="16" height="22" rx="2.5" fill="#ffffff"/>
   <rect x="12" y="3" width="8" height="4" rx="1.5" fill="#0A1B3A"/>
-  <path d="M11.5 16.5l3 3 6-6.5" fill="none" stroke="#99cc33"
+  <path d="M11.5 16.5l3 3 6-6.5" fill="none" stroke="#2e9e5b"
         stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
   <rect x="11.5" y="22" width="9" height="1.8" rx="0.9" fill="#d7dde6"/>
 </svg>
@@ -91,7 +104,7 @@ const String wordmarkMark = '''
 <rect width="40" height="40" rx="10" fill="#0A1B3A"/>
 <rect x="9" y="7" width="22" height="27" rx="3.5" fill="#ffffff"/>
 <rect x="15" y="3.5" width="10" height="5.5" rx="2.2" fill="#0A1B3A"/>
-<path d="M14 19.6l3.9 3.9L26.4 15" fill="none" stroke="#99cc33" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M14 19.6l3.9 3.9L26.4 15" fill="none" stroke="#2e9e5b" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
 <rect x="13.5" y="27" width="13" height="2.2" rx="1.1" fill="#d7dde6"/>
 </svg>''';
 
@@ -99,27 +112,62 @@ const String wordmarkMark = '''
 const String siteCss = '''
 /* SQA Reporter — all rules authored for this generator. */
 
+/* Every colour in the report comes from here. Two families and nothing else:
+   the neutrals that build the page, and the five verdict tones (mirrored from
+   `resultColors`, which is where the meaning lives). A rule that needs a
+   colour takes a token; a rule that invents one is a bug. */
 :root {
   /* The colour titles and subtitles are set in. Links keep their own blue:
-     the two must stay distinguishable. */
-  --title: #0A1B3A;
-  --link: #428bca;
+     the two must stay distinguishable, and this blue clears 4.5:1 on white
+     where the lighter one it replaced did not. */
+  --title: #0B2545;
+  --link: #1d63c4;
   /* The navy read back at a lower weight, for the second half of the
      wordmark and anything else that must sit beside the title without
      competing with it. */
-  --title-soft: #5a6b85;
-  --pass: #99cc33;
-  --rule: #e3e7ee;
+  --title-soft: #5b6b85;
+
+  /* Neutrals: a cool page, white cards, two weights of rule, and one muted
+     ink for labels that are there to be scanned past. */
+  --page: #f4f6fa;
+  --card: #ffffff;
+  --ink: #1f2937;
+  --muted: #64748b;
+  --rule: #e4e8ef;
+  --rule-soft: #eef1f6;
+  --hover: #f7f9fc;
+
+  /* The verdicts, at full strength. */
+  --pass: #2e9e5b;
+  --fail: #d92d3f;
+  --broken: #e07a1f;
+  --skip: #94a3b8;
+  --undefined: #7c5cd6;
+
+  /* Not a verdict: the one blue the quantity charts are painted in, so a
+     bar about duration is never mistaken for a bar about outcomes. */
+  --data: #4f7fe0;
+  --data-soft: #dfe8fb;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+/* The system's own interface face, whichever system that is. A webfont would
+   be a network request the offline report cannot make, and the old stack
+   ("Helvetica Neue", Calibri) resolved to something different — and older —
+   on every one of the three platforms this report is read on. */
 body {
   font-size: 16px;
-  font-family: "Helvetica Neue", Calibri, Helvetica, Arial, sans-serif;
-  background-color: #f7f8f3;
-  color: #333;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+  background-color: var(--page);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
 }
+
+/* Every figure in the report is a count, a duration or a clock time, and all
+   three are read down a column. Proportional digits make that column ragged. */
+table, .kpi-value, .date-and-time { font-variant-numeric: tabular-nums; }
 
 a { text-decoration: none; color: var(--link); }
 a:hover { text-decoration: underline; }
@@ -194,67 +242,160 @@ a:hover { text-decoration: underline; }
 
 .middlecontent {
   margin: 0 auto;
-  padding: 0 1.5em 2em 1.5em;
+  padding: 0 2rem 3rem 2rem;
 }
 
-.breadcrumbs { color: #777; padding: 0.5em 0; display: block; }
+.breadcrumbs {
+  color: var(--muted);
+  font-size: 0.85rem;
+  padding: 0.85em 0 0 0;
+  display: block;
+}
 
-h2 { font-weight: 300; font-size: 1.75em; margin: 0.5em 0; color: var(--title); }
-h3 { font-weight: 300; font-size: 1.4em; margin: 1em 0 0.5em 0; color: var(--title); }
-h4 { font-weight: 400; font-size: 1.1em; margin: 0.75em 0 0.5em 0; color: var(--title); }
+/* Three levels and each does one job: h2 names the page, h3 names a block
+   inside it, h4 labels a panel. The labels are set as small caps rather than
+   as small headings, so a panel title never competes with the page's own. */
+h2 {
+  font-weight: 600;
+  font-size: 1.55rem;
+  letter-spacing: -0.015em;
+  margin: 0.35em 0 0.15em 0;
+  color: var(--title);
+}
+h3 {
+  font-weight: 600;
+  font-size: 1.05rem;
+  margin: 1.25em 0 0.6em 0;
+  color: var(--title);
+}
+h4 {
+  font-weight: 700;
+  font-size: 0.75rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  margin: 0 0 1em 0;
+  color: var(--muted);
+}
 
-.test-count-title { font-size: 1.1em; color: #555; margin-bottom: 0.75em; }
+.test-count-title { font-size: 0.95rem; color: var(--muted); margin-bottom: 1em; }
 
 /* Said plainly rather than in alarm colours: an older run is a fact about
    this report, not a fault in it. */
 .run-age {
   background: #fdf8e8;
   border: 1px solid #eee0b0;
-  border-radius: 4px;
+  border-radius: 8px;
   color: #7a6420;
-  font-size: 0.85em;
-  margin: 0.5em 0;
-  padding: 0.4em 0.8em;
+  font-size: 0.85rem;
+  margin: 0.75em 0;
+  padding: 0.5em 0.9em;
 }
+
+/* ── Key figures ────────────────────────────────────────────────────── */
+
+/* The four numbers someone opens the report to find, above everything that
+   explains them. Until this strip existed the pass rate had to be read off
+   the doughnut and the duration dug out of a statistics table halfway down
+   the page. */
+.kpi-row {
+  display: flex;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+  margin: 0.25rem 0 1.25rem 0;
+}
+
+.kpi {
+  flex: 1 1 0;
+  min-width: 160px;
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  padding: 0.9rem 1.1rem;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+}
+
+.kpi-label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.35rem;
+}
+
+.kpi-value {
+  display: block;
+  font-size: 1.75rem;
+  font-weight: 650;
+  line-height: 1.1;
+  color: var(--title);
+}
+
+.kpi-note { font-size: 0.8rem; color: var(--muted); }
+
+/* Colour only where the number is a verdict on the run: a pass rate is good
+   news, anything needing attention is not, and a count of scenarios is
+   neither. */
+.kpi.good .kpi-value { color: var(--pass); }
+.kpi.bad .kpi-value { color: var(--fail); }
 
 /* ── Menu and tabs ──────────────────────────────────────────────────── */
 
 .nav-tabs {
   list-style: none;
   display: flex;
-  gap: 0.25em;
-  border-bottom: 1px solid #ddd;
+  gap: 0.35em;
+  border-bottom: 1px solid var(--rule);
   margin-top: 0.5em;
 }
 
 .nav-tabs li a, .nav-tabs li span {
   display: inline-block;
-  padding: 0.5em 1em;
+  padding: 0.55em 1.1em;
   border: 1px solid transparent;
-  border-radius: 4px 4px 0 0;
+  border-radius: 8px 8px 0 0;
+  font-size: 0.95rem;
+  font-weight: 500;
   color: var(--link);
 }
 
 .nav-tabs li.active a, .nav-tabs li.active span {
-  color: #555;
-  background-color: #fff;
-  border-color: #ddd;
-  border-bottom-color: #fff;
+  color: var(--title);
+  font-weight: 600;
+  background-color: var(--card);
+  border-color: var(--rule);
+  border-bottom-color: var(--card);
   cursor: default;
 }
 
 .nav-tabs li.disabled span { color: #aaa; cursor: default; }
 
-.date-and-time { float: right; color: gray; padding: 0.5em 0; }
+.date-and-time {
+  float: right;
+  color: var(--muted);
+  font-size: 0.85rem;
+  padding: 0.75em 0;
+}
 
 /* ── Card with tab panes ────────────────────────────────────────────── */
 
+/* One surface, lifted off the page by a hairline and a shadow soft enough to
+   read as depth rather than as a drop shadow. The card under the tabs keeps
+   its square top corners, so the active tab still looks joined to it. */
 .card {
-  background: #fff;
-  border: 1px solid #ddd;
+  background: var(--card);
+  border: 1px solid var(--rule);
   border-top: none;
-  border-radius: 0 0 4px 4px;
-  padding: 1.5em;
+  border-radius: 0 0 12px 12px;
+  padding: 1.4rem 1.5rem;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04),
+              0 8px 20px rgba(16, 24, 40, 0.04);
+}
+
+.card.standalone {
+  border-top: 1px solid var(--rule);
+  border-radius: 12px;
 }
 
 .tab-pane { display: none; }
@@ -274,8 +415,8 @@ h4 { font-weight: 400; font-size: 1.1em; margin: 0.75em 0 0.5em 0; color: var(--
 .chart-block.wide { flex: 1 1 380px; min-width: 380px; }
 
 .chart-caption {
-  font-size: 0.8em;
-  color: #777;
+  font-size: 0.78rem;
+  color: var(--muted);
   text-align: center;
   margin-bottom: 0.5em;
 }
@@ -349,22 +490,23 @@ h4 { font-weight: 400; font-size: 1.1em; margin: 0.75em 0 0.5em 0; color: var(--
 
 .chart-legend {
   list-style: none;
-  font-size: 0.8em;
-  color: #555;
+  font-size: 0.88rem;
+  color: var(--ink);
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.25em 1em;
 }
 
-.chart-legend li.empty { color: #b0b0b0; }
+.chart-legend li.empty { color: #a3aec0; }
 
 .chart-legend .swatch {
   display: inline-block;
-  width: 0.9em;
-  height: 0.9em;
+  width: 0.85em;
+  height: 0.85em;
   border: 1px solid;
-  margin-right: 0.4em;
-  vertical-align: -0.1em;
+  border-radius: 4px;
+  margin-right: 0.45em;
+  vertical-align: -0.05em;
 }
 
 /* ── Bar charts with an axis ────────────────────────────────────────── */
@@ -380,8 +522,8 @@ h4 { font-weight: 400; font-size: 1.1em; margin: 0.75em 0 0.5em 0; color: var(--
   justify-content: space-between;
   align-items: flex-end;
   padding-right: 0.4em;
-  font-size: 0.75em;
-  color: #888;
+  font-size: 0.75rem;
+  color: var(--muted);
   /* Half a line up and down, so each number sits ON its gridline. */
   margin: -0.5em 0;
 }
@@ -398,7 +540,7 @@ h4 { font-weight: 400; font-size: 1.1em; margin: 0.75em 0 0.5em 0; color: var(--
   justify-content: space-between;
 }
 
-.gridlines .gridline { border-top: 1px solid #eee; }
+.gridlines .gridline { border-top: 1px solid var(--rule-soft); }
 
 .bars {
   position: absolute;
@@ -427,23 +569,26 @@ a.bar-column:hover .bar-fill { filter: brightness(0.92); }
 .chart-legend a { color: inherit; }
 .chart-legend a:hover { text-decoration: underline; }
 
+/* A bar is a solid block with a rounded head, not an outlined box: the
+   outline was carrying a second colour at every bar for no information. */
 .bar-fill {
   width: 60%;
-  min-height: 1px;
-  border: 1px solid;
+  min-height: 2px;
+  border: 0;
+  border-radius: 6px 6px 0 0;
   display: flex;
   align-items: flex-start;
   justify-content: center;
 }
 
-.bar-fill.duration-fill {
-  background: rgba(120, 165, 230, 0.55);
-  border-color: rgba(120, 165, 230, 1);
-}
+/* How long tests took is a quantity, not a verdict, so it is painted in the
+   data blue and never in a result colour. */
+.bar-fill.duration-fill { background: var(--data-soft); border-bottom: 3px solid var(--data); }
 
 .bar-value {
-  font-size: 0.75em;
-  color: #444;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--title);
   margin-top: -1.4em;
 }
 
@@ -451,8 +596,8 @@ a.bar-column:hover .bar-fill { filter: brightness(0.92); }
   position: absolute;
   top: 100%;
   padding-top: 0.35em;
-  font-size: 0.7em;
-  color: #777;
+  font-size: 0.72rem;
+  color: var(--muted);
   white-space: nowrap;
 }
 
@@ -480,21 +625,37 @@ a.bar-column:hover .bar-fill { filter: brightness(0.92); }
 
 /* ── Tables ─────────────────────────────────────────────────────────── */
 
-table.table { border-collapse: collapse; width: 100%; margin: 0.5em 0; }
+table.table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.5em 0;
+  font-size: 0.92rem;
+}
 
+/* Column names are labels, not headings: small caps in the muted ink, so the
+   eye lands on the data under them. */
 table.table th {
   text-align: left;
-  padding: 0.5em 0.75em;
-  border-bottom: 2px solid #ddd;
+  padding: 0.6em 0.75em;
+  border-bottom: 1px solid var(--rule);
+  font-size: 0.72rem;
   font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
 
 table.table td {
-  padding: 0.5em 0.75em;
-  border-bottom: 1px solid #eee;
+  padding: 0.62em 0.75em;
+  border-bottom: 1px solid var(--rule-soft);
 }
 
-table.table-striped tbody tr:nth-child(odd) { background: #f9f9f9; }
+/* No zebra striping. Fifty rows of alternating grey is a pattern the reader
+   has to see past; one hairline per row and a tint under the pointer says
+   the same thing quietly, and says where the pointer is besides. */
+table.table tbody tr:hover { background: var(--hover); }
+
+.key-statistics td:nth-child(2n) { color: var(--title); font-weight: 600; }
 
 /* ── Result markers ─────────────────────────────────────────────────── */
 
@@ -507,78 +668,90 @@ table.table-striped tbody tr:nth-child(odd) { background: #f9f9f9; }
   color: #fff;
   text-align: center;
   font-weight: bold;
-  font-size: 0.9em;
+  font-size: 0.85em;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.12);
 }
 
 /* ── The scenario table's controls ──────────────────────────────────── */
 
-.test-count { color: var(--title); font-weight: 600; }
+.test-count { color: var(--muted); font-weight: 500; }
 
 .table-controls {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 1em;
-  margin: 0.5em 0;
-  font-size: 0.85em;
-  color: #555;
+  margin: 0.5em 0 0.75em 0;
+  font-size: 0.85rem;
+  color: var(--muted);
 }
 
 .table-controls select, .table-controls input {
-  border: 1px solid #ccc;
-  border-radius: 3px;
-  padding: 0.25em 0.4em;
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 0.4em 0.6em;
   font: inherit;
+  font-size: 0.9rem;
+  color: var(--ink);
+}
+
+.table-controls select:focus, .table-controls input:focus {
+  outline: 2px solid var(--data);
+  outline-offset: 1px;
 }
 
 .table-controls input { min-width: 14em; }
 
 th.sortable { cursor: pointer; user-select: none; white-space: nowrap; }
-th.sortable::after { content: " ⇅"; color: #bbb; font-size: 0.85em; }
-th.sortable.asc::after { content: " ↑"; color: #428bca; }
-th.sortable.desc::after { content: " ↓"; color: #428bca; }
+th.sortable::after { content: " ⇅"; color: #b6c0cf; font-size: 0.85em; }
+th.sortable.asc::after { content: " ↑"; color: var(--link); }
+th.sortable.desc::after { content: " ↓"; color: var(--link); }
 
 .table-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 0.75em;
-  font-size: 0.85em;
-  color: #666;
+  margin-top: 0.9em;
+  font-size: 0.85rem;
+  color: var(--muted);
 }
 
 .pagination { display: flex; gap: 0.25em; }
 
 .pagination button {
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 3px;
-  color: #428bca;
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  color: var(--link);
   cursor: pointer;
   font: inherit;
-  min-width: 2em;
-  padding: 0.25em 0.5em;
+  font-size: 0.85rem;
+  min-width: 2.1em;
+  padding: 0.3em 0.6em;
 }
 
+.pagination button:hover:not(:disabled):not(.active) { background: var(--hover); }
+
 .pagination button.active {
-  background: #333;
-  border-color: #333;
+  background: var(--title);
+  border-color: var(--title);
   color: #fff;
   cursor: default;
 }
 
-.pagination button:disabled { color: #ccc; cursor: default; }
+.pagination button:disabled { color: #c3cbd8; cursor: default; }
 
-.empty-note { color: #777; font-size: 0.9em; }
+.empty-note { color: var(--muted); font-size: 0.9rem; }
 
 .active-filter {
-  background: #eef3f8;
-  border: 1px solid #cfe0ee;
-  border-radius: 4px;
-  color: #38617f;
-  font-size: 0.85em;
+  background: #eef3fb;
+  border: 1px solid #d3e0f2;
+  border-radius: 8px;
+  color: #2c5480;
+  font-size: 0.85rem;
   margin: 0.5em 0;
-  padding: 0.4em 0.8em;
+  padding: 0.45em 0.85em;
 }
 
 .clear-filter {
@@ -598,21 +771,23 @@ th.sortable.desc::after { content: " ↓"; color: #428bca; }
 
 .tag-cloud { display: flex; flex-wrap: wrap; gap: 0.4em; margin-top: 0.5em; }
 
+/* Tags are neutral by design: a tag is a label someone put on a test, not a
+   verdict about it, so it borrows none of the verdict colours. */
 .tag-badge.cloud {
-  background: #eef6e3;
-  border-color: #cfe3b4;
-  color: #4a6b28;
-  font-size: 0.8em;
-  padding: 0.25em 0.7em;
+  background: #eef2f8;
+  border-color: #dbe3ef;
+  color: #33507a;
+  font-size: 0.8rem;
+  padding: 0.28em 0.75em;
 }
 
 .tag-count {
-  background: #fff;
-  border-radius: 8px;
-  color: #6b8f42;
+  background: var(--card);
+  border-radius: 999px;
+  color: var(--muted);
   font-size: 0.9em;
   margin-left: 0.5em;
-  padding: 0 0.4em;
+  padding: 0 0.45em;
 }
 
 /* A table wider than the window scrolls here, not on <body>: the banner,
@@ -620,8 +795,8 @@ th.sortable.desc::after { content: " ↓"; color: #428bca; }
 .table-scroll { overflow-x: auto; }
 .table-scroll > table { min-width: 44em; }
 
-.version { color: gray; font-size: 0.85em; }
-.footer { margin: 1em auto; padding: 0 1.5em; }
+.version { color: var(--muted); font-size: 0.85rem; }
+.footer { margin: 1.5em auto; padding: 0 2rem; }
 
 /* ── Narrow screens ─────────────────────────────────────────────────── */
 
@@ -663,8 +838,8 @@ th.sortable.desc::after { content: " ↓"; color: #428bca; }
 @media (max-width: 600px) {
   body { font-size: 15px; }
 
-  .middlecontent, .topbanner, .footer { padding-left: 0.75em; }
-  .middlecontent, .topbanner, .footer { padding-right: 0.75em; }
+  .middlecontent, .topbanner, .footer { padding-left: 1rem; }
+  .middlecontent, .topbanner, .footer { padding-right: 1rem; }
 
   .card { padding: 1em 0.75em; }
 
@@ -691,8 +866,6 @@ th.sortable.desc::after { content: " ↓"; color: #428bca; }
 
 /* ── Test detail page ───────────────────────────────────────────────── */
 
-.card.standalone { border-top: 1px solid #ddd; border-radius: 4px; }
-
 .titlebar { margin: 1em 0 0.5em 0; }
 
 .story-header-row {
@@ -702,45 +875,62 @@ th.sortable.desc::after { content: " ↓"; color: #428bca; }
   gap: 1em;
 }
 
-.story-header-title { font-weight: 300; color: var(--title); margin: 0; }
+.story-header-title {
+  font-weight: 600;
+  font-size: 1.25rem;
+  letter-spacing: -0.01em;
+  color: var(--title);
+  margin: 0;
+}
 
 .tags { text-align: right; }
 
 .tag-badge {
   display: inline-block;
-  background: #eef3f8;
-  border: 1px solid #cfe0ee;
-  border-radius: 10px;
-  color: #38617f;
-  font-size: 0.75em;
-  padding: 0.15em 0.7em;
+  background: #eef2f8;
+  border: 1px solid #dbe3ef;
+  border-radius: 999px;
+  color: #33507a;
+  font-size: 0.75rem;
+  padding: 0.25em 0.75em;
   margin: 0.15em 0;
 }
 
+/* The verdict is said three ways at once — the icon, the word, and the tint
+   this bar carries — because colour alone is not something every reader
+   gets. The tint is the verdict at a tenth of its strength: enough to say
+   "this one passed" from across the room, light enough to read text on. */
 .test-title-bar {
-  background: #fff;
-  border: 1px solid #ddd;
-  border-left-width: 5px;
-  border-radius: 4px;
-  padding: 0.75em 1em;
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-left-width: 4px;
+  border-radius: 0 12px 12px 0;
+  padding: 0.85em 1.1em;
   margin-top: 0.5em;
 }
 
-.test-case-title { font-size: 1.3em; margin-left: 0.4em; }
+.test-case-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--title);
+  margin-left: 0.4em;
+}
 
-.success-color { color: #99cc33; }
-.failure-color { color: #ff1631; }
-.error-color { color: #ff6108; }
-.skipped-color { color: #b8860b; }
-.undefined-color { color: #5332a8; }
+/* The verdict spelled out. These are the `solid` tones, which is what makes
+   the word readable: the colours they replaced sat under 2:1 on white. */
+.success-color { color: var(--pass); }
+.failure-color { color: var(--fail); }
+.error-color { color: var(--broken); }
+.skipped-color { color: #6b7a8d; }
+.undefined-color { color: var(--undefined); }
 
-.test-SUCCESS { border-left-color: #99cc33; }
-.test-FAILURE { border-left-color: #ff1631; }
-.test-ERROR { border-left-color: #ff6108; }
-.test-SKIPPED { border-left-color: #b8860b; }
-.test-UNDEFINED { border-left-color: #5332a8; }
+.test-title-bar.test-SUCCESS { border-left-color: var(--pass); background: #eef8f2; }
+.test-title-bar.test-FAILURE { border-left-color: var(--fail); background: #fdeff1; }
+.test-title-bar.test-ERROR { border-left-color: var(--broken); background: #fdf5eb; }
+.test-title-bar.test-SKIPPED { border-left-color: var(--skip); background: #f2f5f8; }
+.test-title-bar.test-UNDEFINED { border-left-color: var(--undefined); background: #f4f1fc; }
 
-.test-description { color: #777; font-style: italic; margin-top: 0.4em; }
+.test-description { color: var(--muted); font-style: italic; margin-top: 0.4em; }
 
 /* ── Step table ─────────────────────────────────────────────────────── */
 
@@ -754,15 +944,18 @@ table.step-table {
 
 table.step-table th {
   text-align: left;
-  padding: 0.5em 0.75em;
-  border-bottom: 2px solid #ddd;
-  color: var(--title);
+  padding: 0.55em 0.75em;
+  border-bottom: 1px solid var(--rule);
+  font-size: 0.72rem;
   font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
 
 table.step-table td {
-  padding: 0.35em 0.75em;
-  border-bottom: 1px solid #f0f0f0;
+  padding: 0.4em 0.75em;
+  border-bottom: 1px solid var(--rule-soft);
   vertical-align: middle;
 }
 
@@ -770,19 +963,23 @@ table.step-table td {
    rule is the hierarchy made visible: it runs the height of everything that
    belongs to the step above it. */
 .step-section > td { padding: 0 0 0 1.6em; }
-.step-section > td > table { border-left: 2px solid #e8eef4; }
+.step-section > td > table { border-left: 2px solid var(--rule); }
 
 table.step-table.nested { margin: 0; }
-table.step-table.nested td { border-bottom: 1px solid #f2f2f2; }
+table.step-table.nested td { border-bottom: 1px solid var(--rule-soft); }
 
-.step-table tr.test-FAILURE > td, .step-table tr.test-ERROR > td {
-  background: #fff6f3;
-}
+.step-table tr.test-FAILURE > td { background: #fdeff1; }
+.step-table tr.test-ERROR > td { background: #fdf5eb; }
 
 .step-description-column { width: auto; }
 .shot-column { width: 150px; }
-.outcome-column { width: 130px; font-size: 0.85em; }
-.duration-column { width: 100px; color: #666; font-size: 0.9em; }
+.outcome-column {
+  width: 130px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.duration-column { width: 100px; color: var(--muted); font-size: 0.85rem; }
 
 .step-description {
   line-height: 1.5;
@@ -793,10 +990,10 @@ table.step-table.nested td { border-bottom: 1px solid #f2f2f2; }
 
 /* Depth reads as weight: a business step is plain, what happens inside it is
    lighter and italic, the way the reference distinguishes them. */
-.step-row.level-0 .step-text { color: #333; }
-.step-row.level-1 .step-text { color: #444; font-style: italic; }
+.step-row.level-0 .step-text { color: var(--ink); }
+.step-row.level-1 .step-text { color: #46536b; font-style: italic; }
 .step-row.level-2 .step-text,
-.step-row.level-3 .step-text { color: #666; font-style: italic; }
+.step-row.level-3 .step-text { color: var(--muted); font-style: italic; }
 
 .step-icon {
   width: 1.05em;
@@ -811,17 +1008,17 @@ table.step-table.nested td { border-bottom: 1px solid #f2f2f2; }
 .step-tools { display: flex; gap: 0.5em; margin-bottom: 0.5em; }
 
 .step-tools button {
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 3px;
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
   color: var(--link);
   cursor: pointer;
   font: inherit;
-  font-size: 0.8em;
-  padding: 0.25em 0.7em;
+  font-size: 0.8rem;
+  padding: 0.3em 0.8em;
 }
 
-.step-tools button:hover { background: #f0f6fb; }
+.step-tools button:hover { background: var(--hover); }
 
 .caret {
   background: none;
@@ -841,23 +1038,23 @@ table.step-table.nested td { border-bottom: 1px solid #f2f2f2; }
 .step-row.level-0 > td:first-child { font-weight: 500; }
 
 .screenshot {
-  border: 1px solid #ddd;
-  border-radius: 2px;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
   object-fit: cover;
-  background: #fff;
+  background: var(--card);
 }
 
 .evidence, .stacktrace { margin-top: 0.5em; }
 .evidence summary, .stacktrace summary {
-  color: #428bca;
+  color: var(--link);
   cursor: pointer;
-  font-size: 0.85em;
+  font-size: 0.85rem;
 }
 
 .evidence pre, .stacktrace pre, .error-message pre {
-  background: #f7f7f5;
-  border: 1px solid #eee;
-  border-radius: 3px;
+  background: var(--page);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
   padding: 0.75em;
   margin-top: 0.4em;
   overflow-x: auto;
@@ -878,28 +1075,28 @@ table.step-table.nested td { border-bottom: 1px solid #f2f2f2; }
 /* ── Screenshots gallery ────────────────────────────────────────────── */
 
 .screenshot-failure {
-  background: #fff;
-  border: 1px solid #ddd;
-  border-left-width: 5px;
-  border-radius: 4px;
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-left-width: 4px;
+  border-radius: 0 12px 12px 0;
   margin: 0.75em 0;
   padding: 0.75em 1em;
 }
 
 .screenshot-failure pre {
-  font-size: 0.85em;
+  font-size: 0.85rem;
   white-space: pre-wrap;
-  color: #555;
+  color: var(--ink);
 }
 
 .gallery-link { margin-bottom: 0.75em; font-size: 0.9em; }
 
-/* ── Requirements ───────────────────────────────────────────────────── */
+/* ── Features ───────────────────────────────────────────────────────── */
 
 .requirements-table .requirement-name-column { width: 45%; }
 .requirements-table .requirement-type {
-  color: #888;
-  font-size: 0.8em;
+  color: var(--muted);
+  font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -911,9 +1108,9 @@ table.step-table.nested td { border-bottom: 1px solid #f2f2f2; }
 
 .progress {
   display: flex;
-  height: 14px;
-  background: #ececec;
-  border-radius: 7px;
+  height: 9px;
+  background: var(--rule-soft);
+  border-radius: 999px;
   overflow: hidden;
 }
 
@@ -922,12 +1119,12 @@ table.step-table.nested td { border-bottom: 1px solid #f2f2f2; }
 .feature-coverage { margin-bottom: 1em; }
 
 .requirement-narrative {
-  color: #666;
+  color: var(--muted);
   font-style: italic;
   margin-bottom: 0.75em;
 }
 
-.scenario-narrative { color: #888; font-size: 0.85em; }
+.scenario-narrative { color: var(--muted); font-size: 0.85rem; }
 
 .carousel { max-width: 800px; margin: 0 auto; }
 
@@ -936,9 +1133,9 @@ table.step-table.nested td { border-bottom: 1px solid #f2f2f2; }
   align-items: center;
   justify-content: center;
   min-height: 320px;
-  background: #fbfbfa;
-  border: 1px solid #eee;
-  border-radius: 4px;
+  background: var(--page);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
 }
 
 .slide { text-align: center; padding: 1em; width: 100%; }
@@ -947,14 +1144,15 @@ table.step-table.nested td { border-bottom: 1px solid #f2f2f2; }
 .slide img {
   max-width: 100%;
   max-height: 60vh;
-  border: 1px solid #ddd;
-  background: #fff;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--card);
 }
 
 .slide figcaption {
   margin-top: 0.75em;
-  color: #555;
-  font-size: 0.9em;
+  color: var(--muted);
+  font-size: 0.9rem;
 }
 
 .carousel-controls {
@@ -966,10 +1164,10 @@ table.step-table.nested td { border-bottom: 1px solid #f2f2f2; }
 }
 
 .carousel-prev, .carousel-next {
-  background: #fff;
-  border: 1px solid #ddd;
+  background: var(--card);
+  border: 1px solid var(--rule);
   border-radius: 50%;
-  color: #428bca;
+  color: var(--link);
   cursor: pointer;
   font-size: 1.4em;
   line-height: 1;
@@ -977,20 +1175,20 @@ table.step-table.nested td { border-bottom: 1px solid #f2f2f2; }
   height: 2em;
 }
 
-.carousel-prev:hover, .carousel-next:hover { background: #f0f6fb; }
+.carousel-prev:hover, .carousel-next:hover { background: var(--hover); }
 .carousel-prev:disabled, .carousel-next:disabled {
-  color: #ccc;
+  color: #c3cbd8;
   cursor: default;
-  background: #fff;
+  background: var(--card);
 }
 
 .bullets { display: flex; flex-wrap: wrap; gap: 0.35em; }
 
 .bullet {
-  background: lightgrey;
+  background: #dde3ec;
   border: none;
   border-radius: 50%;
-  color: #000;
+  color: var(--ink);
   cursor: pointer;
   font-size: 0.75em;
   width: 20px;
@@ -1000,7 +1198,7 @@ table.step-table.nested td { border-bottom: 1px solid #f2f2f2; }
   text-align: center;
 }
 
-.bullet.active { background: #428bca; color: #fff; }
+.bullet.active { background: var(--link); color: #fff; }
 ''';
 
 /// The site's only script: the dashboard's tab switch and the detail page's

@@ -101,11 +101,7 @@ String dashboardHtml(
     ..write(menuBar(generatedAt, homeActive: true, offset: offset))
     ..write(_runAgeNote(rows, generatedAt, offset))
     ..writeln('<h2>Test Results: All Tests</h2>')
-    ..writeln(
-      '<div class="test-count-title">'
-      '<span class="test-count">$total test${total == 1 ? '' : 's'}</span>'
-      '</div>',
-    )
+    ..write(_keyFigures(rows, counts, total))
     ..write(_tabBar())
     ..writeln('<div class="card">')
     ..write(_summaryPane(rows, counts, total, run, offset))
@@ -157,6 +153,52 @@ String _humanGap(Duration gap) {
     return '${gap.inHours} hour${gap.inHours == 1 ? '' : 's'}';
   }
   return '${gap.inDays} day${gap.inDays == 1 ? '' : 's'}';
+}
+
+/// The four figures the report is opened for, above everything that explains
+/// them: how many scenarios ran, what share passed, how many need somebody,
+/// and how long the whole thing took.
+///
+/// Every one of these could be found before — in the doughnut, in the legend,
+/// in a statistics table halfway down the page — which is exactly the
+/// argument for putting them here: a reader who only wants the verdict should
+/// not have to read a chart to get it.
+String _keyFigures(List<_Row> rows, Map<String, int> counts, int total) {
+  final int passed = counts['SUCCESS'] ?? 0;
+  final int skipped = counts['SKIPPED'] ?? 0;
+  // Failed and broken are one number here on purpose: both mean a person has
+  // to look at something, and which of the two it was is a question for the
+  // table, not for the top of the page.
+  final int attention = (counts['FAILURE'] ?? 0) + (counts['ERROR'] ?? 0);
+  final List<int> durations = rows.map((_Row row) => row.durationMs).toList()
+    ..sort();
+  final int wallClock = rows.isEmpty
+      ? 0
+      : rows
+                .map((_Row row) => row.stopMs)
+                .reduce((int a, int b) => a > b ? a : b) -
+            rows
+                .map((_Row row) => row.startMs)
+                .reduce((int a, int b) => a < b ? a : b);
+
+  String tile(
+    String label,
+    String value,
+    String note, {
+    String modifier = '',
+  }) =>
+      '<div class="kpi$modifier">'
+      '<span class="kpi-label">${escapeHtml(label)}</span>'
+      '<span class="kpi-value">${escapeHtml(value)}</span>'
+      '<span class="kpi-note">${escapeHtml(note)}</span>'
+      '</div>';
+
+  return '<div class="kpi-row">'
+      '${tile('Scenarios', '$total', skipped == 0 ? 'all of them run' : '$skipped skipped')}'
+      '${tile('Pass rate', total == 0 ? '—' : '${(passed * 100 / total).round()}%', '$passed of $total passing', modifier: total > 0 && attention == 0 ? ' good' : '')}'
+      '${tile('Needs attention', '$attention', attention == 1 ? '1 failed or broken' : 'failed or broken', modifier: attention > 0 ? ' bad' : '')}'
+      '${tile('Duration', rows.isEmpty ? '—' : compoundDuration(wallClock), durations.isEmpty ? 'nothing ran' : 'slowest ${compoundDuration(durations.last)}')}'
+      '</div>\n';
 }
 
 String _tabBar() => '''
@@ -293,7 +335,7 @@ String _keyStatistics(
   }
 
   return '''
-<h3>Key Statistics</h3>
+<h4>Key Statistics</h4>
 <table class="table table-striped key-statistics">
 <tbody>
 $body</tbody>

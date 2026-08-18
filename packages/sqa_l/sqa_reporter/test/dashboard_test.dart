@@ -93,9 +93,55 @@ void main() {
     });
   });
 
+  group('the key figures', () {
+    test('open the page with the four numbers it is read for', () {
+      expect(html, contains('<div class="kpi-row">'));
+      expect(html, contains('<span class="kpi-label">Scenarios</span>'));
+      expect(html, contains('<span class="kpi-value">2</span>'));
+      expect(html, contains('<span class="kpi-label">Pass rate</span>'));
+      expect(html, contains('<span class="kpi-value">50%</span>'));
+      expect(html, contains('1 of 2 passing'));
+    });
+
+    test('what needs a person is counted, and coloured, on its own', () {
+      // One test in the fixture is broken, which is a thing somebody has to
+      // look at — so the tile is marked, and the pass rate is not called
+      // good news.
+      expect(html, contains('<div class="kpi bad">'));
+      expect(html, contains('1 failed or broken'));
+      expect(
+        html,
+        isNot(contains('<div class="kpi good">')),
+        reason: 'a run with something broken is not a clean run',
+      );
+    });
+
+    test('a run with nothing to look at is called good', () {
+      final String clean = dashboardHtml(
+        ParsedRun(
+          cases: <RunCase>[
+            RunCase(
+              suite: 'login_test',
+              name: 'logs in',
+              status: RunStatus.passed,
+              start: 0,
+              stop: 1000,
+              thread: 'worker-0',
+            ),
+          ],
+        ),
+        platform: 'web',
+        generatedAt: DateTime.utc(2026, 8, 18, 10, 5),
+      );
+      expect(clean, contains('<div class="kpi good">'));
+      expect(clean, contains('<span class="kpi-value">100%</span>'));
+      expect(clean, contains('all of them run'));
+      expect(clean, isNot(contains('<div class="kpi bad">')));
+    });
+  });
+
   group('the summary', () {
     test('counts the run: two tests, half of them passing', () {
-      expect(html, contains('2 tests'));
       expect(html, contains('class="donut-label"'));
       expect(html, contains('>50%</a>'));
     });
@@ -345,9 +391,9 @@ void main() {
       final String css = File(
         '${out.path}/results/sqa-reporter.css',
       ).readAsStringSync();
-      expect(css, contains('--title: #0A1B3A'));
+      expect(css, contains('--title: #0B2545'));
       expect(css, contains('color: var(--title)'));
-      expect(css, contains('--link: #428bca'));
+      expect(css, contains('--link: #1d63c4'));
     });
 
     test('nothing is pinned to a minimum width, and wide tables scroll', () {
