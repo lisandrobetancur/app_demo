@@ -1,0 +1,24 @@
+name: sqa_reporter
+description: "Turns a Patrol run into SQA Reporter results: a run model that owes nothing to any output format, and a serialiser that writes Serenity-schema JSON from it. Pure Dart; carries nothing app-specific."
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.11.5
+
+resolution: workspace
+
+# Deliberately tiny, and deliberately free of Flutter, the kit, Patrol and the
+# app: this package reads a documented marker stream from files and writes
+# files. The pubspec is what turns that rule into something the resolver
+# enforces — an import from any of them does not compile.
+dependencies:
+  # sha256 for Serenity's report file names: sha256(completeName).json.
+  crypto: 3.0.7
+
+dev_dependencies:
+  lint: 0.1.0
+  # 1.31.0 exactly: the workspace resolves as one, and flutter_test in this
+  # SDK pins test_api 0.7.11 — 1.31.1+ wants 0.7.13 and the whole workspace
+  # stops resolving.
+  test: 1.31.0

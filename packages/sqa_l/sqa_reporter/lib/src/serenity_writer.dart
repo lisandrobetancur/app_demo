@@ -1,0 +1,374 @@
+/// The Serenity-schema serialiser: the model in, one JSON file per test out.
+///
+/// The schema it writes is the one documented in
+/// `docs/sqa-reporter/00-serenity-spec.md`, derived from Serenity's own
+/// source (serenity-core @ 5ad4ad7): the JSON is Gson field reflection over
+/// `TestOutcome`, so the field list *is* the schema, plus the adapter rules —
+/// nulls omitted, empty collections omitted, dates as ISO strings, enums by
+/// name, `File` values as bare names. [prune] is those adapters in one place.
+///
+/// Nothing here knows where the model came from. A second output format is a
+/// second file like this one.
+library;
+
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:crypto/crypto.dart';
+
+import 'markers.dart';
+import 'model.dart';
+
+/// Our vocabulary → Serenity's `TestResult` enum names.
+///
+/// The two models agree on the semantics: Serenity's FAILURE is a real
+/// assertion unmet and ERROR is a test that could not do its job — exactly
+/// the failed/broken distinction the suite already computes.
+const Map<RunStatus, String> serenityResult = <RunStatus, String>{
+  RunStatus.passed: 'SUCCESS',
+  RunStatus.failed: 'FAILURE',
+  RunStatus.broken: 'ERROR',
+  RunStatus.skipped: 'SKIPPED',
+  RunStatus.unknown: 'UNDEFINED',
+};
+
+/// Writes one Serenity-schema JSON per case, screenshots beside them, into
+/// [outputDir]. Returns how many result files were written.
+int writeSerenityResults(
+  ParsedRun run,
+  Directory outputDir, {
+  required String platform,
+}) {
+  if (outputDir.existsSync()) {
+    outputDir.deleteSync(recursive: true);
+  }
+  outputDir.createSync(recursive: true);
+
+  int written = 0;
+  for (final RunCase testCase in run.cases) {
+    final Map<String, Object?> outcome = _outcomeFor(
+      testCase,
+      run,
+      platform: platform,
+      outputDir: outputDir,
+    );
+    final String fileName = reportFileName(testCase);
+    File(
+      '${outputDir.path}${Platform.pathSeparator}$fileName',
+    ).writeAsStringSync(const JsonEncoder.withIndent('  ').convert(outcome));
+    written += 1;
+  }
+  return written;
+}
+
+/// `sha256(completeName) + ".json"`, exactly as `ReportNamer` does with
+/// filename compression on (its default): the JSON and its future HTML page
+/// pair by digest.
+String reportFileName(RunCase testCase) =>
+    '${sha256.convert(utf8.encode(completeNameOf(testCase))).toString()}.json';
+
+/// `storyTitle + ":" + name` (`TestOutcome.getCompleteName`). Our story title
+/// is the feature the scenario declared, or the suite file when it declared
+/// none.
+String completeNameOf(RunCase testCase) =>
+    '${testCase.meta?.feature ?? testCase.suite}:${testCase.name}';
+
+Map<String, Object?> _outcomeFor(
+  RunCase testCase,
+  ParsedRun run, {
+  required String platform,
+  required Directory outputDir,
+}) {
+  final ScenarioMeta? meta = testCase.meta;
+  final String storyTitle = meta?.feature ?? testCase.suite;
+
+  // Two clocks measure the same test — the transport from outside, the
+  // markers from inside — and they disagree by a few milliseconds. Widen the
+  // test to hold its own steps rather than report a child outliving its
+  // parent. Same rule, same reason as the original converter.
+  final ({int start, int stop}) bounds = _bounds(testCase.steps);
+  final int start = bounds.start < testCase.start
+      ? bounds.start
+      : testCase.start;
+  final int stop = bounds.stop > testCase.stop ? bounds.stop : testCase.stop;
+  final int duration = stop - start;
+
+  final RunStatus result = promoteStatus(testCase.status, testCase.steps);
+
+  final List<StepNode> steps = List<StepNode>.of(testCase.steps);
+  // Serenity has no test-level screenshot slot — captures live on steps, and
+  // `TestOutcome.getScreenshots()` only walks the tree. A shot with no step
+  // to own it gets a synthetic holder rather than being dropped.
+  if (testCase.orphanShots.isNotEmpty) {
+    steps.add(
+      StepNode(
+        name: 'Screenshots',
+        kind: StepKind.business,
+        start: stop,
+        stop: stop,
+        shots: testCase.orphanShots,
+      ),
+    );
+  }
+
+  final _StepWriter stepWriter = _StepWriter(outputDir, testCase);
+  final List<Map<String, Object?>> testSteps = <Map<String, Object?>>[
+    for (final StepNode step in steps) stepWriter.write(step, level: 0),
+  ];
+  // The run log reads top to bottom when something already went wrong; it is
+  // evidence on the tree's last top-level step, Serenity's slot for "a blob a
+  // step wants to show you" (`ReportData`, rendered as an accordion).
+  if (testCase.logLines.isNotEmpty && testSteps.isNotEmpty) {
+    testSteps.last['reportData'] = <Map<String, Object?>>[
+      <String, Object?>{
+        'id': 'run-log',
+        'title': 'Run log',
+        'contents': '${testCase.logLines.join('\n')}\n',
+        'isEvidence': true,
+      },
+    ];
+  }
+
+  final Map<String, Object?> featureTag = _featureTag(meta, storyTitle);
+
+  return prune(<String, Object?>{
+        'id': '${testCase.suite}#${testCase.name}',
+        'name': testCase.name,
+        'title': testCase.name,
+        'methodName': testCase.name,
+        'testCaseName': testCase.suite,
+        'description': meta?.description,
+        'testSteps': testSteps,
+        'userStory': _userStory(meta, testCase.suite),
+        'featureTag': featureTag,
+        'tags': _tags(testCase, featureTag, platform),
+        'result': serenityResult[result],
+        'startTime': isoUtc(start),
+        'duration': duration,
+        'durationInSeconds': duration / 1000,
+        'testRunTimestamp': run.startedAt ?? isoUtc(start),
+        'context': platform,
+        'manual': false,
+        'isManualTestingUpToDate': false,
+        'testData': testCase.params.isEmpty
+            ? null
+            : testCase.params
+                  .map((RunParam p) => '${p.name}=${p.value}')
+                  .join(', '),
+        if (testCase.failureMessage != null) ...<String, Object?>{
+          'testFailureCause': <String, Object?>{
+            // G1 in the spec: the stream carries no exception class. The first
+            // line's leading identifier is the closest honest value when it looks
+            // like a type name; otherwise the generic verdict.
+            'errorType': _errorTypeFrom(testCase.failureMessage!),
+            'message': testCase.failureTrace ?? testCase.failureMessage,
+          },
+          'testFailureClassname': _errorTypeFrom(testCase.failureMessage!),
+          'testFailureMessage': testCase.failureMessage,
+        },
+      })!
+      as Map<String, Object?>;
+}
+
+Map<String, Object?> _userStory(ScenarioMeta? meta, String suite) {
+  final String? epic = meta?.epic;
+  final String feature = meta?.feature ?? suite;
+  final String featureSlug = slugOf(feature);
+  final String path = epic == null
+      ? featureSlug
+      : '${slugOf(epic)}/$featureSlug';
+  return <String, Object?>{
+    'id': path,
+    'storyName': feature,
+    'displayName': feature,
+    'path': path,
+    'pathElements': <Map<String, Object?>>[
+      if (epic != null)
+        <String, Object?>{'name': slugOf(epic), 'description': epic},
+      <String, Object?>{'name': featureSlug, 'description': feature},
+    ],
+    'type': 'feature',
+  };
+}
+
+Map<String, Object?> _featureTag(ScenarioMeta? meta, String storyTitle) {
+  final String? epic = meta?.epic;
+  final String feature = meta?.feature ?? storyTitle;
+  return <String, Object?>{
+    // Serenity's nested requirement tags are parent/child by name, which is
+    // what lets a two-level tree roll coverage up a branch.
+    'name': epic == null ? feature : '$epic/$feature',
+    'type': 'feature',
+    'displayName': feature,
+  };
+}
+
+List<Map<String, Object?>> _tags(
+  RunCase testCase,
+  Map<String, Object?> featureTag,
+  String platform,
+) {
+  final ScenarioMeta? meta = testCase.meta;
+  return <Map<String, Object?>>[
+    if (meta?.epic != null)
+      <String, Object?>{
+        'name': meta!.epic,
+        'type': 'epic',
+        'displayName': meta.epic,
+      },
+    featureTag,
+    if (meta?.severity != null)
+      <String, Object?>{
+        'name': meta!.severity,
+        'type': 'severity',
+        'displayName': meta.severity,
+      },
+    <String, Object?>{
+      'name': platform,
+      'type': 'context',
+      'displayName': platform,
+    },
+    for (final String tag in testCase.tags)
+      <String, Object?>{'name': tag, 'type': 'tag', 'displayName': tag},
+  ];
+}
+
+/// Writes the step tree, numbering nodes with one global counter across the
+/// whole test — `TestStep.number` is a sequence, not a per-level index — and
+/// writing each screenshot's bytes beside the JSON, referenced by bare name
+/// the way Serenity's `File` serialiser does.
+class _StepWriter {
+  _StepWriter(this.outputDir, this.testCase);
+
+  final Directory outputDir;
+  final RunCase testCase;
+  int _number = 0;
+  int _shotIndex = 0;
+
+  Map<String, Object?> write(StepNode step, {required int level}) {
+    _number += 1;
+    final int number = _number;
+    return prune(<String, Object?>{
+          'number': number,
+          'description': _describe(step),
+          'startTime': isoUtc(step.start),
+          'duration': step.stop - step.start,
+          'result': serenityResult[step.status],
+          'level': level,
+          'precondition': false,
+          'children': <Map<String, Object?>>[
+            for (final StepNode child in step.children)
+              write(child, level: level + 1),
+          ],
+          'screenshots': <Map<String, Object?>>[
+            for (final CapturedShot shot in step.shots)
+              <String, Object?>{
+                'screenshot': _writeShot(shot),
+                'timeStamp': step.stop,
+              },
+          ],
+        })!
+        as Map<String, Object?>;
+  }
+
+  /// An assertion leaf folds expected/actual into its description — G2 in the
+  /// spec: Serenity has no structured slot for them, only the sentence.
+  String _describe(StepNode step) {
+    if (step.kind != StepKind.assertion) {
+      return step.name;
+    }
+    final String expected = _param(step, 'expected');
+    final String actual = _param(step, 'actual');
+    return step.status == RunStatus.passed
+        ? '${step.name} — verified: $expected'
+        : '${step.name} — expected: $expected, actual: $actual';
+  }
+
+  String _param(StepNode step, String name) => step.params
+      .firstWhere(
+        (RunParam p) => p.name == name,
+        orElse: () => RunParam(name, ''),
+      )
+      .value;
+
+  String _writeShot(CapturedShot shot) {
+    _shotIndex += 1;
+    final String digest = sha256
+        .convert(utf8.encode(completeNameOf(testCase)))
+        .toString()
+        .substring(0, 12);
+    final String name =
+        '$digest-${_shotIndex.toString().padLeft(2, '0')}-'
+        '${slugOf(shot.name)}.png';
+    File(
+      '${outputDir.path}${Platform.pathSeparator}$name',
+    ).writeAsBytesSync(shot.bytes);
+    return name;
+  }
+}
+
+/// Epoch ms → the ISO-8601 UTC instant Serenity's `ZonedDateTimeAdapter`
+/// accepts (`ZonedDateTime.parse` takes the plain offset form).
+String isoUtc(int epochMs) =>
+    DateTime.fromMillisecondsSinceEpoch(epochMs, isUtc: true).toIso8601String();
+
+/// Filesystem- and path-safe lowercase name. Our own convention for story
+/// paths and screenshot files, applied consistently so the requirements tree
+/// and the file names agree.
+String slugOf(String text) => text
+    .toLowerCase()
+    .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+    .replaceAll(RegExp(r'^_+|_+$'), '');
+
+/// The Gson adapter rules, applied recursively: null values and empty
+/// collections disappear (`CollectionAdapter` returns null for them, and Gson
+/// omits nulls). Returns null when the pruned value itself becomes empty, so
+/// containers collapse the same way all the way up.
+Object? prune(Object? value) {
+  if (value is Map<String, Object?>) {
+    final Map<String, Object?> out = <String, Object?>{};
+    for (final MapEntry<String, Object?> entry in value.entries) {
+      final Object? pruned = prune(entry.value);
+      if (pruned != null) {
+        out[entry.key] = pruned;
+      }
+    }
+    return out.isEmpty ? null : out;
+  }
+  if (value is List<Object?>) {
+    final List<Object?> out = <Object?>[
+      for (final Object? item in value)
+        if (prune(item) case final Object kept) kept,
+    ];
+    return out.isEmpty ? null : out;
+  }
+  return value;
+}
+
+({int start, int stop}) _bounds(List<StepNode> steps) {
+  int start = 1 << 62;
+  int stop = -1 << 62;
+  void visit(List<StepNode> list) {
+    for (final StepNode step in list) {
+      if (step.start < start) {
+        start = step.start;
+      }
+      if (step.stop > stop) {
+        stop = step.stop;
+      }
+      visit(step.children);
+    }
+  }
+
+  visit(steps);
+  return (start: start, stop: stop);
+}
+
+/// G1's heuristic: a leading `SomeTypeName:` on the first line reads as the
+/// exception class; anything else is reported as a failed assertion.
+String _errorTypeFrom(String message) {
+  final RegExpMatch? match = RegExp(
+    r'^([A-Z][A-Za-z0-9_]*(?:Error|Exception|Failure))\b',
+  ).firstMatch(message.trimLeft());
+  return match?.group(1) ?? 'AssertionError';
+}

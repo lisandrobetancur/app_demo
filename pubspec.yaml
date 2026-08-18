@@ -9,6 +9,7 @@ workspace:
   - packages/apps/market_app
   - packages/development/lint
   - packages/sqa_l/patrol_kit
+  - packages/sqa_l/sqa_reporter
   - packages/features/core/cart/constants
   - packages/features/core/cart/module
   - packages/features/core/cart/typing
