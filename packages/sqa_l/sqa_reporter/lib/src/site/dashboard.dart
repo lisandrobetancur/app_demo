@@ -12,8 +12,10 @@ import 'dart:io';
 
 import '../markers.dart';
 import '../model.dart';
+import '../requirements.dart';
 import '../serenity_writer.dart';
 import 'page_chrome.dart';
+import 'requirements_page.dart' show coverageOverview;
 import 'site_assets.dart';
 
 /// What the report calls the project, by platform. This replaces the
@@ -124,6 +126,7 @@ String _summaryPane(
     ..write(_keyStatistics(rows, run))
     ..writeln('</div>')
     ..writeln('</div>')
+    ..write(coverageOverview(requirementsOf(run)))
     ..writeln('</div>');
   return pane.toString();
 }

@@ -31,19 +31,25 @@ String banner(String platform) =>
 ''';
 
 /// The main menu with the generation stamp. [homeActive] is true on the
-/// dashboard itself; a detail page renders Home as the way back instead.
-String menuBar(DateTime generatedAt, {required bool homeActive}) {
+/// dashboard itself and [requirementsActive] on the requirements pages; a
+/// page that is neither renders both as links back.
+String menuBar(
+  DateTime generatedAt, {
+  required bool homeActive,
+  bool requirementsActive = false,
+}) {
   final String home = homeActive
       ? '<li class="active"><a href="#">Overall Test Results</a></li>'
       : '<li><a href="index.html">Overall Test Results</a></li>';
+  final String requirements = requirementsActive
+      ? '<li class="active"><a href="#">Requirements</a></li>'
+      : '<li><a href="capabilities.html">Requirements</a></li>';
   return '''
 <div>
   <span class="date-and-time">Report generated ${timestampOf(generatedAt)}</span>
   <ul class="nav nav-tabs">
     $home
-    <li class="disabled">
-      <span title="Available in a later phase">Requirements</span>
-    </li>
+    $requirements
   </ul>
 </div>
 ''';

@@ -18,6 +18,8 @@ export 'src/inputs.dart' show parsePatrolLog, parsePlaywright, splitTitle;
 export 'src/markers.dart'
     show MarkerParse, hasStepWith, parseMarkers, promoteStatus, stripAnsi;
 export 'src/model.dart';
+export 'src/requirements.dart'
+    show RequirementNode, featuresIn, requirementsOf, resultSeverity;
 export 'src/serenity_writer.dart'
     show
         Capture,
@@ -44,6 +46,12 @@ export 'src/site/dashboard.dart'
         resultIcon,
         writeDashboard;
 export 'src/site/page_chrome.dart' show timestampOf;
+export 'src/site/requirements_page.dart'
+    show
+        capabilitiesHtml,
+        featurePageHtml,
+        featureReportName,
+        writeRequirementPages;
 export 'src/site/screenshots_page.dart'
     show screenshotsPageHtml, screenshotsReportName, writeScreenshotPages;
 export 'src/site/site_assets.dart' show resultColors, resultGlyphs;

@@ -418,6 +418,33 @@ table.step-table.nested td { border-bottom: 1px solid #f2f2f2; }
 
 .gallery-link { margin-bottom: 0.75em; font-size: 0.9em; }
 
+/* ── Requirements ───────────────────────────────────────────────────── */
+
+.requirements-table .requirement-name-column { width: 45%; }
+.requirements-table .requirement-type {
+  color: #888;
+  font-size: 0.8em;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.requirement-row.level-0 > td { font-weight: 600; }
+.requirement-row.level-1 > td { font-weight: 400; }
+
+.coverage-column { width: 200px; }
+
+.progress {
+  display: flex;
+  height: 14px;
+  background: #ececec;
+  border-radius: 7px;
+  overflow: hidden;
+}
+
+.progress-bar { height: 100%; }
+
+.feature-coverage { margin-bottom: 1em; }
+
 .carousel { max-width: 800px; margin: 0 auto; }
 
 .slides {

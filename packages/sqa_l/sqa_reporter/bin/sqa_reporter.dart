@@ -66,6 +66,11 @@ void main(List<String> argv) {
     Directory(args.output),
     platform: args.platform,
   );
+  final List<File> requirements = writeRequirementPages(
+    run,
+    Directory(args.output),
+    platform: args.platform,
+  );
 
   stdout
     ..writeln(
@@ -74,7 +79,8 @@ void main(List<String> argv) {
     )
     ..writeln(
       'Dashboard: ${index.path} (${pages.length} test page(s), '
-      '${galleries.length} gallery page(s))',
+      '${galleries.length} gallery page(s), '
+      '${requirements.length} requirement page(s))',
     );
   if (written == 0) {
     exitCode = 1;
