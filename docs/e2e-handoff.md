@@ -7,6 +7,10 @@ studying this POC.
 
 - **Reference repository (public):** https://github.com/lisandrobetancur/app_demo
 - **Phased migration prompt:** [`docs/prompt-migracion-patrol.md`](./prompt-migracion-patrol.md)
+- **Report generator prompt:** [`docs/prompt-sqa-reporter.md`](./prompt-sqa-reporter.md)
+  — a separate line of work: replacing Allure with a Serenity-shaped report
+  written in Dart. Unrelated to migrating the suite; listed here because
+  this document is where someone looks for what exists.
 
 ## How to start on another account
 
