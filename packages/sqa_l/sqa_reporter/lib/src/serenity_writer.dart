@@ -61,11 +61,19 @@ int writeSerenityResults(
   return written;
 }
 
-/// `sha256(completeName) + ".json"`, exactly as `ReportNamer` does with
-/// filename compression on (its default): the JSON and its future HTML page
-/// pair by digest.
-String reportFileName(RunCase testCase) =>
-    '${sha256.convert(utf8.encode(completeNameOf(testCase))).toString()}.json';
+/// sha256 hex of the complete name — the digest that pairs every artefact of
+/// one test: `<digest>.json`, `<digest>.html`, and the `<digest12>-NN-*.png`
+/// screenshots, exactly as `ReportNamer` pairs them with filename compression
+/// on (its default).
+String reportDigest(RunCase testCase) =>
+    sha256.convert(utf8.encode(completeNameOf(testCase))).toString();
+
+/// The JSON result file's name.
+String reportFileName(RunCase testCase) => '${reportDigest(testCase)}.json';
+
+/// The HTML detail page's name — same digest, so the two point at each other
+/// without an index.
+String htmlReportName(RunCase testCase) => '${reportDigest(testCase)}.html';
 
 /// `storyTitle + ":" + name` (`TestOutcome.getCompleteName`). Our story title
 /// is the feature the scenario declared, or the suite file when it declared
@@ -82,36 +90,15 @@ Map<String, Object?> _outcomeFor(
   final ScenarioMeta? meta = testCase.meta;
   final String storyTitle = meta?.feature ?? testCase.suite;
 
-  // Two clocks measure the same test — the transport from outside, the
-  // markers from inside — and they disagree by a few milliseconds. Widen the
-  // test to hold its own steps rather than report a child outliving its
-  // parent. Same rule, same reason as the original converter.
-  final ({int start, int stop}) bounds = _bounds(testCase.steps);
-  final int start = bounds.start < testCase.start
-      ? bounds.start
-      : testCase.start;
-  final int stop = bounds.stop > testCase.stop ? bounds.stop : testCase.stop;
+  final ({int start, int stop}) bounds = widenedBoundsOf(testCase);
+  final int start = bounds.start;
+  final int stop = bounds.stop;
   final int duration = stop - start;
 
   final RunStatus result = promoteStatus(testCase.status, testCase.steps);
 
-  final List<StepNode> steps = List<StepNode>.of(testCase.steps);
-  // Serenity has no test-level screenshot slot — captures live on steps, and
-  // `TestOutcome.getScreenshots()` only walks the tree. A shot with no step
-  // to own it gets a synthetic holder rather than being dropped.
-  if (testCase.orphanShots.isNotEmpty) {
-    steps.add(
-      StepNode(
-        name: 'Screenshots',
-        kind: StepKind.business,
-        start: stop,
-        stop: stop,
-        shots: testCase.orphanShots,
-      ),
-    );
-  }
-
-  final _StepWriter stepWriter = _StepWriter(outputDir, testCase);
+  final List<StepNode> steps = presentedStepsOf(testCase);
+  final _StepWriter stepWriter = _StepWriter(outputDir, shotNamesFor(testCase));
   final List<Map<String, Object?>> testSteps = <Map<String, Object?>>[
     for (final StepNode step in steps) stepWriter.write(step, level: 0),
   ];
@@ -233,24 +220,98 @@ List<Map<String, Object?>> _tags(
   ];
 }
 
+/// The run's clock, widened to hold its own steps: two clocks measure the
+/// same test — the transport from outside, the markers from inside — and they
+/// disagree by a few milliseconds. Widening rather than trusting either one
+/// avoids reporting a child that outlives its parent. Same rule, same reason
+/// as the original converter.
+({int start, int stop}) widenedBoundsOf(RunCase testCase) {
+  final ({int start, int stop}) bounds = _bounds(testCase.steps);
+  return (
+    start: bounds.start < testCase.start ? bounds.start : testCase.start,
+    stop: bounds.stop > testCase.stop ? bounds.stop : testCase.stop,
+  );
+}
+
+/// The steps a report presents for [testCase]: its own tree, plus a synthetic
+/// holder for any screenshot that arrived with no step open to own it —
+/// Serenity has no test-level screenshot slot (`TestOutcome.getScreenshots()`
+/// only walks the tree), so an orphan gets a step rather than being dropped.
+List<StepNode> presentedStepsOf(RunCase testCase) {
+  final List<StepNode> steps = List<StepNode>.of(testCase.steps);
+  if (testCase.orphanShots.isNotEmpty) {
+    final int stop = widenedBoundsOf(testCase).stop;
+    steps.add(
+      StepNode(
+        name: 'Screenshots',
+        kind: StepKind.business,
+        start: stop,
+        stop: stop,
+        shots: testCase.orphanShots,
+      ),
+    );
+  }
+  return steps;
+}
+
+/// One file name per captured screenshot — `<digest12>-NN-<slug>.png`,
+/// numbered in the order the JSON writer visits them (a step's children
+/// before its own captures). Shared by the JSON writer and the HTML pages so
+/// both always reference the same files.
+Map<CapturedShot, String> shotNamesFor(RunCase testCase) {
+  final String digest = reportDigest(testCase).substring(0, 12);
+  final Map<CapturedShot, String> names = Map<CapturedShot, String>.identity();
+  int index = 0;
+  void visit(StepNode step) {
+    step.children.forEach(visit);
+    for (final CapturedShot shot in step.shots) {
+      index += 1;
+      names[shot] =
+          '$digest-${index.toString().padLeft(2, '0')}-'
+          '${slugOf(shot.name)}.png';
+    }
+  }
+
+  presentedStepsOf(testCase).forEach(visit);
+  return names;
+}
+
+/// A step's one-line description. An assertion leaf folds expected/actual
+/// into it — G2 in the spec: Serenity has no structured slot for them, only
+/// the sentence.
+String stepDescription(StepNode step) {
+  if (step.kind != StepKind.assertion) {
+    return step.name;
+  }
+  String param(String name) => step.params
+      .firstWhere(
+        (RunParam p) => p.name == name,
+        orElse: () => RunParam(name, ''),
+      )
+      .value;
+  return step.status == RunStatus.passed
+      ? '${step.name} — verified: ${param('expected')}'
+      : '${step.name} — expected: ${param('expected')}, '
+            'actual: ${param('actual')}';
+}
+
 /// Writes the step tree, numbering nodes with one global counter across the
 /// whole test — `TestStep.number` is a sequence, not a per-level index — and
 /// writing each screenshot's bytes beside the JSON, referenced by bare name
 /// the way Serenity's `File` serialiser does.
 class _StepWriter {
-  _StepWriter(this.outputDir, this.testCase);
+  _StepWriter(this.outputDir, this.shotNames);
 
   final Directory outputDir;
-  final RunCase testCase;
+  final Map<CapturedShot, String> shotNames;
   int _number = 0;
-  int _shotIndex = 0;
 
   Map<String, Object?> write(StepNode step, {required int level}) {
     _number += 1;
     final int number = _number;
     return prune(<String, Object?>{
           'number': number,
-          'description': _describe(step),
+          'description': stepDescription(step),
           'startTime': isoUtc(step.start),
           'duration': step.stop - step.start,
           'result': serenityResult[step.status],
@@ -271,35 +332,8 @@ class _StepWriter {
         as Map<String, Object?>;
   }
 
-  /// An assertion leaf folds expected/actual into its description — G2 in the
-  /// spec: Serenity has no structured slot for them, only the sentence.
-  String _describe(StepNode step) {
-    if (step.kind != StepKind.assertion) {
-      return step.name;
-    }
-    final String expected = _param(step, 'expected');
-    final String actual = _param(step, 'actual');
-    return step.status == RunStatus.passed
-        ? '${step.name} — verified: $expected'
-        : '${step.name} — expected: $expected, actual: $actual';
-  }
-
-  String _param(StepNode step, String name) => step.params
-      .firstWhere(
-        (RunParam p) => p.name == name,
-        orElse: () => RunParam(name, ''),
-      )
-      .value;
-
   String _writeShot(CapturedShot shot) {
-    _shotIndex += 1;
-    final String digest = sha256
-        .convert(utf8.encode(completeNameOf(testCase)))
-        .toString()
-        .substring(0, 12);
-    final String name =
-        '$digest-${_shotIndex.toString().padLeft(2, '0')}-'
-        '${slugOf(shot.name)}.png';
+    final String name = shotNames[shot]!;
     File(
       '${outputDir.path}${Platform.pathSeparator}$name',
     ).writeAsBytesSync(shot.bytes);

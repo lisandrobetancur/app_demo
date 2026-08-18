@@ -56,13 +56,18 @@ void main(List<String> argv) {
     Directory(args.output),
     platform: args.platform,
   );
+  final List<File> pages = writeTestPages(
+    run,
+    Directory(args.output),
+    platform: args.platform,
+  );
 
   stdout
     ..writeln(
       'Wrote $written SQA Reporter result(s) to ${args.output} '
       '(${args.platform})',
     )
-    ..writeln('Dashboard: ${index.path}');
+    ..writeln('Dashboard: ${index.path} (${pages.length} test page(s))');
   if (written == 0) {
     exitCode = 1;
   }

@@ -255,10 +255,153 @@ table.table-striped tbody tr:nth-child(odd) { background: #f9f9f9; }
 
 .version { color: gray; font-size: 0.85em; }
 .footer { max-width: 1200px; min-width: 1024px; margin: 1em auto; padding: 0 1em; }
+
+/* ── Test detail page ───────────────────────────────────────────────── */
+
+.card.standalone { border-top: 1px solid #ddd; border-radius: 4px; }
+
+.titlebar { margin: 1em 0 0.5em 0; }
+
+.story-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1em;
+}
+
+.story-header-title { font-weight: 300; color: #555; margin: 0; }
+
+.tags { text-align: right; }
+
+.tag-badge {
+  display: inline-block;
+  background: #eef3f8;
+  border: 1px solid #cfe0ee;
+  border-radius: 10px;
+  color: #38617f;
+  font-size: 0.75em;
+  padding: 0.15em 0.7em;
+  margin: 0.15em 0;
+}
+
+.test-title-bar {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-left-width: 5px;
+  border-radius: 4px;
+  padding: 0.75em 1em;
+  margin-top: 0.5em;
+}
+
+.test-case-title { font-size: 1.3em; margin-left: 0.4em; }
+
+.success-color { color: #99cc33; }
+.failure-color { color: #ff1631; }
+.error-color { color: #ff6108; }
+.skipped-color { color: #b8860b; }
+.undefined-color { color: #5332a8; }
+
+.test-SUCCESS { border-left-color: #99cc33; }
+.test-FAILURE { border-left-color: #ff1631; }
+.test-ERROR { border-left-color: #ff6108; }
+.test-SKIPPED { border-left-color: #b8860b; }
+.test-UNDEFINED { border-left-color: #5332a8; }
+
+.test-description { color: #777; font-style: italic; margin-top: 0.4em; }
+
+/* ── Step table ─────────────────────────────────────────────────────── */
+
+/* Fixed layout, so a nested table's columns land on the same grid as its
+   parent's instead of being sized independently by their own contents. */
+table.step-table {
+  border-collapse: collapse;
+  width: 100%;
+  table-layout: fixed;
+}
+
+table.step-table th {
+  text-align: left;
+  padding: 0.5em 0.75em;
+  border-bottom: 2px solid #ddd;
+  color: #6d9b3a;
+  font-weight: 600;
+}
+
+table.step-table td {
+  padding: 0.5em 0.75em;
+  border-bottom: 1px solid #eee;
+  vertical-align: top;
+}
+
+/* A group's children live in a nested table inside a spanning cell. Zeroing
+   that cell's padding keeps the child columns on the parent's grid instead of
+   drifting right by one cell's worth of padding at every level. */
+.step-section > td { padding: 0; }
+
+table.step-table.nested { margin: 0; }
+table.step-table.nested td { border-bottom: 1px solid #f2f2f2; }
+
+.step-table tr.test-FAILURE > td, .step-table tr.test-ERROR > td {
+  background: #fff6f3;
+}
+
+.step-description-column { width: auto; }
+.shot-column { width: 150px; }
+.outcome-column { width: 130px; font-size: 0.85em; }
+.duration-column { width: 100px; color: #666; font-size: 0.9em; }
+
+.step-description { line-height: 1.5; }
+
+.caret {
+  background: none;
+  border: none;
+  color: #0e78ad;
+  cursor: pointer;
+  font-size: 1em;
+  padding: 0;
+  margin-right: 0.2em;
+}
+
+.caret.open { transform: rotate(90deg); display: inline-block; }
+
+.screenshot {
+  border: 1px solid #ddd;
+  border-radius: 2px;
+  object-fit: cover;
+  background: #fff;
+}
+
+.evidence, .stacktrace { margin-top: 0.5em; }
+.evidence summary, .stacktrace summary {
+  color: #428bca;
+  cursor: pointer;
+  font-size: 0.85em;
+}
+
+.evidence pre, .stacktrace pre, .error-message pre {
+  background: #f7f7f5;
+  border: 1px solid #eee;
+  border-radius: 3px;
+  padding: 0.75em;
+  margin-top: 0.4em;
+  overflow-x: auto;
+  font-size: 0.8em;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+/* Width and style only: the colour comes from the `test-<RESULT>` class the
+   block also carries, and a `border-left` shorthand here would reset it. */
+.failure-block {
+  margin-top: 1.5em;
+  border-left-width: 5px;
+  border-left-style: solid;
+  padding-left: 1em;
+}
 ''';
 
-/// The only script on the page: the Summary / Test Results tab switch,
-/// written for this page.
+/// The site's only script: the dashboard's tab switch and the detail page's
+/// step-group carets, both written here. Nothing else on any page runs code.
 const String siteJs = '''
 document.querySelectorAll("[data-tab]").forEach(function (tab) {
   tab.addEventListener("click", function (event) {
@@ -269,6 +412,15 @@ document.querySelectorAll("[data-tab]").forEach(function (tab) {
     document.querySelectorAll(".tab-pane").forEach(function (pane) {
       pane.classList.toggle("active", pane.id === tab.dataset.tab);
     });
+  });
+});
+
+document.querySelectorAll(".caret").forEach(function (caret) {
+  caret.addEventListener("click", function () {
+    var section = document.getElementById(caret.dataset.toggle);
+    if (!section) { return; }
+    section.hidden = !section.hidden;
+    caret.classList.toggle("open", !section.hidden);
   });
 });
 ''';

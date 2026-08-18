@@ -13,6 +13,7 @@ import 'dart:io';
 import '../markers.dart';
 import '../model.dart';
 import '../serenity_writer.dart';
+import 'page_chrome.dart';
 import 'site_assets.dart';
 
 /// What the report calls the project, by platform. This replaces the
@@ -72,19 +73,12 @@ String dashboardHtml(
   final StringBuffer page = StringBuffer()
     ..writeln('<!DOCTYPE html>')
     ..writeln('<html lang="en">')
-    ..writeln('<head>')
-    ..writeln('<meta charset="UTF-8"/>')
-    ..writeln(
-      '<meta name="viewport" content="width=device-width, initial-scale=1">',
-    )
-    ..writeln('<title>SQA Reporter</title>')
-    ..writeln('<link rel="stylesheet" href="sqa-reporter.css"/>')
-    ..writeln('</head>')
+    ..write(pageHead())
     ..writeln('<body>')
-    ..write(_banner(platform))
+    ..write(banner(platform))
     ..writeln('<div class="middlecontent">')
     ..writeln('<span class="breadcrumbs"><a href="index.html">Home</a></span>')
-    ..write(_menu(generatedAt))
+    ..write(menuBar(generatedAt, homeActive: true))
     ..writeln('<h2>Test Results: All Tests</h2>')
     ..writeln('<div class="test-count-title">$total test cases</div>')
     ..write(_tabBar())
@@ -93,40 +87,12 @@ String dashboardHtml(
     ..write(_testsPane(rows))
     ..writeln('</div>')
     ..writeln('</div>')
-    ..writeln('<div class="footer">')
-    ..writeln('<span class="version">SQA Reporter version 0.1.0</span>')
-    ..writeln('</div>')
+    ..write(pageFooter())
     ..writeln('<script>$siteJs</script>')
     ..writeln('</body>')
     ..writeln('</html>');
   return page.toString();
 }
-
-String _banner(String platform) =>
-    '''
-<div class="topheader">
-  <div class="topbanner">
-    <div class="wordmark">SQA <span class="accent">Reporter</span></div>
-    <div class="projectname">
-      <span class="projecttitle">${escapeHtml(projectTitleFor(platform))}</span>
-      <span class="projectsubtitle">E2E test report</span>
-    </div>
-  </div>
-</div>
-''';
-
-String _menu(DateTime generatedAt) =>
-    '''
-<div>
-  <span class="date-and-time">Report generated ${_timestamp(generatedAt)}</span>
-  <ul class="nav nav-tabs">
-    <li class="active"><a href="#">Overall Test Results</a></li>
-    <li class="disabled">
-      <span title="Available in a later phase">Requirements</span>
-    </li>
-  </ul>
-</div>
-''';
 
 String _tabBar() => '''
 <ul class="nav nav-tabs">
@@ -255,8 +221,8 @@ String _keyStatistics(List<_Row> rows, ParsedRun run) {
 <table class="table table-striped">
 <tbody>
 ${row('Number of test cases', '${rows.length}')}
-${row('Tests started', rows.isEmpty ? '—' : _timestamp(DateTime.fromMillisecondsSinceEpoch(earliestStart, isUtc: true)))}
-${row('Tests finished', rows.isEmpty ? '—' : _timestamp(DateTime.fromMillisecondsSinceEpoch(latestStop, isUtc: true)))}
+${row('Tests started', rows.isEmpty ? '—' : timestampOf(DateTime.fromMillisecondsSinceEpoch(earliestStart, isUtc: true)))}
+${row('Tests finished', rows.isEmpty ? '—' : timestampOf(DateTime.fromMillisecondsSinceEpoch(latestStop, isUtc: true)))}
 ${row('Total duration', rows.isEmpty ? '—' : compoundDuration(latestStop - earliestStart))}
 ${row('Fastest test', durations.isEmpty ? '—' : compoundDuration(durations.first))}
 ${row('Slowest test', durations.isEmpty ? '—' : compoundDuration(durations.last))}
@@ -282,12 +248,12 @@ String _testsPane(List<_Row> rows) {
     pane.writeln(
       '<tr>'
       '<td>${escapeHtml(row.feature)}</td>'
-      '<td>${escapeHtml(row.name)}</td>'
+      '<td><a href="${row.href}">${escapeHtml(row.name)}</a></td>'
       '<td>${escapeHtml(row.context)}</td>'
       '<td>${row.stepCount}</td>'
-      '<td>${_timestamp(DateTime.fromMillisecondsSinceEpoch(row.startMs, isUtc: true))}</td>'
+      '<td>${timestampOf(DateTime.fromMillisecondsSinceEpoch(row.startMs, isUtc: true))}</td>'
       '<td>${compoundDuration(row.durationMs)}</td>'
-      '<td>${resultIcon(row.result)}</td>'
+      '<td><a href="${row.href}">${resultIcon(row.result)}</a></td>'
       '</tr>',
     );
   }
@@ -342,12 +308,6 @@ String _displayName(String result) => switch (result) {
   _ => 'Undefined',
 };
 
-String _timestamp(DateTime at) {
-  String pad(int value) => value.toString().padLeft(2, '0');
-  return '${at.year}-${pad(at.month)}-${pad(at.day)} '
-      '${pad(at.hour)}:${pad(at.minute)}:${pad(at.second)} UTC';
-}
-
 /// One table row's worth of a case, with the same widening and promotion the
 /// JSON writer applies, so the two surfaces never disagree about a verdict.
 class _Row {
@@ -359,6 +319,7 @@ class _Row {
     required this.startMs,
     required this.stopMs,
     required this.result,
+    required this.href,
   });
 
   factory _Row.of(RunCase testCase) {
@@ -371,6 +332,7 @@ class _Row {
       startMs: testCase.start,
       stopMs: testCase.stop,
       result: serenityResult[status]!,
+      href: htmlReportName(testCase),
     );
   }
 
@@ -381,6 +343,9 @@ class _Row {
   final int startMs;
   final int stopMs;
   final String result;
+
+  /// The detail page this row links to.
+  final String href;
 
   int get durationMs => stopMs - startMs;
 }

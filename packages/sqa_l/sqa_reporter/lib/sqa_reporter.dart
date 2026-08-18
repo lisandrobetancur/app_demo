@@ -21,11 +21,17 @@ export 'src/model.dart';
 export 'src/serenity_writer.dart'
     show
         completeNameOf,
+        htmlReportName,
         isoUtc,
+        presentedStepsOf,
         prune,
+        reportDigest,
         reportFileName,
         serenityResult,
+        shotNamesFor,
         slugOf,
+        stepDescription,
+        widenedBoundsOf,
         writeSerenityResults;
 export 'src/site/dashboard.dart'
     show
@@ -35,4 +41,6 @@ export 'src/site/dashboard.dart'
         projectTitleFor,
         resultIcon,
         writeDashboard;
+export 'src/site/page_chrome.dart' show timestampOf;
 export 'src/site/site_assets.dart' show resultColors, resultGlyphs;
+export 'src/site/test_page.dart' show testPageHtml, writeTestPages;
