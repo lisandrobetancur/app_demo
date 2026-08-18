@@ -115,6 +115,29 @@ set +e
 ) || status=$?
 set -e
 
+# A channel names a browser Playwright expects to find already installed; it
+# downloads nothing. When one is missing the run dies before the first test
+# with `Playwright process exited unexpectedly with code 1` and nothing else —
+# patrol_cli captures Playwright's stderr, so the real message ("Chromium
+# distribution 'msedge' is not found at ...") never reaches the terminal, and
+# `--verbose` does not bring it back.
+#
+# Zero tests plus a requested channel is that shape almost every time, so the
+# guess is worth printing. It is a guess, not a diagnosis, and it says so.
+if [[ -n "$BROWSER" && "$status" -ne 0 ]]; then
+  echo >&2
+  echo "The run asked for --browser=$BROWSER and no test executed." >&2
+  echo "A channel uses a browser already installed on this machine; if it is" >&2
+  echo "absent Playwright fails to launch and the CLI hides the reason." >&2
+  echo >&2
+  echo "  npx playwright install $BROWSER      # install it, or" >&2
+  echo "  melos run e2eWeb                     # run on the bundled Chromium" >&2
+  echo >&2
+  echo "To see Playwright's own error, ask it directly:" >&2
+  echo "  RUNNER=\$(find ~/.pub-cache/hosted/pub.dev -maxdepth 1 -type d -name 'patrol-*' | tail -1)/web_runner" >&2
+  echo "  (cd \"\$RUNNER\" && npx playwright open --channel=$BROWSER about:blank)" >&2
+fi
+
 echo
 echo "── Building the report ───────────────────────────────────────────────"
 # Deliberately not chained with `&&` to the above: a red suite is exactly when

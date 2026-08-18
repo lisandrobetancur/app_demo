@@ -34,6 +34,14 @@ packages/apps/market_app/node_modules/
 packages/apps/market_app/test_bundle.dart
 packages/apps/market_app/patrol_test/test_bundle.dart
 
+# Where `patrol test` writes when it is called by hand rather than through
+# `run_web.sh`, which redirects both with `--web-report-dir` and
+# `--web-results-dir`. The script's own runs land under `build/e2e/`, already
+# ignored — these two only appear when someone debugs the CLI directly, which
+# is a normal thing to do and should not dirty `git status`.
+packages/apps/market_app/test-results/
+packages/apps/market_app/playwright-report/
+
 # Everything an E2E run generates — Playwright results, logcat, Allure results
 # and report — lives under `build/e2e/<platform>/`, already ignored by the
 # `build/` rule above. One root instead of four scattered paths: that way the
