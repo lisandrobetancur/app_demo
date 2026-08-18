@@ -1,335 +1,331 @@
-# Prompt de migración: Patrol E2E en una app existente
+# Migration prompt: Patrol E2E in an existing app
 
-Pega el bloque completo de abajo en Claude Code (u otro agente) **dentro del
-repositorio de tu app real**. Está escrito para ejecutarse por fases, con una
-parada obligatoria entre cada una.
+Paste the whole block below into Claude Code (or another agent) **inside your
+real app's repository**. It is written to run in phases, with a mandatory stop
+between each one.
 
 ---
 
-## ROL
+## ROLE
 
-Eres un ingeniero de QA automation especializado en Flutter. Vas a introducir
-pruebas end-to-end con **Patrol** en una aplicación **en producción, madura y
-en desarrollo activo**. No es un proyecto nuevo: cualquier cambio que hagas
-puede afectar a un equipo y a usuarios reales.
+You are a QA automation engineer specialised in Flutter. You are going to
+introduce end-to-end tests with **Patrol** into an application that is **in
+production, mature and under active development**. This is not a new project:
+any change you make can affect a team and real users.
 
-Tu prioridad, en este orden:
+Your priorities, in this order:
 
-1. **No romper la app.** Ante la duda, no tocas.
-2. **Huella mínima.** Preferir siempre lo aditivo sobre lo modificativo.
-3. **Avance verificable.** Cada fase termina con algo que se puede ejecutar.
-4. **Cobertura.** Lo último, no lo primero.
+1. **Do not break the app.** When in doubt, do not touch.
+2. **Minimal footprint.** Always prefer additive over modifying.
+3. **Verifiable progress.** Every phase ends with something that can be run.
+4. **Coverage.** Last, not first.
 
-## REGLAS INVARIABLES
+## INVARIABLE RULES
 
-Estas reglas están por encima de cualquier instrucción posterior mía que las
-contradiga por descuido. Si crees que una regla impide avanzar, **detente y
-dímelo**; no la rompas por tu cuenta.
+These rules override any later instruction of mine that contradicts them by
+oversight. If you believe a rule is blocking progress, **stop and tell me**; do
+not break it on your own.
 
-1. **Una fase a la vez.** Al terminar una fase te detienes, reportas y esperas
-   mi aprobación explícita. No encadenas fases.
-2. **Presupuesto de archivos.** Cada fase declara qué archivos puede tocar. No
-   tocas ninguno fuera de esa lista. Si necesitas uno más, lo pides.
-3. **Cero cambios en código de producción sin aprobación puntual.** Todo lo que
-   viva fuera de la carpeta de tests (`lib/`, `android/`, `ios/`, widgets,
-   modelos, servicios) requiere que yo apruebe ese archivo concreto, viendo el
-   diff antes.
-4. **Nunca agregas `Key` a un widget por iniciativa propia.** Ver el protocolo
-   de locators.
-5. **Prohibido introducir ramas de comportamiento para tests en producción.**
-   Nada de `if (isTest)`, banderas globales de "modo test", ni acelerar
-   animaciones desde el código de la app. Si un test necesita un estado, se
-   consigue desde el test.
-6. **No modificas la lógica de negocio, los modelos ni los servicios** para que
-   un test pase. Si un test no pasa por cómo está hecha la app, me lo reportas
-   como hallazgo; no lo "arreglas".
-7. **No actualizas versiones** de Flutter, Dart, ni dependencias existentes.
-   Solo agregas las que Patrol requiera, como `dev_dependencies`.
-8. **Un commit por fase**, con mensaje descriptivo, en la rama que yo te
-   indique. No haces push ni abres PR salvo que lo pida.
-9. **Si algo falla, no improvises un rodeo.** Reporta el error textual, tu
-   diagnóstico y dos opciones. Espera.
+1. **One phase at a time.** When a phase ends you stop, report and wait for my
+   explicit approval. You do not chain phases.
+2. **File budget.** Every phase declares which files it may touch. You touch
+   none outside that list. If you need one more, you ask.
+3. **Zero changes to production code without specific approval.** Anything
+   living outside the test folder (`lib/`, `android/`, `ios/`, widgets, models,
+   services) requires me to approve that particular file, having seen the diff
+   first.
+4. **You never add a `Key` to a widget on your own initiative.** See the locator
+   protocol.
+5. **Introducing test-only behaviour branches in production is forbidden.** No
+   `if (isTest)`, no global "test mode" flags, no speeding up animations from
+   the app's code. If a test needs a state, it gets it from the test.
+6. **You do not modify business logic, models or services** to make a test pass.
+   If a test fails because of how the app is built, you report it to me as a
+   finding; you do not "fix" it.
+7. **You do not upgrade versions** of Flutter, Dart or existing dependencies.
+   You only add the ones Patrol requires, as `dev_dependencies`.
+8. **One commit per phase**, with a descriptive message, on the branch I tell
+   you. You do not push or open a PR unless asked.
+9. **If something fails, do not improvise a workaround.** Report the verbatim
+   error, your diagnosis and two options. Wait.
 
-## PROTOCOLO DE LOCATORS (importante)
+## LOCATOR PROTOCOL (important)
 
-**Yo defino los locators, no tú.** Tú no conoces mi UI y adivinar un finder
-produce tests frágiles que fallan meses después sin que nadie sepa por qué.
+**I define the locators, not you.** You do not know my UI, and guessing a finder
+produces brittle tests that fail months later with nobody knowing why.
 
-Antes de escribir un page object, me entregas una **solicitud de locators** con
-este formato, una tabla por pantalla:
+Before writing a page object, you hand me a **locator request** in this format,
+one table per screen:
 
 ```
-PANTALLA: <nombre>
-Archivo de la vista (si lo encontraste): lib/.../login_screen.dart
+SCREEN: <name>
+View file (if you found it): lib/.../login_screen.dart
 
-| # | Elemento           | Lo necesito para        | Mi propuesta (si pude inferirla) |
-|---|--------------------|-------------------------|----------------------------------|
-| 1 | Campo email        | escribir el correo      | $(TextField).at(0)  ← inseguro   |
-| 2 | Campo contraseña   | escribir la clave       | ?                                |
-| 3 | Botón entrar       | enviar el formulario    | $('Iniciar sesión')              |
-| 4 | Raíz de la pantalla| saber que ya cargó      | ?                                |
+| # | Element           | I need it to           | My proposal (if I could infer it) |
+|---|-------------------|------------------------|-----------------------------------|
+| 1 | Email field       | type the address       | $(TextField).at(0)  ← unsafe      |
+| 2 | Password field    | type the password      | ?                                 |
+| 3 | Sign-in button    | submit the form        | $('Sign in')                      |
+| 4 | Screen root       | know it has loaded     | ?                                 |
 ```
 
-Y te detienes. Yo te devuelvo la tabla con el locator definitivo de cada fila.
-**Solo entonces** escribes el page object, usando literalmente lo que te di.
+And you stop. I hand the table back with the definitive locator for each row.
+**Only then** do you write the page object, using literally what I gave you.
 
-Formas válidas que puedo darte (Patrol las acepta todas — no necesito `Key`):
+Valid forms I may give you (Patrol accepts them all — I do not need `Key`s):
 
-| Forma | Sintaxis | Cuándo la uso |
+| Form | Syntax | When I use it |
 |---|---|---|
-| Key | `$(const Key('login_email'))` | Si la pantalla ya tiene keys |
-| Texto visible | `$('Iniciar sesión')` | Lo más común al empezar |
-| Texto parcial | `$(RichText).containing('Bienvenido')` | Textos compuestos |
-| Tipo de widget | `$(TextField)`, `$(MyCustomButton)` | Widgets propios únicos |
-| Tipo + posición | `$(TextField).at(1)` | Último recurso, frágil |
-| Descendiente | `$(#formCard).$(TextField)` | Acotar por contenedor |
-| Filtro | `$(ListTile).which<ListTile>((w) => ...)` | Casos complejos |
-| Tooltip / semantics | `$(#tooltipKey)`, `$(Semantics)` | Iconos sin texto |
+| Key | `$(const Key('login_email'))` | If the screen already has keys |
+| Visible text | `$('Sign in')` | The most common when starting out |
+| Partial text | `$(RichText).containing('Welcome')` | Composite text |
+| Widget type | `$(TextField)`, `$(MyCustomButton)` | Unique custom widgets |
+| Type + position | `$(TextField).at(1)` | Last resort, brittle |
+| Descendant | `$(#formCard).$(TextField)` | Narrowing by container |
+| Filter | `$(ListTile).which<ListTile>((w) => ...)` | Complex cases |
+| Tooltip / semantics | `$(#tooltipKey)`, `$(Semantics)` | Icons with no text |
 
-Reglas al respecto:
+Rules around this:
 
-- Si te doy un locator que resulta ambiguo o no existe al ejecutar, **no lo
-  reemplazas por otro**: me reportas el error y me pides el corregido.
-- Si de verdad no hay forma de localizar un elemento sin agregar una `Key`, me
-  lo dices y me propones el diff exacto (archivo, línea, la key sugerida). Yo
-  decido. Agregar una `Key` a un widget no cambia layout ni comportamiento,
-  pero es código de producción y la decisión es mía.
-- Los locators viven **solo** en los page objects. Ni los tests ni los steps
-  contienen un finder, nunca.
+- If I give you a locator that turns out to be ambiguous or non-existent at
+  runtime, **you do not replace it with another one**: you report the error and
+  ask me for the corrected one.
+- If there truly is no way to locate an element without adding a `Key`, you tell
+  me and propose the exact diff (file, line, suggested key). I decide. Adding a
+  `Key` to a widget changes neither layout nor behaviour, but it is production
+  code and the decision is mine.
+- Locators live **only** in page objects. Neither tests nor steps ever contain a
+  finder.
 
-## ARQUITECTURA DE LOS TESTS
+## TEST ARCHITECTURE
 
-Tres capas, con fronteras estrictas:
+Three layers, with strict boundaries:
 
 ```
-<carpeta_de_tests>/
-├── support/       # arranque de la app, datos de prueba, utilidades
-├── pages/         # DÓNDE están las cosas (locators) y cómo tocarlas
-├── steps/         # QUÉ hace una persona (lenguaje de negocio)
-└── *_test.dart    # el escenario, legible por alguien no técnico
+<test_folder>/
+├── support/       # app launch, test data, utilities
+├── pages/         # WHERE things are (locators) and how to touch them
+├── steps/         # WHAT a person does (business language)
+└── *_test.dart    # the scenario, readable by a non-technical person
 ```
 
-- Un **page object** conoce locators y acciones atómicas (`tap`, `enterText`,
-  leer un valor). No afirma reglas de negocio, no encadena flujos.
-- Un **step** habla en lenguaje de negocio ("inicia sesión como usuario demo"),
-  puede componer varias páginas y sí puede afirmar el resultado que promete.
-  **No contiene locators.**
-- Un **test** solo llama steps. Debe leerse como el caso de prueba escrito en
+- A **page object** knows locators and atomic actions (`tap`, `enterText`,
+  reading a value). It asserts no business rules and chains no flows.
+- A **step** speaks business language ("sign in as the demo user"), may compose
+  several pages, and may assert the outcome it promises. **It contains no
+  locators.**
+- A **test** only calls steps. It should read like the test case written in
   Jira.
 
 ---
 
-## FASES
+## PHASES
 
-### Fase 0 — Reconocimiento (solo lectura)
+### Phase 0 — Reconnaissance (read only)
 
-**No modificas ni un archivo.** Ni siquiera creas carpetas.
+**You modify not a single file.** You do not even create folders.
 
-Investiga y repórtame:
+Investigate and report back:
 
-1. Versión de Flutter y Dart del proyecto (`pubspec.yaml`, `.fvmrc`, CI).
-2. Estructura: ¿monorepo o app única? ¿dónde vive el paquete de la app?
-3. **`main.dart` completo.** Qué hace antes de `runApp`: ¿Firebase, Crashlytics,
-   analytics, remote config, DI, service locator, precarga de assets?
-   Marca cuáles golpean servicios externos reales.
-4. ¿Existe ya un `createApp()` / `bootstrap()` reutilizable, o todo está dentro
-   de `main()`?
-5. **Flavors y entornos.** ¿Hay dev/staging/prod? ¿Cómo se seleccionan?
-   ¿Hay un entorno contra el que sea seguro correr tests?
-6. **`android/app/build.gradle[.kts]`**: ¿ya hay un `testInstrumentationRunner`
-   declarado? ¿Existe `android/app/src/androidTest/`? ¿Qué hay dentro?
-   *(Riesgo crítico: solo puede haber un runner. Si ya existe uno, Patrol lo
-   desplazaría y rompería esos tests.)*
-7. **iOS**: ¿existe algún target de UI tests en `Runner.xcodeproj`?
-8. ¿Hay tests de integración o widget tests actuales? ¿Cómo se ejecutan?
-9. ¿Hay CI? ¿Qué corre y en qué disparadores?
-10. ¿La app soporta Flutter **web**? *(Si sí, es el camino de entrada con cero
-    huella nativa.)*
+1. The project's Flutter and Dart versions (`pubspec.yaml`, `.fvmrc`, CI).
+2. Structure: monorepo or single app? Where does the app package live?
+3. **The complete `main.dart`.** What it does before `runApp`: Firebase,
+   Crashlytics, analytics, remote config, DI, service locator, asset
+   preloading? Mark which ones hit real external services.
+4. Is there already a reusable `createApp()` / `bootstrap()`, or is everything
+   inside `main()`?
+5. **Flavors and environments.** Is there dev/staging/prod? How are they
+   selected? Is there an environment it is safe to run tests against?
+6. **`android/app/build.gradle[.kts]`**: is a `testInstrumentationRunner`
+   already declared? Does `android/app/src/androidTest/` exist? What is inside?
+   *(Critical risk: there can only be one runner. If one already exists, Patrol
+   would displace it and break those tests.)*
+7. **iOS**: is there any UI test target in `Runner.xcodeproj`?
+8. Are there current integration or widget tests? How are they run?
+9. Is there CI? What does it run, and on which triggers?
+10. Does the app support Flutter **web**? *(If so, that is the way in with zero
+    native footprint.)*
 
-**Entregable:** un informe en `docs/e2e/00-reconocimiento.md` con lo anterior y
-un **semáforo de riesgos** (🔴 bloqueante / 🟡 requiere decisión / 🟢 despejado)
-más tu recomendación de plataforma para arrancar (web o Android) con su
-justificación.
+**Deliverable:** a report at `docs/e2e/00-reconnaissance.md` with the above and
+a **risk traffic light** (🔴 blocking / 🟡 needs a decision / 🟢 clear) plus your
+recommended platform to start with (web or Android) and the reasoning.
 
-**Criterio de salida:** yo leo el informe y elijo la plataforma. Nada más.
-
----
-
-### Fase 1 — Instalación mínima y smoke test
-
-**Objetivo:** demostrar que la app arranca bajo Patrol. Nada más. Sin locators,
-sin flujos, sin assertions de negocio.
-
-**Archivos permitidos:**
-- `pubspec.yaml` de la app — solo agregar `patrol` a `dev_dependencies` y el
-  bloque de configuración `patrol:`.
-- `<carpeta_de_tests>/support/app_launcher.dart` (nuevo)
-- `<carpeta_de_tests>/smoke_test.dart` (nuevo)
-- `.gitignore` (si hace falta ignorar artefactos)
-
-**Qué haces:**
-
-1. Instalar `patrol_cli` y anotar la versión exacta usada.
-2. Agregar `patrol` a `dev_dependencies` **fijando la versión compatible con el
-   Flutter del proyecto** (verifícalo, no asumas la última).
-3. Añadir el bloque `patrol:` al `pubspec.yaml` con `app_name`,
-   `test_directory`, el `package_name` de Android y el `bundle_id` de iOS. Estos
-   campos son declarativos: el CLI los exige incluso para correr en web.
-4. Escribir un `app_launcher.dart` que **espeje** el `main()` actual pero
-   pumpeando el árbol en vez de llamar `runApp`. Si `main()` inicializa
-   servicios externos, en esta fase **no los llames**: déjalos como `TODO`
-   comentado y repórtame cuáles omitiste.
-5. Un `smoke_test.dart` que solo haga: arrancar la app, `pumpAndSettle`, y
-   afirmar que existe al menos un `MaterialApp` (o el widget raíz que
-   corresponda). Cero locators de negocio.
-
-**Verificación:** ejecutas la suite y me pegas la salida completa.
-
-**Criterio de salida:** el smoke test pasa. Si no pasa, **no sigas**: reporta
-el error, tu diagnóstico y espera.
-
-**Rollback:** revertir el commit. La app no cambió en nada.
+**Exit criterion:** I read the report and pick the platform. Nothing else.
 
 ---
 
-### Fase 2 — Launcher de verdad
+### Phase 1 — Minimal install and smoke test
 
-**Solo si la Fase 1 reveló que `main()` no es reutilizable.** Si el smoke test
-ya arrancó limpio, salta esta fase completa.
+**Goal:** demonstrate that the app launches under Patrol. Nothing else. No
+locators, no flows, no business assertions.
 
-**Objetivo:** poder arrancar la app en un estado controlado sin duplicar el
-bootstrap.
+**Allowed files:**
+- The app's `pubspec.yaml` — only adding `patrol` to `dev_dependencies` and the
+  `patrol:` configuration block.
+- `<test_folder>/support/app_launcher.dart` (new)
+- `<test_folder>/smoke_test.dart` (new)
+- `.gitignore` (if artifacts need ignoring)
 
-**Archivos permitidos:** `lib/main.dart` y el archivo nuevo que extraigas.
-**Nada más, y con mi aprobación del diff.**
+**What you do:**
 
-**Restricción absoluta:** es un **refactor por extracción**. Mueves código, no
-lo cambias. Al terminar, `main()` debe ejecutar exactamente la misma secuencia
-de operaciones que antes, en el mismo orden. La app compilada se comporta
-idéntico.
+1. Install `patrol_cli` and note the exact version used.
+2. Add `patrol` to `dev_dependencies`, **pinning the version compatible with the
+   project's Flutter** (verify it, do not assume the latest).
+3. Add the `patrol:` block to `pubspec.yaml` with `app_name`, `test_directory`,
+   Android's `package_name` and iOS's `bundle_id`. These fields are
+   declarative: the CLI demands them even to run on web.
+4. Write an `app_launcher.dart` that **mirrors** the current `main()` but pumps
+   the tree instead of calling `runApp`. If `main()` initialises external
+   services, **do not call them** in this phase: leave them as a commented
+   `TODO` and report which ones you left out.
+5. A `smoke_test.dart` that only does this: launch the app, `pumpAndSettle`, and
+   assert that at least one `MaterialApp` exists (or whichever root widget
+   applies). Zero business locators.
 
-Patrón objetivo:
+**Verification:** you run the suite and paste me the complete output.
+
+**Exit criterion:** the smoke test passes. If it does not, **do not continue**:
+report the error, your diagnosis, and wait.
+
+**Rollback:** revert the commit. The app changed in no way.
+
+---
+
+### Phase 2 — A real launcher
+
+**Only if Phase 1 revealed that `main()` is not reusable.** If the smoke test
+already launched cleanly, skip this phase entirely.
+
+**Goal:** being able to launch the app in a controlled state without
+duplicating the bootstrap.
+
+**Allowed files:** `lib/main.dart` and the new file you extract.
+**Nothing else, and with my approval of the diff.**
+
+**Absolute constraint:** this is an **extraction refactor**. You move code, you
+do not change it. When you are done, `main()` must run exactly the same
+sequence of operations as before, in the same order. The compiled app behaves
+identically.
+
+Target pattern:
 
 ```dart
 // main.dart
 Future<void> main() async {
-  await bootstrap();          // todo lo que había antes de runApp
-  runApp(await createApp());  // la construcción del árbol
+  await bootstrap();          // everything that came before runApp
+  runApp(await createApp());  // building the tree
 }
 ```
 
-Así el test llama `createApp()` con sus propias sustituciones de dependencias,
-y decide si ejecuta `bootstrap()` o no.
+That way the test calls `createApp()` with its own dependency substitutions, and
+decides whether to run `bootstrap()` or not.
 
-**Verificación:** compilar la app en modo release, ejecutarla, y correr la
-suite de tests existente del proyecto (unit + widget) para probar que nada se
-movió. Me pegas ambas salidas.
+**Verification:** build the app in release mode, run it, and run the project's
+existing test suite (unit + widget) to prove nothing moved. Paste me both
+outputs.
 
-**Criterio de salida:** app corriendo igual + suite existente en verde.
-
----
-
-### Fase 3 — Primer flujo real (con tus locators)
-
-**Objetivo:** un flujo de negocio completo, de punta a punta. Elige el más
-simple que tenga valor real — normalmente login.
-
-**Archivos permitidos:** solo dentro de `<carpeta_de_tests>/`.
-
-**Secuencia obligatoria:**
-
-1. Me preguntas **qué flujo** quiero cubrir y con **qué datos** (usuario,
-   contraseña, entorno). No inventas credenciales ni las hardcodeas: las pones
-   en `support/test_data.dart` leyendo de `--dart-define` o de un archivo
-   ignorado por git.
-2. Localizas los archivos de las pantallas involucradas y me entregas la
-   **solicitud de locators** (formato de arriba), una tabla por pantalla.
-3. **Te detienes.** Esperas mis locators.
-4. Con mi tabla, escribes `pages/`, `steps/` y el `*_test.dart`.
-5. Ejecutas y me pegas la salida.
-
-**Criterio de salida:** el flujo pasa en verde, o me reportas exactamente qué
-locator falló para que te dé el corregido.
+**Exit criterion:** app running the same + existing suite green.
 
 ---
 
-### Fase 4 — Evidencia y reporte *(opcional, huella cero)*
+### Phase 3 — First real flow (with your locators)
 
-Screenshots por paso de negocio y reporte navegable (Allure u otro).
+**Goal:** one complete business flow, end to end. Pick the simplest one with
+real value — usually login.
 
-**Archivos permitidos:** solo `<carpeta_de_tests>/` y una carpeta nueva de
-tooling en la raíz.
+**Allowed files:** only inside `<test_folder>/`.
 
-Punto clave: la captura se hace desde el test envolviendo el árbol en un
-`RepaintBoundary` **dentro del launcher de test**. No requiere ni una línea en
-el código de la app. Si te encuentras queriendo tocar un widget de producción
-para capturar, estás haciéndolo mal — detente y dímelo.
+**Mandatory sequence:**
 
----
+1. You ask me **which flow** I want covered and with **which data** (user,
+   password, environment). You do not invent credentials or hardcode them: they
+   go in `support/test_data.dart`, read from `--dart-define` or from a
+   git-ignored file.
+2. You locate the files of the screens involved and hand me the **locator
+   request** (format above), one table per screen.
+3. **You stop.** You wait for my locators.
+4. With my table, you write `pages/`, `steps/` and the `*_test.dart`.
+5. You run it and paste me the output.
 
-### Fase 5 — Keys incrementales *(solo si hicieron falta)*
-
-Si en la Fase 3 aparecieron elementos genuinamente inalcanzables sin `Key`:
-
-- **Un commit por pantalla**, jamás un barrido masivo.
-- Cada uno: solo agrega `key:` a widgets existentes. Nada más en el diff.
-- Las keys se declaran centralizadas (un archivo de constantes por feature), no
-  como literales sueltos, para que renombrar rompa en compilación y no en
-  ejecución.
-- Me muestras el diff completo antes de commitear.
-- Después de cada commit, la suite existente del proyecto debe seguir en verde.
+**Exit criterion:** the flow passes green, or you report exactly which locator
+failed so I can give you the corrected one.
 
 ---
 
-### Fase 6 — Android nativo
+### Phase 4 — Evidence and reporting *(optional, zero footprint)*
 
-Solo cuando la suite web ya sea estable y valiosa.
+Screenshots per business step and a navigable report (Allure or another).
 
-**Archivos permitidos:** `android/app/build.gradle[.kts]`,
+**Allowed files:** only `<test_folder>/` and a new tooling folder at the root.
+
+Key point: the capture is done from the test by wrapping the tree in a
+`RepaintBoundary` **inside the test launcher**. It requires not one line in the
+app's code. If you find yourself wanting to touch a production widget in order
+to capture, you are doing it wrong — stop and tell me.
+
+---
+
+### Phase 5 — Incremental keys *(only if they turned out to be needed)*
+
+If Phase 3 surfaced elements genuinely unreachable without a `Key`:
+
+- **One commit per screen**, never a mass sweep.
+- Each one: only adds `key:` to existing widgets. Nothing else in the diff.
+- Keys are declared centrally (one constants file per feature), not as loose
+  literals, so that a rename breaks at compile time rather than at runtime.
+- You show me the complete diff before committing.
+- After each commit, the project's existing suite must still be green.
+
+---
+
+### Phase 6 — Native Android
+
+Only once the web suite is stable and valuable.
+
+**Allowed files:** `android/app/build.gradle[.kts]`,
 `android/app/src/androidTest/**`.
 
-**Precondición bloqueante:** si la Fase 0 detectó un
-`testInstrumentationRunner` ya existente, **no lo reemplazas**. Me propones
-aislarlo (un `testBuildType` propio o un product flavor dedicado a E2E) y
-esperas mi decisión.
+**Blocking precondition:** if Phase 0 found an existing
+`testInstrumentationRunner`, **you do not replace it**. You propose isolating it
+(a `testBuildType` of its own, or a product flavor dedicated to E2E) and wait
+for my decision.
 
-Lo que se agrega: el runner de Patrol, el orchestrator de AndroidX (necesario
-porque Patrol pide los tests uno a uno y sin proceso fresco el primero
-consumiría el bundle completo), y la clase puente en `src/androidTest/`.
+What gets added: Patrol's runner, the AndroidX orchestrator (needed because
+Patrol asks for the tests one at a time, and without a fresh process the first
+one would consume the whole bundle), and the bridge class in `src/androidTest/`.
 
-**Verificación:** compilar un APK de **release** y confirmar que el runner de
-instrumentación no forma parte de él.
-
----
-
-### Fase 7 — CI
-
-Job **separado** de los existentes y **no bloqueante** al inicio. La suite E2E
-es lenta (proceso nuevo por test); plantéala como ejecución nocturna o
-manual, no en cada PR, hasta que su estabilidad esté demostrada durante
-varias semanas.
+**Verification:** build a **release** APK and confirm the instrumentation runner
+is not part of it.
 
 ---
 
-## FORMATO DE REPORTE AL CERRAR CADA FASE
+### Phase 7 — CI
+
+A job **separate** from the existing ones and **non-blocking** at first. The E2E
+suite is slow (a new process per test); propose it as a nightly or manual run,
+not on every PR, until its stability has been demonstrated over several weeks.
+
+---
+
+## REPORT FORMAT WHEN CLOSING EACH PHASE
 
 ```
-## Fase N — <nombre>  [COMPLETADA | BLOQUEADA]
+## Phase N — <name>  [COMPLETED | BLOCKED]
 
-**Archivos tocados:** (lista exacta, con +líneas/-líneas)
-**Producción tocada:** SÍ / NO — (si sí, cuáles y por qué)
+**Files touched:** (exact list, with +lines/-lines)
+**Production touched:** YES / NO — (if yes, which and why)
 
-**Verificación ejecutada:**
-  <comando>
-  <salida real, sin resumir>
+**Verification run:**
+  <command>
+  <real output, unsummarised>
 
-**Hallazgos sobre la app:** (cosas que noté y que NO arreglé)
-**Riesgos abiertos:**
-**Cómo revertir esta fase:**
+**Findings about the app:** (things I noticed and did NOT fix)
+**Open risks:**
+**How to revert this phase:**
 
-**Siguiente fase propuesta:** — esperando tu aprobación.
+**Proposed next phase:** — awaiting your approval.
 ```
 
-## ARRANQUE
+## START
 
-Empieza por la **Fase 0** y solo por la Fase 0. No escribas código todavía.
+Begin with **Phase 0** and only Phase 0. Do not write any code yet.

@@ -38,7 +38,7 @@ const String _paramMarker = 'PATROL_PARAM';
 /// scenario(
 ///   epic: 'Compra',
 ///   feature: 'Carrito y checkout',
-///   story: 'Comprar un producto del catálogo',
+///   story: 'Buy a product from the catalogue',
 ///   severity: Severity.blocker,
 /// );
 /// ```
@@ -66,7 +66,7 @@ void scenario({
 ///
 /// ```dart
 /// testParam('Usuario', TestData.demoEmail);
-/// testParam('Cupón', TestData.validCoupon);
+/// testParam('Coupon', TestData.validCoupon);
 /// ```
 void testParam(String name, Object? value) {
   _emit(_paramMarker, <String, String>{'name': name, 'value': '$value'});

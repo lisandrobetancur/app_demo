@@ -12,7 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 /// ```dart
 /// e2eTest('…', tags: […], ($) async {
 ///   scenario(…);
-///   testParam('Usuario', TestData.demoEmail);   // ← todavía no hay datos
+///   testParam('User', TestData.demoEmail);   // ← no data yet
 ///   await launchMarketApp($);
 /// });
 /// ```
@@ -39,8 +39,8 @@ void main() {
     expect(
       files,
       isNotEmpty,
-      reason: 'no se encontró ningún *_test.dart en ${testDir.path}; '
-          '¿cambió la ruta o el directorio de trabajo?',
+      reason: 'found no *_test.dart under ${testDir.path}; did the path or '
+          'the working directory change?',
     );
 
     final List<String> offences = <String>[];
@@ -48,8 +48,8 @@ void main() {
     for (final File file in files) {
       final String source = file.readAsStringSync();
 
-      // Cada llamada a `e2eTest(` abre un cuerpo de prueba. Partir por ahí es
-      // suficiente: lo que sigue a una y precede a la siguiente es el cuerpo.
+      // Every `e2eTest(` call opens a test body. Splitting on it is enough:
+      // what follows one and precedes the next is the body.
       final List<String> bodies = source.split('e2eTest(')..removeAt(0);
 
       for (int i = 0; i < bodies.length; i++) {
@@ -58,12 +58,12 @@ void main() {
         final int dataAt = body.indexOf('TestData.');
 
         if (dataAt < 0) {
-          continue; // no lee datos: nada que ordenar
+          continue; // reads no data: nothing to order
         }
         if (launchAt < 0) {
           offences.add(
-            '${file.path}: la prueba #${i + 1} lee TestData pero nunca '
-            'llama a launchMarketApp',
+            '${file.path}: test #${i + 1} reads TestData but never calls '
+            'launchMarketApp',
           );
           continue;
         }
@@ -74,9 +74,9 @@ void main() {
               .length
               .toString();
           offences.add(
-            '${file.path}: la prueba #${i + 1} lee TestData (línea $line del '
-            'cuerpo) antes de launchMarketApp. Los datos se cargan al '
-            'arrancar la app, así que esa lectura falla con TestDataError.',
+            '${file.path}: test #${i + 1} reads TestData (line $line of the '
+            'body) before launchMarketApp. The data is loaded as the app '
+            'launches, so that read fails with TestDataError.',
           );
         }
       }

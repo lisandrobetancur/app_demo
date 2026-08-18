@@ -43,7 +43,7 @@ element, and each can change on its own:
 ```dart
 class LoginPage extends BasePage {
   static final Loc _view   = Loc.key('login_view');
-  static final Loc _submit = Loc.text('Iniciar sesión');   // sin keys todavía
+  static final Loc _submit = Loc.text('Sign in');   // no keys yet
 
   @override
   PatrolFinder get root => _view.resolve($);
@@ -79,7 +79,7 @@ class AuthSteps extends BaseSteps {
       step('Expect the login to be rejected', () async {
         should(
           seeThat('sigue en login',        () => _login.isVisible,     isTrue),
-          seeThat('no llegó al dashboard', () => _dashboard.isVisible, isFalse),
+          seeThat('did not reach the dashboard', () => _dashboard.isVisible, isFalse),
         );
       });
 }
@@ -96,15 +96,15 @@ that need it — the runner and the report:
 
 ```dart
 e2eTest(
-  'rechaza credenciales inválidas',
-  tags: <String>[Tags.smoke, Tags.negativo],
+  'rejects invalid credentials',
+  tags: <String>[Tags.smoke, Tags.negative],
   ($) async { … },
 );
 ```
 
 ```sh
-patrol test --device chrome --tags "smoke_test && negativo"
-patrol test --device chrome --exclude-tags "lento"
+patrol test --device chrome --tags "smoke_test && negative"
+patrol test --device chrome --exclude-tags "slow"
 ```
 
 The filter is applied while the test bundle is generated, so an excluded test
@@ -121,7 +121,7 @@ from the assertions, which are verdicts on the product.
 ```dart
 Log.info('Comprando como ${user.email}');
 Log.debug('Carrito', data: <String, Object>{'items': 3});
-Log.warn('El cupón ya estaba aplicado');
+Log.warn('The coupon was already applied');
 ```
 
 Everything lands in a `run.log` attachment on the test; `warn` and `error`
@@ -145,7 +145,7 @@ Two file shapes are accepted, because both are what data looks like:
 { "demo": { "email": "ana@market.demo", "publications": 5 } }
 
 // invalid_logins.json — rows, looped over by a data-driven test
-[ { "case": "contraseña incorrecta", "email": "…", "password": "…" } ]
+[ { "case": "wrong password", "email": "…", "password": "…" } ]
 ```
 
 Reads are typed and every failure names the field, the record and the file:

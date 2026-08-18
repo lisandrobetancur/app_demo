@@ -72,22 +72,22 @@ jobs:
       - name: Analyze
         run: melos run lint
 
-      # Antes de gastar dos minutos de navegador: si el framework mismo está
-      # roto, la suite E2E mentiría en vez de fallar.
+      # Before spending two minutes of browser time: if the framework itself
+      # is broken, the E2E suite would lie rather than fail.
       - name: Test the kit
         run: melos run testKit
 
-      # Y los del cableado: que los JSON de datos estén declarados como
-      # assets, que el índice apunte a archivos que existen y que los campos
-      # se llamen como la fachada cree. Roto esto, la suite E2E falla por lo
-      # que parece un defecto del producto.
+      # And the wiring: that the data JSON is declared as assets, that the
+      # index points at files that exist, and that the fields are named the way
+      # the façade believes. Break this and the E2E suite fails for what looks
+      # like a product defect.
       - name: Test the data files
         run: melos run testApp
 
-      # Limpia lo de la corrida anterior, corre, y genera el reporte — las
-      # tres cosas. El reporte se construye también cuando la suite falla, que
-      # es cuando importa, y el paso sigue saliendo en rojo porque el script
-      # propaga el código de salida de la suite y no el del reporte.
+      # Cleans up after the previous run, runs, and builds the report — all
+      # three. The report is built even when the suite fails, which is when it
+      # matters, and the step still exits red because the script propagates the
+      # suite's exit code rather than the report's.
       - name: Run the suite and build the report
         run: melos run e2eWeb
 
@@ -121,17 +121,17 @@ jobs:
           path: build/e2e/web/allure/report
           retention-days: 14
 
-      # Al final del job, y no junto al fallo: este paso vuelve a correr la
-      # suite, lo que sobrescribe build/e2e/web/playwright/ — los resultados de
-      # los que se construyen el reporte y el check de JUnit. Puesto antes, una
-      # corrida roja terminaba publicando un reporte de la RE-ejecución en vez
-      # de la original. Aquí ya está todo publicado y puede pisar lo que
-      # quiera.
+      # At the end of the job, and not next to the failure: this step runs the
+      # suite again, which overwrites build/e2e/web/playwright/ — the results
+      # the report and the JUnit check are built from. Placed earlier, a red
+      # run ended up publishing a report of the RE-run instead of the original
+      # one. By here everything is already published and it can overwrite
+      # whatever it likes.
       #
-      # El CLI esconde el stderr de Playwright, así que un fallo que no es un
-      # test caído — un navegador que no arranca, una config que no carga —
-      # llega como un código de salida pelado. Esto lo repite en verbose para
-      # sacarle el motivo.
+      # The CLI hides Playwright's stderr, so a failure that is not a failing
+      # test — a browser that will not start, a config that will not load —
+      # arrives as a bare exit code. This repeats it in verbose to get the
+      # reason out of it.
       - name: Diagnose a suite failure
         if: failure()
         run: |

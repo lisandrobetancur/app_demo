@@ -60,19 +60,19 @@ melos:
   scripts:
     lint: flutter analyze --no-fatal-infos
 
-    # Los tests del propio framework: headless, sin navegador ni dispositivo.
-    # Cubren lo que se rompería en silencio — el parser de precios, la costura
-    # entre aserciones suaves y reporte, la regla de agrupación de `should` y
-    # la clasificación failed/broken.
+    # The framework's own tests: headless, no browser and no device. They
+    # cover what would break silently — the price parser, the seam between soft
+    # assertions and the report, `should`'s grouping rule and the
+    # failed/broken classification.
     testKit: melos exec --scope=patrol_kit -- flutter test
 
-    # Los tests unitarios de la app. Hoy son los que comprueban que los
-    # archivos de datos existen, se declaran como assets y contienen los
-    # campos que la fachada lee — la parte del cableado que, si se rompe,
-    # hace fallar un E2E por lo que parece una razón de producto.
+    # The app's unit tests. Today they are the ones checking that the data
+    # files exist, are declared as assets and hold the fields the façade reads
+    # — the wiring that, when broken, fails an E2E for what looks like a
+    # product reason.
     testApp: melos exec --scope=market_app -- flutter test
 
-    # Todo lo que corre sin navegador ni dispositivo, en un solo comando.
+    # Everything that runs without a browser or a device, in one command.
     testFast: melos run testKit && melos run testApp
     dartFormat: melos exec -c 1 -- dart format . --line-length 80
     dartFix: melos exec -c 1 -- dart fix --apply
@@ -82,52 +82,53 @@ melos:
 
     # ── Suite end-to-end ────────────────────────────────────────────────
     #
-    # Cada uno de estos comandos hace TRES cosas, en este orden:
+    # Each of these commands does THREE things, in this order:
     #
-    #   1. borra lo que dejó la corrida anterior DE ESA plataforma,
-    #   2. corre la suite,
-    #   3. genera el reporte de Allure — siempre, también si la suite falló.
+    #   1. deletes what the previous run left FOR THAT PLATFORM,
+    #   2. runs the suite,
+    #   3. builds the Allure report — always, including when the suite failed.
     #
-    # Es el modelo de `aggregate` de Serenity: el reporte es parte de la
-    # ejecución, no un paso que alguien tiene que acordarse de lanzar. Abrirlo
-    # sigue siendo aparte (`allureServeWeb` / `allureServeAndroid`), porque
-    # generar y abrir son decisiones distintas y en CI sólo existe la primera.
+    # This is Serenity's `aggregate` model: the report is part of running, not
+    # a step somebody has to remember to launch. Opening it stays separate
+    # (`allureServeWeb` / `allureServeAndroid`), because building and opening
+    # are different decisions and in CI only the first one exists.
     #
-    # El código de salida es el de la suite, no el del reporte: una corrida
-    # roja sale roja aunque su reporte se haya construido bien.
+    # The exit code is the suite's, not the report's: a red run exits red even
+    # when its report was built fine.
     #
-    # Todo lo generado va a UNA raíz por plataforma:
+    # Everything generated goes to ONE root per platform:
     #
     #   build/e2e/web/{playwright,test-results,allure/{results,report}}
     #   build/e2e/android/{android_run.log,allure/{results,report}}
     #
-    # Eso es lo que hace de fiar la limpieza: borrar la raíz entera no puede
-    # dejarse nada, mientras que enumerar cuatro rutas repartidas por el repo
-    # sí — así fue como `test-results/` no lo borró nadie nunca.
+    # That is what makes the cleanup trustworthy: deleting the whole root
+    # cannot leave anything behind, while enumerating four paths scattered
+    # around the repo can — which is how `test-results/` went undeleted for
+    # months.
     #
-    # Al empezar y no al terminar: limpiar al final deja la máquina limpia
-    # pero se lleva la evidencia de lo que acaba de fallar.
+    # At the start and not at the end: cleaning up afterwards leaves the
+    # machine tidy but takes the evidence of what just failed with it.
     e2eWeb: bash tool/e2e/run_web.sh
     e2eAndroid: bash tool/e2e/run_android.sh
 
-    # Con navegador visible, para verlo manejar la app.
+    # With a visible browser, to watch it drive the app.
     e2eWebHeaded: bash tool/e2e/run_web.sh --headed
 
-    # Filtrado por tags. Patrol acepta expresiones booleanas, no sólo nombres,
-    # y el filtro se aplica al GENERAR el bundle: un test excluido no se
-    # compila dentro del binario, no es que se compile y se salte. El
-    # vocabulario está en `Tags`, en el kit.
+    # Filtering by tag. Patrol takes boolean expressions, not just names, and
+    # the filter is applied while GENERATING the bundle: an excluded test is
+    # never compiled into the binary — not compiled and then skipped. The
+    # vocabulary lives in `Tags`, in the kit.
     e2eWebSmoke: bash tool/e2e/run_web.sh --tags=smoke_test
-    e2eWebNegative: bash tool/e2e/run_web.sh --tags=negativo
+    e2eWebNegative: bash tool/e2e/run_web.sh --tags=negative
 
-    # Sólo la limpieza, para cuando quieras dejar una plataforma en cero sin
-    # correr nada.
+    # Cleanup only, for when you want to zero a platform without running
+    # anything.
     e2eClean: bash tool/e2e/clean.sh web && bash tool/e2e/clean.sh android
     e2eCleanWeb: bash tool/e2e/clean.sh web
     e2eCleanAndroid: bash tool/e2e/clean.sh android
 
-    # Correr y además ABRIR el reporte. La generación ya la hace `e2eWeb`;
-    # esto sólo añade el servidor local encima.
+    # Run and also OPEN the report. `e2eWeb` already builds it; this only adds
+    # the local server on top.
     e2eWebReport: melos run e2eWeb && melos run allureServeWeb
     e2eWebHeadedReport: melos run e2eWebHeaded && melos run allureServeWeb
 

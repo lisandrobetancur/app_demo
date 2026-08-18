@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "description": "Índice de los datos de prueba. Cada entrada de \"datasets\" es un nombre lógico y el archivo que lo contiene; añadir un data set es una línea aquí y un archivo al lado. El cargador no conoce ningún nombre de antemano: lee lo que este archivo liste.",
+  "description": "Index of the test data. Each entry under \"datasets\" is a logical name and the file holding it; adding a data set is one line here and a file beside it. The loader knows no name in advance: it reads whatever this file lists.",
   "datasets": {
     "users": "users.json",
     "products": "products.json",

@@ -326,7 +326,7 @@ melos run e2eWebHeaded            # visible browser
 melos run e2eAndroid              # connected Android device
 
 melos run e2eWebSmoke             # only --tags "smoke_test"
-melos run e2eWebNegative          # only --tags "negativo"
+melos run e2eWebNegative          # only --tags "negative"
 ```
 
 The report is built **even when the suite fails** — that is when it gets

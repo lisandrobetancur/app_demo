@@ -59,10 +59,10 @@ jobs:
       # api-level 31 is Android 12, the same as the physical device the suite
       # was verified on. `run_android.sh` needs no argument: it takes the first
       # authorised device, and the emulator is the only one here.
-      # Limpia lo de la corrida anterior, corre, y genera el reporte — las tres
-      # cosas, igual que en web. El reporte se construye también cuando la
-      # suite falla, y el paso sigue saliendo en rojo porque el script propaga
-      # el código de salida de la suite.
+      # Cleans up after the previous run, runs, and builds the report — all
+      # three, same as on web. The report is built even when the suite fails,
+      # and the step still exits red because the script propagates the suite's
+      # exit code.
       - name: Run the suite on an emulator and build the report
         uses: reactivecircus/android-emulator-runner@v2
         with:

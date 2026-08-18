@@ -51,8 +51,8 @@ void main() {
       Log.trace('no');
       Log.debug('no');
       Log.info('no');
-      Log.warn('sí');
-      Log.error('sí');
+      Log.warn('yes');
+      Log.error('yes');
     });
 
     expect(traces.map((Map<String, Object?> t) => t['level']), <String>[
@@ -68,11 +68,11 @@ void main() {
 
     final List<Map<String, Object?>> traces = tracesFrom(() {
       Log.debug('detalle');
-      Log.info('narración');
+      Log.info('narration');
     });
 
     expect(traces.map((Map<String, Object?> t) => t['message']), <String>[
-      'narración',
+      'narration',
     ]);
   });
 
@@ -81,11 +81,11 @@ void main() {
     // would be read as a trace followed by a line of garbage, so the payload
     // is encoded rather than interpolated.
     final List<Map<String, Object?>> traces = tracesFrom(
-      () => Log.error('falló\nen dos líneas'),
+      () => Log.error('failed\non two lines'),
     );
 
     expect(traces, hasLength(1));
-    expect(traces.single['message'], 'falló\nen dos líneas');
+    expect(traces.single['message'], 'failed\non two lines');
   });
 
   test('structured data travels alongside the message', () {
@@ -109,12 +109,12 @@ void main() {
 
   test('the buffered lines read as a log', () {
     tracesFrom(() {
-      Log.info('primero');
-      Log.warn('segundo');
+      Log.info('first');
+      Log.warn('second');
     });
 
     expect(Log.emitted, hasLength(2));
-    expect(Log.emitted.first, contains('[INFO] primero'));
-    expect(Log.emitted.last, contains('[WARN] segundo'));
+    expect(Log.emitted.first, contains('[INFO] first'));
+    expect(Log.emitted.last, contains('[WARN] second'));
   });
 }

@@ -1,21 +1,21 @@
-# El vocabulario de tags de la suite E2E.
+# The tag vocabulary of the E2E suite.
 #
-# Declararlos aquí no es lo que hace que el filtrado funcione — eso lo hace
-# Patrol, que aplica `--tags` al generar el bundle de pruebas. Esto es la otra
-# mitad: `package:test` avisa cuando un test usa un tag que nadie declaró, y
-# ese aviso es justamente lo que atrapa el `smoke` escrito donde iba
-# `smoke_test`. Un filtro mal escrito no falla: selecciona menos pruebas de
-# las que quien lo escribió cree.
+# Declaring them here is not what makes filtering work — Patrol does that, by
+# applying `--tags` while it generates the test bundle. This is the other half:
+# `package:test` warns when a test uses a tag nobody declared, and that warning
+# is exactly what catches a `smoke` written where `smoke_test` was meant. A
+# misspelled filter does not fail: it selects fewer tests than whoever wrote it
+# believes.
 #
-# Las constantes viven en `Tags`, en patrol_kit. Esta lista debe reflejarlas.
+# The constants live in `Tags`, in patrol_kit. This list must mirror them.
 tags:
   smoke_test:
-    description: La suite corta; decide si la build merece más pruebas.
+    description: The short suite; decides whether the build is worth testing further.
   regression:
-    description: La suite completa.
-  exito:
-    description: Camino feliz — se le pide al producto que haga su trabajo.
-  negativo:
-    description: Camino negativo — la aserción es sobre el rechazo.
-  lento:
-    description: Suficientemente lento como para excluirlo de un ciclo rápido.
+    description: The full suite.
+  success:
+    description: Happy path — the product is asked to do its job and does.
+  negative:
+    description: Negative path — the assertion is on the refusal.
+  slow:
+    description: Slow enough to be worth excluding from a quick loop.
