@@ -398,6 +398,98 @@ table.step-table.nested td { border-bottom: 1px solid #f2f2f2; }
   border-left-style: solid;
   padding-left: 1em;
 }
+
+/* ── Screenshots gallery ────────────────────────────────────────────── */
+
+.screenshot-failure {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-left-width: 5px;
+  border-radius: 4px;
+  margin: 0.75em 0;
+  padding: 0.75em 1em;
+}
+
+.screenshot-failure pre {
+  font-size: 0.85em;
+  white-space: pre-wrap;
+  color: #555;
+}
+
+.gallery-link { margin-bottom: 0.75em; font-size: 0.9em; }
+
+.carousel { max-width: 800px; margin: 0 auto; }
+
+.slides {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 320px;
+  background: #fbfbfa;
+  border: 1px solid #eee;
+  border-radius: 4px;
+}
+
+.slide { text-align: center; padding: 1em; width: 100%; }
+.slide[hidden] { display: none; }
+
+.slide img {
+  max-width: 100%;
+  max-height: 60vh;
+  border: 1px solid #ddd;
+  background: #fff;
+}
+
+.slide figcaption {
+  margin-top: 0.75em;
+  color: #555;
+  font-size: 0.9em;
+}
+
+.carousel-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1em;
+  margin-top: 1em;
+}
+
+.carousel-prev, .carousel-next {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 50%;
+  color: #428bca;
+  cursor: pointer;
+  font-size: 1.4em;
+  line-height: 1;
+  width: 2em;
+  height: 2em;
+}
+
+.carousel-prev:hover, .carousel-next:hover { background: #f0f6fb; }
+.carousel-prev:disabled, .carousel-next:disabled {
+  color: #ccc;
+  cursor: default;
+  background: #fff;
+}
+
+.bullets { display: flex; flex-wrap: wrap; gap: 0.35em; }
+
+.bullet {
+  background: lightgrey;
+  border: none;
+  border-radius: 50%;
+  color: #000;
+  cursor: pointer;
+  font-size: 0.75em;
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
+  padding: 0;
+  text-align: center;
+}
+
+.bullet.active { background: #428bca; color: #fff; }
 ''';
 
 /// The site's only script: the dashboard's tab switch and the detail page's
@@ -422,5 +514,46 @@ document.querySelectorAll(".caret").forEach(function (caret) {
     section.hidden = !section.hidden;
     caret.classList.toggle("open", !section.hidden);
   });
+});
+
+document.querySelectorAll(".carousel").forEach(function (carousel) {
+  var slides = carousel.querySelectorAll(".slide");
+  var bullets = carousel.querySelectorAll(".bullet");
+  var previous = carousel.querySelector(".carousel-prev");
+  var next = carousel.querySelector(".carousel-next");
+  if (!slides.length) { return; }
+
+  var current = 0;
+
+  function show(index) {
+    current = Math.max(0, Math.min(index, slides.length - 1));
+    slides.forEach(function (slide, i) { slide.hidden = i !== current; });
+    bullets.forEach(function (bullet, i) {
+      bullet.classList.toggle("active", i === current);
+    });
+    if (previous) { previous.disabled = current === 0; }
+    if (next) { next.disabled = current === slides.length - 1; }
+  }
+
+  bullets.forEach(function (bullet) {
+    bullet.addEventListener("click", function () {
+      show(parseInt(bullet.dataset.goto, 10) || 0);
+    });
+  });
+  if (previous) {
+    previous.addEventListener("click", function () { show(current - 1); });
+  }
+  if (next) {
+    next.addEventListener("click", function () { show(current + 1); });
+  }
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "ArrowLeft") { show(current - 1); }
+    if (event.key === "ArrowRight") { show(current + 1); }
+  });
+
+  // A thumbnail links straight to its own capture: ?screenshot=N opens the
+  // gallery on that slide rather than on the first.
+  var requested = new URLSearchParams(window.location.search).get("screenshot");
+  show(parseInt(requested, 10) || 0);
 });
 ''';

@@ -12,8 +12,8 @@ const String tinyPngBase64 =
     'z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
 
 /// The stdout of a passing test: scenario metadata, params, tags, one
-/// business step holding one interaction and one assertion, a screenshot
-/// chunked in two, and a trace with an info and a warn line.
+/// business step holding one interaction and one assertion, two screenshots
+/// (one whole, one chunked in two), and a trace with an info and a warn line.
 String passingStdout() {
   final String chunk1 = tinyPngBase64.substring(0, tinyPngBase64.length ~/ 2);
   final String chunk2 = tinyPngBase64.substring(tinyPngBase64.length ~/ 2);
@@ -22,6 +22,8 @@ String passingStdout() {
     'PATROL_PARAM ${jsonEncode(<String, String>{'name': 'User', 'value': 'ana@market.demo'})}',
     'PATROL_TAGS ${jsonEncode(<String>['smoke_test', 'success'])}',
     'PATROL_STEP|begin|1|Log in as the demo user',
+    // A capture that fits in one chunk: the other shape of the marker.
+    'PATROL_SHOT|before_login|0|1|$tinyPngBase64',
     'PATROL_LOG ${jsonEncode(<String, String>{'type': 'step', 'timestamp': '2026-08-18T10:00:01.000Z', 'action': 'tap login_submit_button', 'status': 'start'})}',
     'PATROL_LOG ${jsonEncode(<String, String>{'type': 'step', 'timestamp': '2026-08-18T10:00:02.500Z', 'action': 'tap login_submit_button', 'status': 'success'})}',
     'PATROL_ASSERT ${jsonEncode(<String, String>{'name': 'the dashboard greets the user', 'status': 'passed', 'expected': 'Hola, Ana', 'actual': 'Hola, Ana'})}',

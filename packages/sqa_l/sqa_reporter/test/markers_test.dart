@@ -47,9 +47,9 @@ void main() {
     test('a screenshot whose last chunk lands after the step closed still '
         'belongs to that step', () {
       final StepNode business = parsed.steps.first;
-      expect(business.shots, hasLength(1));
-      expect(business.shots.single.name, 'after_login');
-      expect(business.shots.single.bytes, isNotEmpty);
+      expect(business.shots, hasLength(2));
+      expect(business.shots.last.name, 'after_login');
+      expect(business.shots.last.bytes, isNotEmpty);
       expect(parsed.orphanShots, isEmpty);
     });
 

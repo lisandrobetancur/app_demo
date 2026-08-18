@@ -119,10 +119,11 @@ void main() {
     test('hang off the step that captured them, by the same file the JSON '
         'references', () {
       final Map<CapturedShot, String> names = shotNamesFor(run.cases.first);
-      expect(names, hasLength(1));
-      final String file = names.values.single;
-      expect(passingPage, contains('src="$file"'));
-      expect(File('${results.path}/$file').existsSync(), isTrue);
+      expect(names, hasLength(2));
+      for (final String file in names.values) {
+        expect(passingPage, contains('src="$file"'));
+        expect(File('${results.path}/$file').existsSync(), isTrue);
+      }
     });
 
     test('the column is absent when a test captured nothing', () {

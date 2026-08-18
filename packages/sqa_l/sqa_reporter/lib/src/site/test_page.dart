@@ -16,6 +16,7 @@ import '../model.dart';
 import '../serenity_writer.dart';
 import 'dashboard.dart' show compoundDuration, escapeHtml, resultIcon;
 import 'page_chrome.dart';
+import 'screenshots_page.dart' show screenshotsReportName;
 import 'site_assets.dart';
 
 /// Writes one detail page per case into [outputDir], beside the JSON results
@@ -53,9 +54,19 @@ String testPageHtml(
   final List<StepNode> steps = presentedStepsOf(testCase);
   final bool hasShots = shotNames.isNotEmpty;
 
+  // A thumbnail opens the gallery *at its own capture*, so the index a shot
+  // has there is the index it links to here. Same traversal, same numbers.
+  final List<Capture> captures = capturesOf(testCase);
+  final Map<CapturedShot, int> slideOf = Map<CapturedShot, int>.identity();
+  for (int i = 0; i < captures.length; i += 1) {
+    slideOf[captures[i].shot] = i;
+  }
+
   final _StepTable table = _StepTable(
     hasShots: hasShots,
     shotNames: shotNames,
+    slideOf: slideOf,
+    gallery: screenshotsReportName(testCase),
     runLog: testCase.logLines,
   );
 
@@ -74,6 +85,14 @@ String testPageHtml(
     ..write(menuBar(generatedAt, homeActive: false))
     ..write(_titleBar(testCase, result, feature, platform))
     ..writeln('<div class="card standalone">')
+    ..write(
+      hasShots
+          ? '<p class="gallery-link"><a href="'
+                '${screenshotsReportName(testCase)}">'
+                'View all ${captures.length} screenshot'
+                '${captures.length == 1 ? '' : 's'}</a></p>\n'
+          : '',
+    )
     ..write(table.render(steps))
     ..write(_failure(testCase, result))
     ..writeln('</div>')
@@ -141,11 +160,15 @@ class _StepTable {
   _StepTable({
     required this.hasShots,
     required this.shotNames,
+    required this.slideOf,
+    required this.gallery,
     required this.runLog,
   });
 
   final bool hasShots;
   final Map<CapturedShot, String> shotNames;
+  final Map<CapturedShot, int> slideOf;
+  final String gallery;
   final List<String> runLog;
   int _section = 0;
 
@@ -225,7 +248,8 @@ class _StepTable {
 
   String _thumbs(StepNode step) => <String>[
     for (final CapturedShot shot in step.shots)
-      '<a href="${shotNames[shot]}">'
+      '<a href="$gallery?screenshot=${slideOf[shot] ?? 0}" '
+          'title="Open the screenshots gallery here">'
           '<img class="screenshot" src="${shotNames[shot]}" '
           'alt="${escapeHtml(shot.name)}" width="48" height="48"/></a>',
   ].join(' ');

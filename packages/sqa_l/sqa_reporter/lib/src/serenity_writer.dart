@@ -254,25 +254,43 @@ List<StepNode> presentedStepsOf(RunCase testCase) {
   return steps;
 }
 
-/// One file name per captured screenshot — `<digest12>-NN-<slug>.png`,
-/// numbered in the order the JSON writer visits them (a step's children
-/// before its own captures). Shared by the JSON writer and the HTML pages so
-/// both always reference the same files.
-Map<CapturedShot, String> shotNamesFor(RunCase testCase) {
-  final String digest = reportDigest(testCase).substring(0, 12);
-  final Map<CapturedShot, String> names = Map<CapturedShot, String>.identity();
-  int index = 0;
-  void visit(StepNode step) {
-    step.children.forEach(visit);
+/// One capture, with the step that took it and the depth it sits at — the
+/// gallery needs all three, and the order is the one every surface uses.
+typedef Capture = ({CapturedShot shot, StepNode step, int depth});
+
+/// Every capture in [testCase], in the order the JSON writer visits them: a
+/// step's children before its own captures. One traversal, used by the JSON
+/// writer, the step table and the gallery, so a capture has the same index
+/// and the same file name wherever it appears.
+List<Capture> capturesOf(RunCase testCase) {
+  final List<Capture> captures = <Capture>[];
+  void visit(StepNode step, int depth) {
+    for (final StepNode child in step.children) {
+      visit(child, depth + 1);
+    }
     for (final CapturedShot shot in step.shots) {
-      index += 1;
-      names[shot] =
-          '$digest-${index.toString().padLeft(2, '0')}-'
-          '${slugOf(shot.name)}.png';
+      captures.add((shot: shot, step: step, depth: depth));
     }
   }
 
-  presentedStepsOf(testCase).forEach(visit);
+  for (final StepNode step in presentedStepsOf(testCase)) {
+    visit(step, 0);
+  }
+  return captures;
+}
+
+/// One file name per captured screenshot — `<digest12>-NN-<slug>.png`, in
+/// [capturesOf] order. Shared by the JSON writer and the HTML pages so both
+/// always reference the same files.
+Map<CapturedShot, String> shotNamesFor(RunCase testCase) {
+  final String digest = reportDigest(testCase).substring(0, 12);
+  final Map<CapturedShot, String> names = Map<CapturedShot, String>.identity();
+  final List<Capture> captures = capturesOf(testCase);
+  for (int i = 0; i < captures.length; i += 1) {
+    names[captures[i].shot] =
+        '$digest-${(i + 1).toString().padLeft(2, '0')}-'
+        '${slugOf(captures[i].shot.name)}.png';
+  }
   return names;
 }
 

@@ -159,11 +159,18 @@ void main() {
       final Map<String, Object?> business =
           steps.first! as Map<String, Object?>;
       final List<Object?> shots = business['screenshots']! as List<Object?>;
-      final Map<String, Object?> shot = shots.single! as Map<String, Object?>;
-      final String name = shot['screenshot']! as String;
-      expect(name, isNot(contains('/')), reason: 'File serialiser: bare name');
-      expect(File('${out.path}/results/$name').existsSync(), isTrue);
-      expect(shot['timeStamp'], isA<int>());
+      expect(shots, hasLength(2));
+      for (final Object? raw in shots) {
+        final Map<String, Object?> shot = raw! as Map<String, Object?>;
+        final String name = shot['screenshot']! as String;
+        expect(
+          name,
+          isNot(contains('/')),
+          reason: 'File serialiser: bare name',
+        );
+        expect(File('${out.path}/results/$name').existsSync(), isTrue);
+        expect(shot['timeStamp'], isA<int>());
+      }
     });
 
     test('an assertion folds expected/actual into its description (G2)', () {

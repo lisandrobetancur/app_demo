@@ -20,6 +20,8 @@ export 'src/markers.dart'
 export 'src/model.dart';
 export 'src/serenity_writer.dart'
     show
+        Capture,
+        capturesOf,
         completeNameOf,
         htmlReportName,
         isoUtc,
@@ -42,5 +44,7 @@ export 'src/site/dashboard.dart'
         resultIcon,
         writeDashboard;
 export 'src/site/page_chrome.dart' show timestampOf;
+export 'src/site/screenshots_page.dart'
+    show screenshotsPageHtml, screenshotsReportName, writeScreenshotPages;
 export 'src/site/site_assets.dart' show resultColors, resultGlyphs;
 export 'src/site/test_page.dart' show testPageHtml, writeTestPages;

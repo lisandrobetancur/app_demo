@@ -64,7 +64,7 @@ void main() {
     test('parses the same markers into the same tree as the web path', () {
       final RunCase testCase = run.cases.single;
       expect(testCase.steps.first.name, 'Log in as the demo user');
-      expect(testCase.steps.first.shots, hasLength(1));
+      expect(testCase.steps.first.shots, hasLength(2));
       expect(testCase.meta?.feature, 'Authentication');
     });
 

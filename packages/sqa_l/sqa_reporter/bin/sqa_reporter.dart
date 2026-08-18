@@ -61,13 +61,21 @@ void main(List<String> argv) {
     Directory(args.output),
     platform: args.platform,
   );
+  final List<File> galleries = writeScreenshotPages(
+    run,
+    Directory(args.output),
+    platform: args.platform,
+  );
 
   stdout
     ..writeln(
       'Wrote $written SQA Reporter result(s) to ${args.output} '
       '(${args.platform})',
     )
-    ..writeln('Dashboard: ${index.path} (${pages.length} test page(s))');
+    ..writeln(
+      'Dashboard: ${index.path} (${pages.length} test page(s), '
+      '${galleries.length} gallery page(s))',
+    );
   if (written == 0) {
     exitCode = 1;
   }
