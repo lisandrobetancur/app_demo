@@ -321,13 +321,23 @@ runs, and builds the report** — three things in one command, the way Serenity'
 `aggregate` is part of the build rather than a step someone has to remember:
 
 ```bash
-melos run e2eWeb                  # headless Chrome
+melos run e2eWeb                  # headless, Playwright's bundled Chromium
 melos run e2eWebHeaded            # visible browser
 melos run e2eAndroid              # connected Android device
 
 melos run e2eWebSmoke             # only --tags "smoke_test"
 melos run e2eWebNegative          # only --tags "negative"
+
+melos run e2eWebChrome            # installed Google Chrome
+melos run e2eWebEdge              # installed Microsoft Edge
 ```
+
+The last two swap Playwright's bundled Chromium for a browser installed on the
+machine, through `run_web.sh --browser=<channel>`; `chrome-beta`, `msedge-dev`
+and the other channels work the same way. They are all Chromium builds — Patrol
+sets no `browserName` and defines no Playwright projects, so Firefox and WebKit
+are not reachable, and this is **not** cross-engine coverage. CI stays on the
+bundled Chromium, which is the one it is guaranteed to have.
 
 The report is built **even when the suite fails** — that is when it gets
 opened — and the command still exits non-zero, so CI does not read a red run

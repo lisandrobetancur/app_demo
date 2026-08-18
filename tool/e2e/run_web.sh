@@ -2,7 +2,7 @@
 #
 # Runs the E2E suite in the browser and leaves the report built.
 #
-#   tool/e2e/run_web.sh [--headed]
+#   tool/e2e/run_web.sh [--headed] [--tags=<expression>] [--browser=<channel>]
 #
 # Three things in one command, in this order: clean up after the previous run,
 # run, and build the report. This is Serenity's `aggregate` model — the report
@@ -28,13 +28,30 @@ APP_DIR="packages/apps/market_app"
 
 HEADLESS=true
 TAGS=()
+BROWSER=""
+
+# The browsers Playwright will accept as a `channel`. Checked here rather than
+# left to Playwright because the failure is expensive and late: the app is built
+# and served first, so a typo surfaces a minute in, from inside the runner,
+# worded in Playwright's terms rather than this script's.
+CHANNELS="chrome chrome-beta chrome-dev chrome-canary msedge msedge-beta msedge-dev msedge-canary"
+
 for arg in "$@"; do
   case "$arg" in
     --headed) HEADLESS=false ;;
     --tags=*) TAGS=(--tags "${arg#--tags=}") ;;
+    --browser=*)
+      BROWSER="${arg#--browser=}"
+      if [[ " $CHANNELS " != *" $BROWSER "* ]]; then
+        echo "unknown browser: $BROWSER" >&2
+        echo "choose one of: $CHANNELS" >&2
+        echo "(all of them are Chromium builds — Patrol exposes no other engine)" >&2
+        exit 2
+      fi
+      ;;
     *)
       echo "unrecognized argument: $arg" >&2
-      echo "usage: tool/e2e/run_web.sh [--headed] [--tags=<expression>]" >&2
+      echo "usage: tool/e2e/run_web.sh [--headed] [--tags=<expression>] [--browser=<channel>]" >&2
       exit 2
       ;;
   esac
@@ -62,9 +79,26 @@ OUT="$PWD/build/e2e/web"
 # Allure converter and `junit` for CI. The `json` one is not optional:
 # Playwright's per-test capture is the only channel carrying the screenshot
 # markers out of the browser.
+#
+# `--browser` reaches Playwright as an environment variable and not as a flag,
+# because `patrol_cli` has none: of its twenty-odd `--web-*` options not one
+# selects a browser. Patrol's own playwright.config.ts does read
+# `PATROL_WEB_CHANNEL`, and the CLI spreads the parent environment into the
+# process it spawns, so exporting it here arrives.
+#
+# Unset by default, deliberately. With no channel Playwright uses the Chromium
+# it ships, which is the one CI has and the one that gets a reproducible run.
+# A channel asks for a browser installed on this machine instead.
+#
+# Note what `--device chrome` above is NOT: that is Flutter's device — how the
+# app is built and served — not the browser driving the test. The two words
+# being the same is a coincidence worth not tripping over.
 status=0
 set +e
 (
+  if [[ -n "$BROWSER" ]]; then
+    export PATROL_WEB_CHANNEL="$BROWSER"
+  fi
   cd "$APP_DIR" && patrol test \
     --device chrome \
     "${TAGS[@]+"${TAGS[@]}"}" \
