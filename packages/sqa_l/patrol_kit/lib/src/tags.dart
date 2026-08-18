@@ -8,6 +8,7 @@ import 'package:meta/meta.dart';
 import 'package:patrol/patrol.dart';
 import 'package:patrol_finders/patrol_finders.dart' as finders;
 
+import 'failure_report.dart';
 import 'log.dart';
 
 /// Marker the report generator reads to label a test with its tags.
@@ -101,6 +102,10 @@ void e2eTest(
   ),
   PlatformAutomatorConfig? platformAutomatorConfig,
 }) {
+  // Installed here, while the test is being registered rather than while it
+  // runs: a failed expectation prints as its message, not as forty frames of
+  // async plumbing. See `failure_report.dart`.
+  useCompactFailureReports();
   patrolTest(
     description,
     // `dynamic` on Patrol's side; an empty list would mean "tagged with

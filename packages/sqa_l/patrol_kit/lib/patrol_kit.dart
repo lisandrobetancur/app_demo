@@ -25,6 +25,7 @@ export 'src/base_page.dart';
 export 'src/base_steps.dart';
 export 'src/consequence.dart';
 export 'src/element.dart';
+export 'src/failure_report.dart';
 export 'src/locator.dart';
 export 'src/log.dart';
 export 'src/money.dart';
