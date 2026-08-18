@@ -121,6 +121,14 @@ melos:
     e2eWebSmoke: bash tool/e2e/run_web.sh --tags=smoke_test
     e2eWebNegative: bash tool/e2e/run_web.sh --tags=negative
 
+    # On a browser installed here rather than the Chromium Playwright ships.
+    # Useful for the differences a bundled build hides — codecs, fonts, the
+    # printing path — but both are Chromium: Patrol exposes no other engine, so
+    # this is not cross-engine coverage and should not be mistaken for it.
+    # Needs the browser present, which is why CI stays on the default.
+    e2eWebChrome: bash tool/e2e/run_web.sh --browser=chrome
+    e2eWebEdge: bash tool/e2e/run_web.sh --browser=msedge
+
     # Cleanup only, for when you want to zero a platform without running
     # anything.
     e2eClean: bash tool/e2e/clean.sh web && bash tool/e2e/clean.sh android
