@@ -201,25 +201,28 @@ when a step failed on CI. Two things override it.
 | | Passed | Broke |
 |---|---|---|
 | `Capture.auto` (default) | frame | frame |
-| `Capture.aroundActions` | frame, plus two per interaction | frame |
+| `Capture.aroundActions` | frame, plus two per click and per clear | frame |
 | `Capture.onFailure` | — | frame |
 | `Capture.none` | — | — |
 
-**`Capture.aroundActions` brackets every interaction of the step**, which is
-what you want when the interesting screen is the one an action destroys — a
-form as it was filled, a menu before the tap that closes it:
+**`Capture.aroundActions` brackets the clicks and the clears of a step**,
+which is what you want when the interesting screen is the one an action
+destroys:
 
 ```dart
 await step('Log in', capture: Capture.aroundActions, () async {
-  await login.email.type(email);       // frame before, frame after
-  await login.password.type(password); // frame before, frame after
-  await login.submit.click();          // frame before, frame after
+  await login.email.type(email);       // no frames
+  await login.password.type(password); // no frames
+  await login.submit.click();          // frame before ← the form as filled
+                                       // frame after  ← what it produced
 });
 ```
 
-Two frames per interaction, so it is asked for rather than given. Only
-interactions are bracketed — reading a value changes nothing, and two identical
-frames around a getter are noise.
+Typing is not bracketed on purpose: a field with text in it is the same screen
+with text in it, and a frame either side of every field would bury the two that
+matter. The filled form is still captured — it is the *before* of the click
+that sends it. Reading a value is out because it changes nothing, and
+`scrollTo` because what it produces is the next interaction's *before*.
 
 **`capturing(action, before:, after:)` brackets one action**, with captions you
 write, for when the whole step does not need it:

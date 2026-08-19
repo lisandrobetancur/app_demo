@@ -45,10 +45,7 @@ class UiElement {
   /// Named `type` rather than `sendKeys` because it *replaces* the content
   /// instead of appending to it — which is what `enterText` does, and calling
   /// it `sendKeys` would promise the opposite.
-  Future<void> type(String text) => _acting(
-    'type "$text" into ${loc.description}',
-    () => finder.enterText(text),
-  );
+  Future<void> type(String text) => finder.enterText(text);
 
   /// Empties the field.
   Future<void> clear() =>
@@ -57,10 +54,15 @@ class UiElement {
   /// Runs an interaction, capturing either side of it when the step asked
   /// for that — see [Capture.aroundActions].
   ///
-  /// Only interactions go through here. Reading a value changes nothing, and
-  /// two identical frames around a getter would be noise; `scrollTo` is left
-  /// out for the same reason, since what it produces is the next
-  /// interaction's *before*.
+  /// Only the actions that *consume* a screen go through here: a click and a
+  /// clear. Typing does not — a field with text in it is the same screen with
+  /// text in it, and bracketing every field would bury the frames that matter
+  /// under a dozen near-identical ones. The filled form is still captured:
+  /// it is the *before* of the click that submits it, which is the frame
+  /// somebody actually opens the report to see.
+  ///
+  /// Reading a value is out for a plainer reason — it changes nothing — and
+  /// `scrollTo` because what it produces is the next interaction's *before*.
   Future<T> _acting<T>(String what, Future<T> Function() body) =>
       ActionCapture.enabled
       ? captureAround(

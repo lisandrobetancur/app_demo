@@ -51,13 +51,17 @@ enum Capture {
   /// A frame when the step ends, and another if it breaks. The default.
   auto,
 
-  /// The default, plus a frame either side of **every interaction** the step
-  /// performs — each click, each field typed into, each one cleared.
+  /// The default, plus a frame either side of every **click** and every
+  /// **clear** the step performs.
   ///
-  /// For the steps where what vanishes is the point: a form as it was filled,
-  /// a menu before the tap that closes it, a field before it is overwritten.
-  /// Costs two frames per interaction, which is why it is asked for rather
-  /// than given.
+  /// For the steps where what vanishes is the point: the form as it was
+  /// filled, captured as the *before* of the click that sends it; the menu
+  /// before the tap that closes it; the field before it is emptied.
+  ///
+  /// Typing is deliberately not bracketed. A field with text in it is the
+  /// same screen with text in it, and a frame either side of every keystroke
+  /// target would bury the two that matter under a dozen near-identical
+  /// ones.
   aroundActions,
 
   /// Nothing while the step behaves; a frame if it breaks.
