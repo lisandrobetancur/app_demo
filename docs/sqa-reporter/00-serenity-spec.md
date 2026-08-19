@@ -271,10 +271,17 @@ works from `file://`.
 that nothing of Serenity's exists anywhere in the product — and copying files
 verbatim would oblige carrying Serenity's copyright notice, which contradicts
 that. The inventory above stays as a *read-only reference* for what the pages
-load; the working set becomes stock Bootstrap, bootstrap-icons, DataTables and
-Chart.js obtained from their own distributions (MIT and similar), plus our own
-stylesheet. Layout and structure are followed by eye; formats and field names
-are not protected material.
+load. Layout and structure are followed by eye; formats and field names are not
+protected material.
+
+**What was built instead, recorded here because it went further than this
+decision did:** no third-party library at all. The first plan was stock
+Bootstrap, bootstrap-icons, DataTables and Chart.js from their own
+distributions; what shipped is one authored stylesheet, CSS-only charts (a
+conic-gradient doughnut and flex bars) and about sixty lines of our own script
+for the table's filter, sort and pagination. So the generated site fetches
+nothing, bundles nothing, and carries no third-party notice — it opens from
+`file://` with no network at all.
 
 ---
 
@@ -292,9 +299,10 @@ What it means for this work, stated plainly:
   to the copied material, keep existing copyright notices, and state that
   changes were made. One `LICENSE`/`NOTICE` file under the asset directory
   satisfies this.
-- The bundled third-party libraries (Bootstrap, jQuery, DataTables, Chart.js…)
-  carry their own permissive licences (MIT/similar); their notices travel with
-  their files.
+- Serenity's own bundled third-party libraries (Bootstrap, jQuery, DataTables,
+  Chart.js…) carry their own permissive licences (MIT/similar), and their
+  notices travel with their files. Ours bundles none of them, so none of this
+  applies to what we ship.
 - Apache 2.0 grants **no trademark rights**: the product must not be presented
   as "Serenity BDD". The planned rename already covers this.
 
@@ -303,8 +311,9 @@ because no Serenity file is redistributed. The product is built clean: own
 CSS over stock MIT libraries, Serenity read for structure and schema only.
 The generated site, the package and its output contain no occurrence of the
 string "Serenity" in any casing; the report titles itself **SQA Reporter**,
-and the project-name slot reads **Test e2e Web** or **Test e2e Mobile** by
-platform. Serenity is credited in `docs/` as the design source, which is
+and the project-name slot reads **Web E2E Test Report**, **Android E2E Test
+Report** or **iOS E2E Test Report** by platform — derived from the run, with
+no way to set it. Serenity is credited in `docs/` as the design source, which is
 honesty, not an obligation.
 
 *(A reading of the licence, not legal advice.)*

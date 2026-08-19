@@ -4,9 +4,14 @@ Paste everything below the line into Claude Code (or another agent), opened on
 the `app_demo` repository. It is written to run in phases, with a mandatory stop
 between each one.
 
-> Written while a second, Node-based report pipeline was still in place. That
-> pipeline has since been removed and this generator is the only one; the
-> references below to "the existing pipeline" are read as history.
+> Read as a record of what was asked, not as a description of what exists.
+> Three things moved after it was written: the second, Node-based report
+> pipeline it tells you to leave alone has been removed and this generator is
+> the only one; the report is titled **Web / Android / iOS E2E Test Report**
+> rather than "Test e2e Web"; and no third-party library is used at all — the
+> stylesheet, the charts and the table's behaviour are all authored here.
+> `docs/sqa-reporter/00-serenity-spec.md` and the README describe what is
+> actually built.
 
 ---
 
