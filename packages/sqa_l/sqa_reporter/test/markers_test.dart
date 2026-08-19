@@ -35,6 +35,46 @@ void main() {
       );
     });
 
+    test('a device on another timezone does not make the test hours long', () {
+      // The real defect, from a published run: the suite pins the browser to
+      // `--web-timezone=America/Bogota`, Patrol stamps its markers with the
+      // browser's wall clock and no zone, and the generator read them as UTC.
+      // Every step landed five hours before the test that produced it, and
+      // widening the test to cover its steps stretched all six scenarios to
+      // "5h 0m" against a run that took barely a minute.
+      final int startUtc = DateTime.parse(
+        '2026-08-19T01:10:36.000Z',
+      ).millisecondsSinceEpoch;
+      // What the browser printed at that instant: the same moment, five hours
+      // earlier on the clock, with nothing saying so.
+      const String naive = '2026-08-18T20:10:41.000';
+      final MarkerParse shifted = parseMarkers('''
+PATROL_STEP|begin|1|Log in as the demo user
+PATROL_LOG {"type":"step","status":"start","action":"tap","timestamp":"$naive"}
+PATROL_LOG {"type":"step","status":"success","action":"tap","timestamp":"2026-08-18T20:10:43.000"}
+PATROL_STEP|end|1|passed
+''', startUtc);
+
+      final StepNode business = shifted.steps.single;
+      expect(
+        business.stop - business.start,
+        lessThan(const Duration(minutes: 1).inMilliseconds),
+        reason: 'seven seconds of tapping, not five hours',
+      );
+      expect(
+        business.start,
+        greaterThanOrEqualTo(startUtc),
+        reason: 'a step cannot begin before the test it belongs to',
+      );
+      expect(
+        business.children.single.start - startUtc,
+        const Duration(seconds: 5).inMilliseconds,
+        reason:
+            'the real five seconds of waiting survive the correction; '
+            'only the whole hours of timezone are taken out',
+      );
+    });
+
     test('an assertion is a leaf carrying expected and actual', () {
       final StepNode assertion = parsed.steps.first.children[1];
       expect(assertion.status, RunStatus.passed);

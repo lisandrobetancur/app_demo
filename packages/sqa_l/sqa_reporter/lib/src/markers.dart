@@ -51,6 +51,43 @@ final RegExp _ansi = RegExp('\x1B?\\[[0-9;]*m');
 /// Strips the ANSI colour codes Patrol writes into its log lines.
 String stripAnsi(String text) => text.replaceAll(_ansi, '');
 
+/// How far the marker stream's clock has to move to land on the transport's.
+///
+/// Patrol stamps its `PATROL_LOG` lines with the *device's* wall clock and no
+/// timezone: `2026-08-18T20:10:41.123` is whatever the phone or the browser
+/// thinks the time is, and reading it gives an instant only if you already
+/// know where that device was. The transport's own start — Playwright's
+/// `startTime`, which is real UTC — does not have that problem.
+///
+/// Mixing the two is what made a web run come out five hours long: the suite
+/// runs with `--web-timezone=America/Bogota`, so every marker read as UTC
+/// landed five hours before the test that produced it, and widening the test
+/// to cover its steps stretched it across the gap.
+///
+/// The drift between the first marker and the test's start is therefore two
+/// things added together: real elapsed time, in seconds, and a difference of
+/// timezones, which is always a whole number of quarter-hours — no zone on
+/// earth is offset by anything finer. Rounding to the nearest quarter-hour
+/// separates them: the timezone part comes out exactly and is removed, and the
+/// seconds of real waiting survive, which matters because that gap is the app
+/// launching before the first interaction.
+///
+/// Both clocks the same, as on a device log where the start comes from the
+/// stream itself: the drift is seconds, it rounds to zero, and nothing moves.
+///
+/// Bounded by what a timezone can actually be — the inhabited world spans
+/// UTC−12 to UTC+14 — so a drift larger than that is not a timezone and gets
+/// no correction. Something else is wrong then (a seeded clock in a test, a
+/// truncated log), and silently dragging every step across years to meet it
+/// would hide that rather than fix it.
+int _clockShift(int firstMarker, int startTime) {
+  const int quarterHour = 15 * 60 * 1000;
+  const int farthestZone = 15 * 60 * 60 * 1000;
+  final int shift =
+      ((firstMarker - startTime) / quarterHour).round() * quarterHour;
+  return shift.abs() > farthestZone ? 0 : shift;
+}
+
 /// Parses the markers out of [stdout].
 ///
 /// [startTime] seeds the clock: `PATROL_STEP` markers carry no timestamp of
@@ -58,6 +95,9 @@ String stripAnsi(String text) => text.replaceAll(_ansi, '');
 /// time seen in the `PATROL_LOG` stream. Wall-clock time here would date them
 /// at *parse* time, which put every business step outside its own test's
 /// range in the original converter.
+///
+/// [startTime] is also the reference the marker clock is put back onto when
+/// the two disagree — see [_clockShift].
 MarkerParse parseMarkers(String stdout, int startTime) {
   final List<StepNode> root = <StepNode>[];
   final List<StepNode> businessStack = <StepNode>[];
@@ -70,6 +110,9 @@ MarkerParse parseMarkers(String stdout, int startTime) {
   final List<String> logLines = <String>[];
   StepNode? lastClosedBusiness;
   int clock = startTime;
+  // Resolved from the first timestamped marker and then applied to every one
+  // that follows. See [_clockShift].
+  int? clockShift;
 
   List<StepNode> currentChildren() =>
       businessStack.isNotEmpty ? businessStack.last.children : root;
@@ -210,9 +253,12 @@ MarkerParse parseMarkers(String stdout, int startTime) {
     if (entry == null || entry['type'] != 'step') {
       continue;
     }
-    final int? at = DateTime.tryParse(
+    final int? stamped = DateTime.tryParse(
       '${entry['timestamp']}',
     )?.millisecondsSinceEpoch;
+    final int? at = stamped == null
+        ? null
+        : stamped - (clockShift ??= _clockShift(stamped, startTime));
     if (at != null) {
       clock = at;
     }
