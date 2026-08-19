@@ -92,7 +92,7 @@ String featuresHtml(
   for (final RequirementNode root in roots) {
     rows.write(_row(root, level: 0));
     for (final RequirementNode child in root.children) {
-      rows.write(_row(child, level: 1));
+      rows.write(_row(child, level: 1, under: root));
     }
   }
 
@@ -122,8 +122,22 @@ String featuresHtml(
       '$featureCount feature${featureCount == 1 ? '' : 's'}</div>',
     )
     ..writeln('<div class="card standalone">')
+    // A page whose job is to show everything still has to be searchable once
+    // "everything" is forty features. No pagination: paging a tree either
+    // orphans a feature from its epic or repeats the epic on every page, and
+    // on a page with one job, scrolling beats both.
+    ..writeln('<div class="feature-search">')
+    ..writeln(
+      '<label class="filter">'
+      '<input type="search" class="feature-filter" '
+      'placeholder="Filter features"/></label>',
+    )
+    ..writeln('<span class="filter-count" hidden></span>')
+    ..writeln('</div>')
     ..writeln('<div class="table-scroll">')
-    ..writeln('<table class="table requirements-table">')
+    ..writeln(
+      '<table class="table requirements-table" data-features="$featureCount">',
+    )
     ..writeln(
       // "Name" over a column that holds both epics and the features under
       // them, with the Type column beside it saying which is which.
@@ -237,12 +251,26 @@ String _summary(RequirementNode node) {
       '${rate == null ? 'none run' : '${rate.round()}% passing'}';
 }
 
-String _row(RequirementNode node, {required int level}) {
+String _row(
+  RequirementNode node, {
+  required int level,
+  RequirementNode? under,
+}) {
   final double? rate = node.passRate;
-  final String name = level == 0 && node.type == 'epic'
+  final bool isEpic = level == 0 && node.type == 'epic';
+  final String name = isEpic
       ? escapeHtml(node.name)
       : '<a href="${featureReportName(node)}">${escapeHtml(node.name)}</a>';
-  return '<tr class="requirement-row level-$level" id="${rowAnchorOf(node)}">'
+  // What the filter reads: which rows are features, what each is called, and
+  // which epic a feature belongs to — so a match can bring its heading with
+  // it instead of hanging in mid-air.
+  final String marks = isEpic
+      ? 'class="requirement-row level-$level epic-row" '
+            'data-epic="${rowAnchorOf(node)}"'
+      : 'class="requirement-row level-$level feature-row" '
+            'data-name="${escapeHtml(node.name.toLowerCase())}"'
+            '${under == null ? '' : ' data-of="${rowAnchorOf(under)}"'}';
+  return '<tr $marks id="${rowAnchorOf(node)}">'
       '<td class="requirement-name-column" '
       'style="padding-left:${0.75 + level * 1.5}em">$name</td>'
       '<td class="requirement-type">${node.type}</td>'
@@ -291,14 +319,35 @@ String _coverageBar(RequirementNode node) {
 /// A feature goes to its own page, which is where its scenarios are. An epic
 /// has no page — it is a branch — so it lands on its row in the tree, and
 /// reads as the heading of the features indented beneath it.
-String _coverageRow(RequirementNode node, {required int level}) {
+String _coverageRow(
+  RequirementNode node, {
+  required int level,
+  bool foldable = false,
+  bool open = true,
+  bool hidden = false,
+  RequirementNode? under,
+}) {
   final String href = node.type == 'feature'
       ? featureReportName(node)
       : 'features.html#${rowAnchorOf(node)}';
   final double? rate = node.passRate;
-  return '<tr class="requirement-row level-$level">'
+  // The caret belongs to the epic and folds the features under it, so the
+  // panel's height is set by how many epics a project has rather than by how
+  // many features. An epic with nothing under it gets no caret to press.
+  final String caret = foldable
+      ? '<button class="caret${open ? ' open' : ''}" '
+            'data-fold="${rowAnchorOf(node)}" '
+            'aria-expanded="${open ? 'true' : 'false'}" '
+            'title="Show or hide the features of ${escapeHtml(node.name)}">'
+            '▸</button> '
+      : '';
+  final String marks = under == null
+      ? ''
+      : ' data-under="${rowAnchorOf(under)}"';
+  return '<tr class="requirement-row level-$level"$marks'
+      '${hidden ? ' hidden' : ''}>'
       '<td style="padding-left:${0.75 + level * 1.5}em">'
-      '<a href="$href">${escapeHtml(node.name)}</a></td>'
+      '$caret<a href="$href">${escapeHtml(node.name)}</a></td>'
       '<td>${node.testCount}</td>'
       '<td>${rate == null ? '—' : '${rate.round()}%'}</td>'
       '<td class="coverage-column">${_coverageBar(node)}</td>'
@@ -319,11 +368,24 @@ String coverageOverview(List<RequirementNode> roots) {
   // after is *that* feature: its scenarios, its coverage. So the features are
   // here, each going straight to its own page, and the epic above them is the
   // grouping rather than the destination.
+  // Open while the panel is short enough to read at a glance, folded once it
+  // is not. Twelve rows is about what fits beside Key Statistics without the
+  // summary turning into a list; past that, an epic that has to be opened is
+  // cheaper than a column nobody scrolls.
+  final int rowCount =
+      roots.length +
+      roots.fold(
+        0,
+        (int sum, RequirementNode root) => sum + root.children.length,
+      );
+  final bool open = rowCount <= 12;
+
   final StringBuffer rows = StringBuffer();
   for (final RequirementNode root in roots) {
-    rows.write(_coverageRow(root, level: 0));
+    final bool foldable = root.children.isNotEmpty;
+    rows.write(_coverageRow(root, level: 0, foldable: foldable, open: open));
     for (final RequirementNode child in root.children) {
-      rows.write(_coverageRow(child, level: 1));
+      rows.write(_coverageRow(child, level: 1, under: root, hidden: !open));
     }
   }
   return '''

@@ -671,6 +671,40 @@ table.table tbody tr:hover { background: var(--hover); }
 
 .key-statistics td:nth-child(2n) { color: var(--title); font-weight: 600; }
 
+/* ── Feature search ─────────────────────────────────────────────────── */
+
+.feature-search {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.feature-search input {
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 0.4em 0.7em;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--ink);
+  min-width: 16em;
+}
+
+.feature-search input:focus { outline: 2px solid var(--data); outline-offset: 1px; }
+.filter-count { color: var(--muted); font-size: 0.85rem; }
+
+/* The caret that folds an epic in the coverage panel. Same control as the
+   step tree's, so a reader learns it once. */
+.requirement-row .caret {
+  color: var(--muted);
+  font-size: 0.85em;
+  transform: rotate(0deg);
+  transition: transform 0.12s ease;
+}
+
+.requirement-row .caret.open { transform: rotate(90deg); }
+
 /* ── Severity ───────────────────────────────────────────────────────── */
 
 /* Not a verdict, so it borrows none of the verdict colours: what a failure
@@ -1486,6 +1520,54 @@ document.querySelectorAll("[data-result]").forEach(function (target) {
     }
   });
 });
+
+// The coverage panel folds by epic, so its height is set by how many epics a
+// project has rather than by how many features. Paging it was the other
+// option and it breaks the thing it is paging: an epic ends up on one page
+// and its features on the next, each of them a row with no heading.
+document.querySelectorAll("[data-fold]").forEach(function (caret) {
+  caret.addEventListener("click", function () {
+    var open = !caret.classList.contains("open");
+    caret.classList.toggle("open", open);
+    caret.setAttribute("aria-expanded", open ? "true" : "false");
+    document
+      .querySelectorAll('[data-under="' + caret.dataset.fold + '"]')
+      .forEach(function (row) { row.hidden = !open; });
+  });
+});
+
+// The tree page filters by name. A feature that matches brings its epic with
+// it: a row that says "75% passing" under no heading is a fact about nothing.
+(function () {
+  var filter = document.querySelector(".feature-filter");
+  if (!filter) { return; }
+  var table = document.querySelector("[data-features]");
+  var count = document.querySelector(".filter-count");
+  var features = document.querySelectorAll("tr.feature-row");
+  var epics = document.querySelectorAll("tr.epic-row");
+  var total = table ? parseInt(table.dataset.features, 10) : features.length;
+
+  filter.addEventListener("input", function () {
+    var needle = filter.value.trim().toLowerCase();
+    var shown = 0;
+    var keep = {};
+    features.forEach(function (row) {
+      var hit = !needle || (row.dataset.name || "").indexOf(needle) >= 0;
+      row.hidden = !hit;
+      if (hit) {
+        shown += 1;
+        if (row.dataset.of) { keep[row.dataset.of] = true; }
+      }
+    });
+    epics.forEach(function (row) {
+      row.hidden = Boolean(needle) && !keep[row.dataset.epic];
+    });
+    if (count) {
+      count.hidden = !needle;
+      count.textContent = shown + " of " + total + " features";
+    }
+  });
+})();
 
 // The screenshot viewer: one per page, opened from anywhere that shows a
 // capture — the gallery's slides and the thumbnails on the step table.

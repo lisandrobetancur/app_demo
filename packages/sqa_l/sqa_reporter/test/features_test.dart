@@ -115,8 +115,14 @@ void main() {
     test('lists the whole tree, features indented under their epic', () {
       expect(featuresPage, contains('>Access<'));
       expect(featuresPage, contains('Authentication'));
-      expect(featuresPage, contains('class="requirement-row level-0"'));
-      expect(featuresPage, contains('class="requirement-row level-1"'));
+      expect(
+        featuresPage,
+        contains('class="requirement-row level-0 epic-row"'),
+      );
+      expect(
+        featuresPage,
+        contains('class="requirement-row level-1 feature-row"'),
+      );
       expect(featuresPage, contains('1 epic, 2 features'));
     });
 
@@ -128,6 +134,20 @@ void main() {
           isTrue,
         );
       }
+    });
+
+    test('can be searched, and a match keeps the epic it belongs to', () {
+      expect(featuresPage, contains('class="feature-filter"'));
+      // The three things the filter reads off the rows: which are features,
+      // what each is called, and whose they are.
+      expect(featuresPage, contains('data-name="authentication"'));
+      expect(featuresPage, contains('data-of="req-access"'));
+      expect(featuresPage, contains('data-features="2"'));
+      expect(
+        featuresPage,
+        isNot(contains('class="pagination"')),
+        reason: 'paging a tree orphans a feature from its epic',
+      );
     });
 
     test('is called Features wherever the reader can see it', () {
@@ -260,6 +280,20 @@ void main() {
       final RequirementNode feature = roots.first.children.single;
       expect(index, contains('href="${featureReportName(feature)}"'));
       expect(index, contains('class="requirement-row level-1"'));
+    });
+
+    test('an epic folds its features away, and a short panel starts open', () {
+      final String index = File(
+        '${results.path}/index.html',
+      ).readAsStringSync();
+      expect(index, contains('data-fold="req-access"'));
+      expect(index, contains('data-under="req-access"'));
+      expect(index, contains('aria-expanded="true"'));
+      expect(
+        index,
+        isNot(contains('data-under="req-access" hidden')),
+        reason: 'two rows need no folding to be readable',
+      );
     });
 
     test('the dashboard summarises coverage per root of the tree', () {
