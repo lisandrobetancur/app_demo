@@ -333,6 +333,19 @@ void main() {
   });
 
   group('the scenario table', () {
+    test('carries the severity each scenario declared, sorted worst first', () {
+      expect(
+        html,
+        contains('<th class="sortable" data-sort="number">Severity'),
+      );
+      expect(html, contains('<span class="severity blocker">blocker</span>'));
+      // Blocker sorts above everything, and a scenario that declared nothing
+      // sorts last — saying nothing is not the same as saying "normal".
+      expect(severityWeight('blocker'), lessThan(severityWeight('normal')));
+      expect(severityWeight(null), greaterThan(severityWeight('trivial')));
+      expect(severityLabel(null), contains('severity none'));
+    });
+
     test('lists both tests with feature, name and verdict', () {
       expect(html, contains('<td>Authentication</td>'));
       expect(html, contains('logs in with the seeded demo account'));

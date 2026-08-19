@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 
+import 'taxonomy.dart';
+
 /// Business metadata and case data, for the report.
 ///
 /// A report that lists `purchase_flow_test` and `login_test` tells a reader
@@ -36,14 +38,19 @@ const String _paramMarker = 'PATROL_PARAM';
 ///
 /// ```dart
 /// scenario(
-///   epic: 'Purchase',
-///   feature: 'Cart and checkout',
+///   feature: Features.checkout,
 ///   severity: Severity.blocker,
 /// );
 /// ```
 ///
-/// [epic] and [feature] are what the report groups by on its Features page,
-/// which reads by functionality instead of by file.
+/// [feature] is what the report groups by on its Features page, which reads by
+/// functionality instead of by file, and the epic above it comes with the
+/// feature — declared once in the project's catalogue rather than repeated at
+/// every scenario. See [Feature] for why that pairing lives there.
+///
+/// [epic] overrides it, for the rare case of a feature that genuinely belongs
+/// somewhere else in one particular run. Reach for it knowing that a feature
+/// filed under two epics is two rows in the report.
 ///
 /// There is deliberately no `story`. The taxonomy this borrows from offers one, but a story
 /// is a unit of work while a test is a unit of verification: the level pays
@@ -53,14 +60,14 @@ const String _paramMarker = 'PATROL_PARAM';
 /// stories — several tests to one — adding the parameter back is one line and
 /// breaks no caller.
 void scenario({
-  required String epic,
-  required String feature,
+  required Feature feature,
+  Epic? epic,
   Severity severity = Severity.normal,
   String? description,
 }) {
   _emit(_metaMarker, <String, String>{
-    'epic': epic,
-    'feature': feature,
+    'epic': (epic ?? feature.epic).name,
+    'feature': feature.name,
     'severity': severity.label,
     if (description != null) 'description': description,
   });

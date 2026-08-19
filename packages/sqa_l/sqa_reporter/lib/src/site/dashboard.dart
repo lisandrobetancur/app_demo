@@ -381,6 +381,8 @@ String _testsPane(List<_Row> rows, ParsedRun run, Duration offset) {
       '<tr data-result="${row.result}">'
       '<td>${escapeHtml(row.feature)}</td>'
       '<td><a href="${row.href}">${escapeHtml(row.name)}</a></td>'
+      '<td data-order="${severityWeight(row.severity)}">'
+      '${severityLabel(row.severity)}</td>'
       '<td data-order="${row.stepCount}">${row.stepCount}</td>'
       '<td data-order="${row.startMs}">'
       '${timestampOf(DateTime.fromMillisecondsSinceEpoch(row.startMs, isUtc: true), offset: offset)}</td>'
@@ -418,6 +420,7 @@ String _testsPane(List<_Row> rows, ParsedRun run, Duration offset) {
       '<thead><tr>'
       '<th class="sortable" data-sort="text">Feature</th>'
       '<th class="sortable test-name-column" data-sort="text">Scenario</th>'
+      '<th class="sortable" data-sort="number">Severity</th>'
       '<th class="sortable" data-sort="number">Steps</th>'
       '<th class="sortable" data-sort="number">Started</th>'
       '<th class="sortable" data-sort="number">Total Duration</th>'
@@ -438,6 +441,32 @@ String _testsPane(List<_Row> rows, ParsedRun run, Duration offset) {
     ..writeln('</div>');
   return pane.toString();
 }
+
+/// How much a failure of this scenario would matter, as the scenario itself
+/// declared it.
+///
+/// It was travelling in the marker stream and landing on the detail page as a
+/// tag, which is the one place a reader has already decided to look. On the
+/// table it answers the question the table is read for: of the things that
+/// went wrong, which ones matter — and, on a green run, which parts of the
+/// product the suite is actually guarding.
+String severityLabel(String? severity) => severity == null
+    ? '<span class="severity none">—</span>'
+    : '<span class="severity ${escapeHtml(severity)}">'
+          '${escapeHtml(severity)}</span>';
+
+/// Blocker first, for the same reason the Result column sorts worst first:
+/// ascending puts what needs attention at the top. A scenario that declared
+/// no severity sorts last rather than in the middle — it said nothing, which
+/// is not the same as saying "normal".
+int severityWeight(String? severity) => switch (severity) {
+  'blocker' => 1,
+  'critical' => 2,
+  'normal' => 3,
+  'minor' => 4,
+  'trivial' => 5,
+  _ => 6,
+};
 
 /// Worst first, so sorting the Result column ascending puts what needs
 /// attention at the top — the order the reference sorts by.
@@ -501,6 +530,7 @@ class _Row {
   const _Row({
     required this.feature,
     required this.name,
+    required this.severity,
     required this.stepCount,
     required this.startMs,
     required this.stopMs,
@@ -517,6 +547,7 @@ class _Row {
     return _Row(
       feature: testCase.meta?.feature ?? testCase.suite,
       name: testCase.name,
+      severity: testCase.meta?.severity,
       stepCount: testCase.steps.length,
       startMs: bounds.start,
       stopMs: bounds.stop,
@@ -528,6 +559,10 @@ class _Row {
 
   final String feature;
   final String name;
+
+  /// What `scenario(severity:)` declared, or null when a test declared none.
+  final String? severity;
+
   final int stepCount;
   final int startMs;
   final int stopMs;

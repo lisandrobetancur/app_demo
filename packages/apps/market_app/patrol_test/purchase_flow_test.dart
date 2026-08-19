@@ -14,8 +14,7 @@ void main() {
     tags: <String>[Tags.smoke, Tags.success],
     (PatrolIntegrationTester $) async {
       scenario(
-        epic: 'Purchase',
-        feature: 'Cart and checkout',
+        feature: Features.checkout,
         severity: Severity.blocker,
         description:
             'The critical path of the application. It also checks that the '
@@ -58,8 +57,7 @@ void main() {
     tags: <String>[Tags.regression, Tags.success],
     (PatrolIntegrationTester $) async {
       scenario(
-        epic: 'Purchase',
-        feature: 'Catalog',
+        feature: Features.catalog,
         severity: Severity.normal,
         description:
             'Your own publication is not something you buy: the detail screen '
@@ -88,8 +86,7 @@ void main() {
     tags: <String>[Tags.regression, Tags.negative],
     (PatrolIntegrationTester $) async {
       scenario(
-        epic: 'Purchase',
-        feature: 'Coupons',
+        feature: Features.coupons,
         severity: Severity.minor,
         description:
             'The error must tell expired apart from non-existent, and the '

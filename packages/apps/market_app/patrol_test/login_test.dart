@@ -13,8 +13,7 @@ void main() {
     tags: <String>[Tags.smoke, Tags.success],
     (PatrolIntegrationTester $) async {
       scenario(
-        epic: 'Access',
-        feature: 'Authentication',
+        feature: Features.authentication,
         severity: Severity.blocker,
         description:
             'Without login there is no cart, no orders and no profile: it is '
@@ -39,8 +38,7 @@ void main() {
     tags: <String>[Tags.smoke, Tags.negative],
     (PatrolIntegrationTester $) async {
       scenario(
-        epic: 'Access',
-        feature: 'Authentication',
+        feature: Features.authentication,
         severity: Severity.critical,
         description:
             'The message must stay generic: telling "no such email" apart from '
@@ -76,8 +74,7 @@ void main() {
     tags: <String>[Tags.regression, Tags.negative],
     (PatrolIntegrationTester $) async {
       scenario(
-        epic: 'Access',
-        feature: 'Authentication',
+        feature: Features.authentication,
         severity: Severity.normal,
         description:
             'Live validation must stop the submission before it spends a call '

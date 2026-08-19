@@ -657,6 +657,24 @@ table.table tbody tr:hover { background: var(--hover); }
 
 .key-statistics td:nth-child(2n) { color: var(--title); font-weight: 600; }
 
+/* ── Severity ───────────────────────────────────────────────────────── */
+
+/* Not a verdict, so it borrows none of the verdict colours: what a failure
+   *would* cost is a different question from what happened, and painting it
+   red would have the table shouting about a scenario that passed. Weight
+   carries it instead — the two levels somebody acts on are set solid in the
+   title navy, the rest recede. */
+.severity {
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.severity.blocker, .severity.critical { color: var(--title); font-weight: 700; }
+.severity.none { letter-spacing: 0; }
+
 /* ── Result markers ─────────────────────────────────────────────────── */
 
 .result-icon {
