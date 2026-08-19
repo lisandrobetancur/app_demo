@@ -234,6 +234,23 @@ void main() {
       expect(index, isNot(contains('Available in a later phase')));
     });
 
+    test('a row of the coverage panel leads to that one, not to all of '
+        'them', () {
+      final String index = File(
+        '${results.path}/index.html',
+      ).readAsStringSync();
+      // An epic has no page of its own, so it lands on its row in the tree;
+      // a feature does, and that is where its scenarios are. Sending both to
+      // the top of a page listing every feature answers a question nobody
+      // asked.
+      expect(index, contains('href="features.html#req-access"'));
+      expect(
+        index,
+        contains('href="${featureReportName(roots.last)}"'),
+        reason: 'the orphan feature at the root has a page of its own',
+      );
+    });
+
     test('the dashboard summarises coverage per root of the tree', () {
       final String index = File(
         '${results.path}/index.html',

@@ -242,7 +242,7 @@ String _row(RequirementNode node, {required int level}) {
   final String name = level == 0 && node.type == 'epic'
       ? escapeHtml(node.name)
       : '<a href="${featureReportName(node)}">${escapeHtml(node.name)}</a>';
-  return '<tr class="requirement-row level-$level">'
+  return '<tr class="requirement-row level-$level" id="${rowAnchorOf(node)}">'
       '<td class="requirement-name-column" '
       'style="padding-left:${0.75 + level * 1.5}em">$name</td>'
       '<td class="requirement-type">${node.type}</td>'
@@ -252,6 +252,12 @@ String _row(RequirementNode node, {required int level}) {
       '<td class="coverage-column">${_coverageBar(node)}</td>'
       '</tr>\n';
 }
+
+/// Where a row lives on the features page, so the dashboard can land on it.
+///
+/// An epic has no page of its own — it *is* a branch of the tree — so a link
+/// to one has to arrive at the tree and point at the row.
+String rowAnchorOf(RequirementNode node) => 'req-${slugOf(node.name)}';
 
 /// The segmented bar: one slice per verdict, its width the share of tests
 /// that ended that way. A requirement with no tests shows an empty track
@@ -288,9 +294,17 @@ String coverageOverview(List<RequirementNode> roots) {
   }
   final StringBuffer rows = StringBuffer();
   for (final RequirementNode root in roots) {
+    // Straight to the thing that was clicked. A feature has a page of its own
+    // and that is where its scenarios are; an epic does not, so the link
+    // lands on its row in the tree. Sending both to the top of a page listing
+    // every feature — which is what this did — answers a question nobody
+    // asked.
+    final String href = root.type == 'feature'
+        ? featureReportName(root)
+        : 'features.html#${rowAnchorOf(root)}';
     rows.writeln(
       '<tr>'
-      '<td><a href="features.html">${escapeHtml(root.name)}</a></td>'
+      '<td><a href="$href">${escapeHtml(root.name)}</a></td>'
       '<td>${root.testCount}</td>'
       '<td>${root.passRate == null ? '—' : '${root.passRate!.round()}%'}</td>'
       '<td class="coverage-column">${_coverageBar(root)}</td>'

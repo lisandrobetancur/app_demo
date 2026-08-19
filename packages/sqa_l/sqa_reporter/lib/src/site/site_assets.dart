@@ -1217,6 +1217,70 @@ table.step-table.nested td { border-bottom: 1px solid var(--rule-soft); }
 }
 
 .bullet.active { background: var(--link); color: #fff; }
+
+/* ── Screenshot viewer ──────────────────────────────────────────────── */
+
+/* A screenshot in the carousel is capped at 60vh so the caption and the
+   controls stay on screen, which is right for walking through a run and
+   wrong for reading an error message in the app. Clicking one opens it over
+   the page at its own size.
+   
+   It is a dialog, so it closes the three ways a dialog closes: the button,
+   Escape, and clicking the darkness around it. The button exists because the
+   other two are conventions somebody has to already know. */
+.slides img { cursor: zoom-in; }
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 3.5rem 1.5rem 2rem 1.5rem;
+  background: rgba(11, 37, 69, 0.9);
+}
+
+.lightbox[hidden] { display: none; }
+
+.lightbox-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+  background: var(--card);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+}
+
+.lightbox-caption {
+  color: #e8edf5;
+  font-size: 0.9rem;
+  text-align: center;
+  max-width: 60rem;
+}
+
+.lightbox-close {
+  position: absolute;
+  top: 1rem;
+  right: 1.25rem;
+  width: 2.4rem;
+  height: 2.4rem;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  cursor: pointer;
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.lightbox-close:hover { background: rgba(255, 255, 255, 0.24); }
+.lightbox-close:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+/* Nothing scrolls behind the viewer. */
+body.viewing-shot { overflow: hidden; }
 ''';
 
 /// The site's only script: the dashboard's tab switch and the detail page's
@@ -1448,5 +1512,57 @@ document.querySelectorAll(".carousel").forEach(function (carousel) {
   // gallery on that slide rather than on the first.
   var requested = new URLSearchParams(window.location.search).get("screenshot");
   show(parseInt(requested, 10) || 0);
+
+  // The viewer. A slide is capped at 60vh so its caption and the controls stay
+  // on screen; this is where the screenshot is read rather than glanced at.
+  var box = document.querySelector(".lightbox");
+  if (!box) { return; }
+  var full = box.querySelector(".lightbox-image");
+  var caption = box.querySelector(".lightbox-caption");
+  var close = box.querySelector(".lightbox-close");
+  var opener = null;
+
+  function openShot(image) {
+    opener = image;
+    full.src = image.getAttribute("src");
+    full.alt = image.getAttribute("alt") || "";
+    var figure = image.closest(".slide");
+    var text = figure ? figure.querySelector("figcaption") : null;
+    caption.textContent = text ? text.textContent : full.alt;
+    box.hidden = false;
+    document.body.classList.add("viewing-shot");
+    close.focus();
+  }
+
+  function closeShot() {
+    box.hidden = true;
+    document.body.classList.remove("viewing-shot");
+    // Back to the thumbnail that opened it, so a keyboard reader does not
+    // land at the top of the page each time.
+    if (opener) { opener.focus({ preventScroll: true }); opener = null; }
+  }
+
+  slides.forEach(function (slide) {
+    var image = slide.querySelector("img");
+    if (image) {
+      image.addEventListener("click", function () { openShot(image); });
+    }
+  });
+
+  close.addEventListener("click", closeShot);
+  // The darkness around the picture closes it; the picture itself does not,
+  // or every attempt to look closely would shut the thing.
+  box.addEventListener("click", function (event) {
+    if (event.target === box || event.target === caption) { closeShot(); }
+  });
+  document.addEventListener("keydown", function (event) {
+    if (box.hidden) { return; }
+    if (event.key === "Escape") { closeShot(); }
+    // Walking the run without leaving the viewer.
+    if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+      var image = slides[current].querySelector("img");
+      if (image) { openShot(image); }
+    }
+  });
 });
 ''';

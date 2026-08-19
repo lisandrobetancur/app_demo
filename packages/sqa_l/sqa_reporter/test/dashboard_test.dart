@@ -409,6 +409,14 @@ void main() {
       expect(css, contains('--link: #1d63c4'));
     });
 
+    test('the screenshot viewer is hidden until a screenshot is clicked', () {
+      final String css = File(
+        '${out.path}/results/sqa-reporter.css',
+      ).readAsStringSync();
+      expect(css, contains('.lightbox[hidden] { display: none; }'));
+      expect(css, contains('.slides img { cursor: zoom-in; }'));
+    });
+
     test('nothing is pinned to a minimum width, and wide tables scroll', () {
       final String css = File(
         '${out.path}/results/sqa-reporter.css',

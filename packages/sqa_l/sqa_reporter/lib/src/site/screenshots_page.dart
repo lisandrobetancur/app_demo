@@ -137,7 +137,8 @@ String _carousel(
 
     slides.writeln(
       '<figure class="slide" data-slide="$i"${i == 0 ? '' : ' hidden'}>'
-      '<img src="$file" alt="${escapeHtml(capture.shot.name)}"/>'
+      '<img src="$file" alt="${escapeHtml(capture.shot.name)}" '
+      'title="Open this screenshot full size"/>'
       '<figcaption>$caption</figcaption>'
       '</figure>',
     );
@@ -148,6 +149,9 @@ String _carousel(
     );
   }
 
+  // The viewer that opens over the page when a screenshot is clicked. One
+  // per page rather than one per slide: it shows whichever was asked for, and
+  // a dialog that can be closed needs exactly one close button.
   return '''
 <div class="carousel" data-count="${captures.length}">
   <div class="slides">
@@ -157,6 +161,11 @@ $slides  </div>
     <div class="bullets">$bullets</div>
     <button class="carousel-next" title="Next screenshot">›</button>
   </div>
+</div>
+<div class="lightbox" role="dialog" aria-modal="true" aria-label="Screenshot" hidden>
+  <button class="lightbox-close" title="Close (Esc)" aria-label="Close">×</button>
+  <img class="lightbox-image" src="" alt=""/>
+  <p class="lightbox-caption"></p>
 </div>
 ''';
 }

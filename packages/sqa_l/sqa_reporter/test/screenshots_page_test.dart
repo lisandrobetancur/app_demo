@@ -67,6 +67,28 @@ void main() {
     });
   });
 
+  group('the viewer', () {
+    test('a screenshot opens over the page, with a way out', () {
+      expect(gallery, contains('<div class="lightbox"'));
+      expect(gallery, contains('role="dialog"'));
+      expect(
+        gallery,
+        contains('<button class="lightbox-close"'),
+        reason: 'a picture that opens with no close button traps the reader',
+      );
+      expect(gallery, contains('aria-label="Close"'));
+      expect(gallery, contains('title="Open this screenshot full size"'));
+    });
+
+    test('the three ways out are all wired', () {
+      // The button, Escape, and the darkness around the picture. The button
+      // exists because the other two are conventions somebody has to know.
+      expect(gallery, contains('close.addEventListener("click", closeShot)'));
+      expect(gallery, contains('event.key === "Escape"'));
+      expect(gallery, contains('event.target === box'));
+    });
+  });
+
   group('the carousel', () {
     test('holds one slide per capture, first one visible', () {
       final List<Capture> captures = capturesOf(passing);
