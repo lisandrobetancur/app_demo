@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:patrol_kit/patrol_kit.dart';
 
@@ -175,6 +176,24 @@ void main() {
         ActionCapture.scrolling,
         isFalse,
         reason: 'the next step starts without a run half-open',
+      );
+    });
+  });
+
+  group('a key press', () {
+    test('counts as an action when it activates what has focus', () {
+      expect(keyActivates(LogicalKeyboardKey.enter), isTrue);
+      expect(keyActivates(LogicalKeyboardKey.numpadEnter), isTrue);
+      expect(keyActivates(LogicalKeyboardKey.space), isTrue);
+    });
+
+    test('counts as travel when it only moves the focus', () {
+      expect(keyActivates(LogicalKeyboardKey.tab), isFalse);
+      expect(keyActivates(LogicalKeyboardKey.arrowDown), isFalse);
+      expect(
+        keyActivates(LogicalKeyboardKey.escape),
+        isFalse,
+        reason: 'closing is not submitting; say acts: true if it matters',
       );
     });
   });

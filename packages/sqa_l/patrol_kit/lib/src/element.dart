@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:patrol/patrol.dart';
 
@@ -22,6 +23,18 @@ import 'widget_probes.dart';
 ///
 /// Named [UiElement] rather than `Element` because Flutter already owns that
 /// name for the widget tree's nodes.
+/// Whether pressing [key] is expected to *do* something rather than move
+/// around.
+///
+/// Enter and Space activate whatever has focus — on a form, that is the
+/// submit. Tab and the arrows travel; the screen they leave behind is the one
+/// they arrived at. A Tab that lands on a button and fires it is a real case
+/// and is not guessable from the key, so [UiElement.press] takes an override.
+bool keyActivates(LogicalKeyboardKey key) =>
+    key == LogicalKeyboardKey.enter ||
+    key == LogicalKeyboardKey.numpadEnter ||
+    key == LogicalKeyboardKey.space;
+
 class UiElement {
   const UiElement(this.$, this.loc);
 
@@ -107,6 +120,44 @@ class UiElement {
     }
     await finder.scrollTo(view: inside?.finder);
   }
+
+  // --- Keyboard ------------------------------------------------------------
+
+  /// Presses [key] on whatever currently has focus.
+  ///
+  /// Called on the element it concerns — the field just typed into, the button
+  /// about to be reached — because that is how it reads, but the event goes to
+  /// the focused widget: Flutter has no way to send a key press *at* a widget.
+  ///
+  /// [acts] decides whether the press is bracketed with screenshots when the
+  /// step asked for that. The default follows [keyActivates]: Enter and Space
+  /// do something to the screen, Tab and the arrows only move around it. Say
+  /// `acts: true` for the Tab that reaches a submit button and fires it —
+  /// that press *is* the submit, and the screen before it is the form as it
+  /// was.
+  Future<void> press(LogicalKeyboardKey key, {bool? acts}) async {
+    Future<void> send() async {
+      await $.tester.sendKeyEvent(key);
+      await $.pumpAndSettle();
+    }
+
+    if (!(acts ?? keyActivates(key))) {
+      // Moving the focus does not consume the screen, but it can still be the
+      // thing that ends a run of scrolls.
+      await _endScrollRun(coveredByCaller: false);
+      await send();
+      return;
+    }
+    await _acting('press ${key.keyLabel} on ${loc.description}', send);
+  }
+
+  /// Moves the focus on. Pass `acts: true` when this Tab submits the form
+  /// rather than just stepping to the next field.
+  Future<void> pressTab({bool acts = false}) =>
+      press(LogicalKeyboardKey.tab, acts: acts);
+
+  /// Presses Enter, which on a form is the submit.
+  Future<void> pressEnter() => press(LogicalKeyboardKey.enter);
 
   // --- Reading -------------------------------------------------------------
 

@@ -223,6 +223,18 @@ with text in it, and a frame either side of every field would bury the two that
 matter. The filled form is still captured — it is the *before* of the click
 that sends it. Reading a value is out because it changes nothing.
 
+Key presses follow the same rule as clicks, decided by what the key does:
+Enter and Space act on the screen and are bracketed, Tab and the arrows only
+move the focus and are not. The exception is the Tab that reaches a submit
+button and fires it — that press *is* the submit, so it says so:
+
+```dart
+await login.password.pressTab(acts: true);   // frame before ← the form as filled
+                                             // frame after  ← what it produced
+await login.password.pressEnter();           // bracketed by default
+await login.email.pressTab();                // just moving on: no frames
+```
+
 Scrolling is a run, not a call. A step that walks down a long form scrolls
 three or four times, and a frame either side of each would be four pictures of
 the same page sliding past — so the **first** scroll takes a frame and the run
