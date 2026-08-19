@@ -84,6 +84,11 @@ String pageFooter() => '''
 /// those three zones observes daylight saving, which is why a fixed offset is
 /// exact for them and no timezone database is needed to be right.
 ///
+/// It is also the clock the report *reads* on: Patrol writes every timestamp
+/// without a zone, and this says which one it meant — see `epochOfStamp`. One
+/// setting for both halves is the point, because a report that read on one
+/// clock and printed on another is exactly how Android came out hours off.
+///
 /// `--utc-offset` on the command line moves it for a team on another clock.
 const Duration reportOffset = Duration(hours: -5);
 

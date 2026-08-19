@@ -16,7 +16,13 @@ library;
 
 export 'src/inputs.dart' show parsePatrolLog, parsePlaywright, splitTitle;
 export 'src/markers.dart'
-    show MarkerParse, hasStepWith, parseMarkers, promoteStatus, stripAnsi;
+    show
+        MarkerParse,
+        epochOfStamp,
+        hasStepWith,
+        parseMarkers,
+        promoteStatus,
+        stripAnsi;
 export 'src/model.dart';
 export 'src/requirements.dart'
     show RequirementNode, featuresIn, requirementsOf, resultSeverity;

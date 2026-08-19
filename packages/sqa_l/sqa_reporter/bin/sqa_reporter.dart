@@ -41,9 +41,13 @@ void main(List<String> argv) {
   // wolf on every deliberate use — and any stderr line reads as an error in
   // the melos output. The fact still matters, so the report carries it: the
   // page says when the run finished as well as when it was generated.
+  // The offset is not only how the times are printed: it is also what a
+  // timestamp with no zone means, and Patrol writes every one of its own
+  // without a zone. Reading and printing on the same clock is what makes the
+  // report show the time the device showed.
   final ParsedRun run = args.format == 'playwright'
-      ? parsePlaywright(input)
-      : parsePatrolLog(input);
+      ? parsePlaywright(input, zone: args.offset!)
+      : parsePatrolLog(input, zone: args.offset!);
   final int written = writeSerenityResults(
     run,
     Directory(args.output),
@@ -153,8 +157,9 @@ class _Args {
   final String format;
   final String platform;
 
-  /// The clock the pages show their times in. Null means `--utc-offset` was
-  /// given but could not be read.
+  /// The clock the report is drawn on: both what a timestamp with no zone
+  /// means when it is read, and how every time is printed. Null means
+  /// `--utc-offset` was given but could not be read.
   final Duration? offset;
 }
 

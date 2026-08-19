@@ -68,6 +68,38 @@ void main() {
       expect(testCase.meta?.feature, 'Authentication');
     });
 
+    test('reads a stamp with no zone on the clock the report is drawn on', () {
+      const Duration bogota = Duration(hours: -5);
+      final File input = File('${tmp.path}/zoned.log')
+        ..writeAsStringSync(patrolLog());
+      final RunCase onDeviceClock = parsePatrolLog(
+        input,
+        zone: bogota,
+      ).cases.single;
+
+      String shown(int epoch) => timestampOf(
+        DateTime.fromMillisecondsSinceEpoch(epoch, isUtc: true),
+        offset: bogota,
+      );
+
+      // The device printed 10:00:00.500 and said nothing about where it was.
+      // A device log holds no other clock to check it against — unlike the web
+      // path, its test boundaries are stamped by the device too — so the
+      // report's own clock is what the stamp means, and reading it back there
+      // shows the hour the tester watched go by.
+      expect(shown(onDeviceClock.start), '2026-08-18 10:00:00 UTC-5');
+      expect(
+        shown(run.cases.single.start),
+        '2026-08-18 05:00:00 UTC-5',
+        reason: 'read as UTC and printed at UTC-5, the same log loses 5 hours',
+      );
+      expect(
+        onDeviceClock.stop - onDeviceClock.start,
+        run.cases.single.stop - run.cases.single.start,
+        reason: 'moving both ends of a test cannot change how long it took',
+      );
+    });
+
     test('a case still open at the end reads as broken', () {
       final File input = File('${tmp.path}/dead.log')
         ..writeAsStringSync(
