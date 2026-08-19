@@ -40,12 +40,20 @@ class UiElement {
   /// Taps the element. Patrol settles the tree afterwards.
   Future<void> click() => _acting('click on ${loc.description}', finder.tap);
 
+  // `type` and `clear` are below; `scrollTo` is under Navigation.
+
   /// Types [text] into the element.
   ///
   /// Named `type` rather than `sendKeys` because it *replaces* the content
   /// instead of appending to it — which is what `enterText` does, and calling
   /// it `sendKeys` would promise the opposite.
-  Future<void> type(String text) => finder.enterText(text);
+  Future<void> type(String text) async {
+    // Typing takes no frames of its own, but it does change the screen — so
+    // an open run of scrolls has to be photographed before the text lands on
+    // top of it.
+    await _endScrollRun(coveredByCaller: false);
+    await finder.enterText(text);
+  }
 
   /// Empties the field.
   Future<void> clear() =>
@@ -63,21 +71,42 @@ class UiElement {
   ///
   /// Reading a value is out for a plainer reason — it changes nothing — and
   /// `scrollTo` because what it produces is the next interaction's *before*.
-  Future<T> _acting<T>(String what, Future<T> Function() body) =>
+  Future<T> _acting<T>(String what, Future<T> Function() body) async {
+    if (!ActionCapture.enabled) {
+      return body();
+    }
+    // This action's own *before* frame is the picture of wherever the
+    // scrolling landed, so the run closes without one of its own.
+    await _endScrollRun(coveredByCaller: true);
+    return captureAround(
+      $.takeScreenshot,
+      body,
+      before: 'before $what',
+      after: 'after $what',
+    );
+  }
+
+  Future<void> _endScrollRun({required bool coveredByCaller}) =>
       ActionCapture.enabled
-      ? captureAround(
+      ? ActionCapture.closeScrollRun(
           $.takeScreenshot,
-          body,
-          before: 'before $what',
-          after: 'after $what',
+          coveredByCaller: coveredByCaller,
         )
-      : body();
+      : Future<void>.value();
 
   /// Scrolls until the element is on screen.
   ///
   /// Pass [inside] when the element lives in a specific scrollable and the
   /// screen has more than one.
-  Future<void> scrollTo({Loc? inside}) => finder.scrollTo(view: inside?.finder);
+  Future<void> scrollTo({Loc? inside}) async {
+    // One frame for a run of scrolls, not one per scroll: the first opens it
+    // with a picture of where the scrolling started, and whatever comes next
+    // shows where it landed. See [ActionCapture.openScrollRun].
+    if (ActionCapture.enabled && ActionCapture.openScrollRun()) {
+      await $.takeScreenshot('before scrolling to ${loc.description}');
+    }
+    await finder.scrollTo(view: inside?.finder);
+  }
 
   // --- Reading -------------------------------------------------------------
 

@@ -105,6 +105,80 @@ void main() {
     });
   });
 
+  group('a run of scrolls', () {
+    setUp(() async {
+      // Leave the ambient state as found, whatever a previous test did.
+      await ActionCapture.closeScrollRun(
+        (String _) async {},
+        coveredByCaller: true,
+      );
+    });
+
+    test('is opened by the first scroll and by no other', () {
+      expect(ActionCapture.openScrollRun(), isTrue, reason: 'the first one');
+      expect(
+        ActionCapture.openScrollRun(),
+        isFalse,
+        reason: 'three scrolls down a form are one run, not three',
+      );
+      expect(ActionCapture.scrolling, isTrue);
+    });
+
+    test('lands with a frame when nothing else is about to look', () async {
+      final List<String> taken = <String>[];
+      ActionCapture.openScrollRun();
+
+      await ActionCapture.closeScrollRun(
+        (String name) async => taken.add(name),
+        coveredByCaller: false,
+      );
+
+      expect(taken, <String>['after scrolling']);
+      expect(ActionCapture.scrolling, isFalse);
+    });
+
+    test(
+      'lands without one when the next action photographs it anyway',
+      () async {
+        final List<String> taken = <String>[];
+        ActionCapture.openScrollRun();
+
+        await ActionCapture.closeScrollRun(
+          (String name) async => taken.add(name),
+          coveredByCaller: true,
+        );
+
+        expect(
+          taken,
+          isEmpty,
+          reason: "the click's own before frame is where the scrolling landed",
+        );
+        expect(ActionCapture.scrolling, isFalse);
+      },
+    );
+
+    test('closing a run that was never open does nothing', () async {
+      final List<String> taken = <String>[];
+      await ActionCapture.closeScrollRun(
+        (String name) async => taken.add(name),
+        coveredByCaller: false,
+      );
+      expect(taken, isEmpty);
+    });
+
+    test('does not survive the step it happened in', () async {
+      await ActionCapture.runWith(true, () async {
+        ActionCapture.openScrollRun();
+        expect(ActionCapture.scrolling, isTrue);
+      });
+      expect(
+        ActionCapture.scrolling,
+        isFalse,
+        reason: 'the next step starts without a run half-open',
+      );
+    });
+  });
+
   group('a step that captures by hand', () {
     test('gets no automatic frame at all', () {
       expect(Capture.none.capturesOnSuccess, isFalse);

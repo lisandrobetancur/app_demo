@@ -104,18 +104,64 @@ enum Capture {
 /// an exception cannot leave it stuck on.
 abstract final class ActionCapture {
   static bool _enabled = false;
+  static bool _scrolling = false;
 
   /// True while interactions should capture either side of themselves.
   static bool get enabled => _enabled;
 
+  /// True while a run of scrolls is open — see [openScrollRun].
+  static bool get scrolling => _scrolling;
+
+  /// Opens a run of scrolls, returning true if this is the one that starts
+  /// it.
+  ///
+  /// Scrolling is rarely one call. A step walks down a long form scrolling
+  /// three or four times, and a frame either side of each would be four
+  /// pictures of the same page sliding past. What is worth seeing is where
+  /// the scrolling started and where it landed, so the first scroll of a run
+  /// takes the *before* and the run stays open until something else happens.
+  static bool openScrollRun() {
+    if (_scrolling) {
+      return false;
+    }
+    _scrolling = true;
+    return true;
+  }
+
+  /// Closes an open run of scrolls, capturing where it landed.
+  ///
+  /// [coveredByCaller] is how the duplicate is avoided: an action that takes
+  /// its own *before* frame is already photographing the screen the scrolling
+  /// landed on, and so is the frame a step takes when it ends. Only when
+  /// nothing else is about to look — a scroll followed by typing, say — does
+  /// the landing need a picture of its own.
+  static Future<void> closeScrollRun(
+    Future<void> Function(String name) shoot, {
+    required bool coveredByCaller,
+  }) async {
+    if (!_scrolling) {
+      return;
+    }
+    _scrolling = false;
+    if (!coveredByCaller) {
+      await shoot('after scrolling');
+    }
+  }
+
   /// Runs [body] with [value] in force, then puts back what was there.
+  ///
+  /// Any run of scrolls left open ends with the body: the step's own frame is
+  /// the last word on where it finished.
   static Future<T> runWith<T>(bool value, Future<T> Function() body) async {
     final bool previous = _enabled;
+    final bool wasScrolling = _scrolling;
     _enabled = value;
+    _scrolling = false;
     try {
       return await body();
     } finally {
       _enabled = previous;
+      _scrolling = wasScrolling;
     }
   }
 }

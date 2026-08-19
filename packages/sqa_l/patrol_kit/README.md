@@ -201,7 +201,7 @@ when a step failed on CI. Two things override it.
 | | Passed | Broke |
 |---|---|---|
 | `Capture.auto` (default) | frame | frame |
-| `Capture.aroundActions` | frame, plus two per click and per clear | frame |
+| `Capture.aroundActions` | frame, plus two per click and per clear, plus one per run of scrolls | frame |
 | `Capture.onFailure` | — | frame |
 | `Capture.none` | — | — |
 
@@ -221,8 +221,15 @@ await step('Log in', capture: Capture.aroundActions, () async {
 Typing is not bracketed on purpose: a field with text in it is the same screen
 with text in it, and a frame either side of every field would bury the two that
 matter. The filled form is still captured — it is the *before* of the click
-that sends it. Reading a value is out because it changes nothing, and
-`scrollTo` because what it produces is the next interaction's *before*.
+that sends it. Reading a value is out because it changes nothing.
+
+Scrolling is a run, not a call. A step that walks down a long form scrolls
+three or four times, and a frame either side of each would be four pictures of
+the same page sliding past — so the **first** scroll takes a frame and the run
+stays open until something else happens. Where it landed is normally
+photographed by whatever comes next (the next click's *before*, or the frame
+the step takes when it ends); only when nothing else is about to look — a
+scroll followed by typing — does the landing get a frame of its own.
 
 **`capturing(action, before:, after:)` brackets one action**, with captions you
 write, for when the whole step does not need it:
