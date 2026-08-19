@@ -192,6 +192,36 @@ launcher wraps around the app and streams it as base64 in 800-character chunks �
 a single long line gets mangled on the way out of the browser. Turn it off with
 `--dart-define=E2E_SCREENSHOTS=false`.
 
+Every step captures its end state, and that default is the right one: the
+picture nobody thought to ask for is the one wanted at three in the morning
+when a step failed on CI. Two things override it.
+
+**`capture:` decides whether the automatic frame is taken**, per step:
+
+| | Passed | Broke |
+|---|---|---|
+| `Capture.auto` (default) | frame | frame |
+| `Capture.onFailure` | — | frame |
+| `Capture.none` | — | — |
+
+**`shot(name)` takes one whenever you want**, which is how you capture a moment
+*inside* a step rather than at its end — the dialog before it is dismissed, the
+list before the filter is applied:
+
+```dart
+await step('Apply the coupon', capture: Capture.none, () async {
+  await cart.openCouponField();
+  await shot('coupon field, before typing');
+  await cart.applyCoupon(TestData.validCoupon);
+  await shot('coupon applied');
+});
+```
+
+A step can take as many as it likes, with or without its automatic one. They
+hang off that step in the report, in the order the calls ran, and the gallery
+walks them in the same order. Neither ever fails a test: a missing screenshot
+is a worse report, not a wrong result.
+
 ## Locale
 
 `Money.parse` reads prices back off the screen, and separators are

@@ -34,6 +34,45 @@ const bool screenshotsEnabled = bool.fromEnvironment(
   defaultValue: true,
 );
 
+/// When a business step captures the screen.
+///
+/// Every step takes a frame when it ends, and that default is the right one:
+/// the picture nobody thought to ask for is the one wanted at three in the
+/// morning when a step failed on CI. But a suite of forty steps produces forty
+/// images, and some of them show nothing worth keeping — a step that only
+/// reads a value, one whose screen is identical to the step before it, one
+/// that spends its time on a network call behind a spinner.
+///
+/// So the default stays and the exceptions get a name. Whatever the policy, a
+/// step can always take extra frames by hand with [BaseSteps.shot], which is
+/// how you capture a moment *inside* a step rather than at its end — the
+/// dialog before it is dismissed, the list before the filter is applied.
+enum Capture {
+  /// A frame when the step ends, and another if it breaks. The default.
+  auto,
+
+  /// Nothing while the step behaves; a frame if it breaks.
+  ///
+  /// For steps whose end state says nothing — but whose failure still needs
+  /// to be looked at, which is every step.
+  onFailure,
+
+  /// No frame, ever, not even on failure.
+  ///
+  /// For a step that captures what it needs by hand, and for the rare one
+  /// where an automatic frame would be actively misleading.
+  none;
+
+  /// Whether a step that behaved should be captured.
+  bool get capturesOnSuccess => this == Capture.auto;
+
+  /// Whether a step that broke should be captured.
+  ///
+  /// True for everything except [none]: a failure with no picture is the
+  /// case the screenshots exist for.
+  bool get capturesOnFailure => this != Capture.none;
+}
+
 /// Gives Patrol the screenshot API it does not ship on the web.
 ///
 /// Patrol's web automation exposes taps, text, cookies, dialogs and window
