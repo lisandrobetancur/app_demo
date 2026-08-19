@@ -53,6 +53,8 @@ export 'src/site/dashboard.dart'
         escapeHtml,
         projectTitleFor,
         resultIcon,
+        severityLabel,
+        severityWeight,
         writeDashboard;
 export 'src/site/features_page.dart'
     show featurePageHtml, featureReportName, featuresHtml, writeFeaturePages;

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:patrol/patrol.dart';
 
 import 'locator.dart';
+import 'screenshot.dart';
 import 'widget_probes.dart';
 
 /// One element on screen, with the operations a test performs on it.
@@ -21,6 +23,18 @@ import 'widget_probes.dart';
 ///
 /// Named [UiElement] rather than `Element` because Flutter already owns that
 /// name for the widget tree's nodes.
+/// Whether pressing [key] is expected to *do* something rather than move
+/// around.
+///
+/// Enter and Space activate whatever has focus — on a form, that is the
+/// submit. Tab and the arrows travel; the screen they leave behind is the one
+/// they arrived at. A Tab that lands on a button and fires it is a real case
+/// and is not guessable from the key, so [UiElement.press] takes an override.
+bool keyActivates(LogicalKeyboardKey key) =>
+    key == LogicalKeyboardKey.enter ||
+    key == LogicalKeyboardKey.numpadEnter ||
+    key == LogicalKeyboardKey.space;
+
 class UiElement {
   const UiElement(this.$, this.loc);
 
@@ -37,23 +51,113 @@ class UiElement {
   // --- Interaction ---------------------------------------------------------
 
   /// Taps the element. Patrol settles the tree afterwards.
-  Future<void> click() => finder.tap();
+  Future<void> click() => _acting('click on ${loc.description}', finder.tap);
+
+  // `type` and `clear` are below; `scrollTo` is under Navigation.
 
   /// Types [text] into the element.
   ///
   /// Named `type` rather than `sendKeys` because it *replaces* the content
   /// instead of appending to it — which is what `enterText` does, and calling
   /// it `sendKeys` would promise the opposite.
-  Future<void> type(String text) => finder.enterText(text);
+  Future<void> type(String text) async {
+    // Typing takes no frames of its own, but it does change the screen — so
+    // an open run of scrolls has to be photographed before the text lands on
+    // top of it.
+    await _endScrollRun(coveredByCaller: false);
+    await finder.enterText(text);
+  }
 
   /// Empties the field.
-  Future<void> clear() => finder.enterText('');
+  Future<void> clear() =>
+      _acting('clear ${loc.description}', () => finder.enterText(''));
+
+  /// Runs an interaction, capturing either side of it when the step asked
+  /// for that — see [Capture.aroundActions].
+  ///
+  /// Only the actions that *consume* a screen go through here: a click and a
+  /// clear. Typing does not — a field with text in it is the same screen with
+  /// text in it, and bracketing every field would bury the frames that matter
+  /// under a dozen near-identical ones. The filled form is still captured:
+  /// it is the *before* of the click that submits it, which is the frame
+  /// somebody actually opens the report to see.
+  ///
+  /// Reading a value is out for a plainer reason — it changes nothing — and
+  /// `scrollTo` because what it produces is the next interaction's *before*.
+  Future<T> _acting<T>(String what, Future<T> Function() body) async {
+    if (!ActionCapture.enabled) {
+      return body();
+    }
+    // This action's own *before* frame is the picture of wherever the
+    // scrolling landed, so the run closes without one of its own.
+    await _endScrollRun(coveredByCaller: true);
+    return captureAround(
+      $.takeScreenshot,
+      body,
+      before: 'before $what',
+      after: 'after $what',
+    );
+  }
+
+  Future<void> _endScrollRun({required bool coveredByCaller}) =>
+      ActionCapture.enabled
+      ? ActionCapture.closeScrollRun(
+          $.takeScreenshot,
+          coveredByCaller: coveredByCaller,
+        )
+      : Future<void>.value();
 
   /// Scrolls until the element is on screen.
   ///
   /// Pass [inside] when the element lives in a specific scrollable and the
   /// screen has more than one.
-  Future<void> scrollTo({Loc? inside}) => finder.scrollTo(view: inside?.finder);
+  Future<void> scrollTo({Loc? inside}) async {
+    // One frame for a run of scrolls, not one per scroll: the first opens it
+    // with a picture of where the scrolling started, and whatever comes next
+    // shows where it landed. See [ActionCapture.openScrollRun].
+    if (ActionCapture.enabled && ActionCapture.openScrollRun()) {
+      await $.takeScreenshot('before scrolling to ${loc.description}');
+    }
+    await finder.scrollTo(view: inside?.finder);
+  }
+
+  // --- Keyboard ------------------------------------------------------------
+
+  /// Presses [key] on whatever currently has focus.
+  ///
+  /// Called on the element it concerns — the field just typed into, the button
+  /// about to be reached — because that is how it reads, but the event goes to
+  /// the focused widget: Flutter has no way to send a key press *at* a widget.
+  ///
+  /// [acts] decides whether the press is bracketed with screenshots when the
+  /// step asked for that. The default follows [keyActivates]: Enter and Space
+  /// do something to the screen, Tab and the arrows only move around it. Say
+  /// `acts: true` for the Tab that reaches a submit button and fires it —
+  /// that press *is* the submit, and the screen before it is the form as it
+  /// was.
+  Future<void> press(LogicalKeyboardKey key, {bool? acts}) async {
+    Future<void> send() async {
+      await $.tester.sendKeyEvent(key);
+      await $.pumpAndSettle();
+    }
+
+    if (!(acts ?? keyActivates(key))) {
+      // Moving the focus does not consume the screen, but it can still be the
+      // thing that ends a run of scrolls.
+      await _endScrollRun(coveredByCaller: false);
+      await send();
+      return;
+    }
+    await _acting('press ${key.keyLabel} on ${loc.description}', send);
+  }
+
+  /// Moves the focus on. Pass `acts: true` when this Tab submits the form
+  /// rather than just stepping to the next field.
+  Future<void> pressTab({bool acts = false}) =>
+      press(LogicalKeyboardKey.tab, acts: acts);
+
+  /// Presses Enter, which on a form is the submit.
+  Future<void> pressEnter() => press(LogicalKeyboardKey.enter);
 
   // --- Reading -------------------------------------------------------------
 

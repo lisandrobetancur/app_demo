@@ -34,6 +34,166 @@ const bool screenshotsEnabled = bool.fromEnvironment(
   defaultValue: true,
 );
 
+/// When a business step captures the screen.
+///
+/// Every step takes a frame when it ends, and that default is the right one:
+/// the picture nobody thought to ask for is the one wanted at three in the
+/// morning when a step failed on CI. But a suite of forty steps produces forty
+/// images, and some of them show nothing worth keeping — a step that only
+/// reads a value, one whose screen is identical to the step before it, one
+/// that spends its time on a network call behind a spinner.
+///
+/// So the default stays and the exceptions get a name. Whatever the policy, a
+/// step can always take extra frames by hand with [BaseSteps.shot], which is
+/// how you capture a moment *inside* a step rather than at its end — the
+/// dialog before it is dismissed, the list before the filter is applied.
+enum Capture {
+  /// A frame when the step ends, and another if it breaks. The default.
+  auto,
+
+  /// The default, plus a frame either side of every **click** and every
+  /// **clear** the step performs.
+  ///
+  /// For the steps where what vanishes is the point: the form as it was
+  /// filled, captured as the *before* of the click that sends it; the menu
+  /// before the tap that closes it; the field before it is emptied.
+  ///
+  /// Typing is deliberately not bracketed. A field with text in it is the
+  /// same screen with text in it, and a frame either side of every keystroke
+  /// target would bury the two that matter under a dozen near-identical
+  /// ones.
+  aroundActions,
+
+  /// Nothing while the step behaves; a frame if it breaks.
+  ///
+  /// For steps whose end state says nothing — but whose failure still needs
+  /// to be looked at, which is every step.
+  onFailure,
+
+  /// No frame, ever, not even on failure.
+  ///
+  /// For a step that captures what it needs by hand, and for the rare one
+  /// where an automatic frame would be actively misleading.
+  none;
+
+  /// Whether a step that behaved should be captured.
+  bool get capturesOnSuccess =>
+      this == Capture.auto || this == Capture.aroundActions;
+
+  /// Whether every interaction inside the step captures either side of
+  /// itself.
+  bool get bracketsActions => this == Capture.aroundActions;
+
+  /// Whether a step that broke should be captured.
+  ///
+  /// True for everything except [none]: a failure with no picture is the
+  /// case the screenshots exist for.
+  bool get capturesOnFailure => this != Capture.none;
+}
+
+/// Whether interactions are currently bracketing themselves with frames.
+///
+/// Ambient rather than passed down, because the alternative is threading a
+/// flag through every page object and every element — the page layer would
+/// have to know about screenshots to stay out of their way, which is exactly
+/// the coupling the layers exist to prevent.
+///
+/// A single mutable field is enough: a Patrol test owns its isolate and runs
+/// its steps one after another, so there is never a second step reading this
+/// at the same time. [runWith] restores what it found, so nesting works and
+/// an exception cannot leave it stuck on.
+abstract final class ActionCapture {
+  static bool _enabled = false;
+  static bool _scrolling = false;
+
+  /// True while interactions should capture either side of themselves.
+  static bool get enabled => _enabled;
+
+  /// True while a run of scrolls is open — see [openScrollRun].
+  static bool get scrolling => _scrolling;
+
+  /// Opens a run of scrolls, returning true if this is the one that starts
+  /// it.
+  ///
+  /// Scrolling is rarely one call. A step walks down a long form scrolling
+  /// three or four times, and a frame either side of each would be four
+  /// pictures of the same page sliding past. What is worth seeing is where
+  /// the scrolling started and where it landed, so the first scroll of a run
+  /// takes the *before* and the run stays open until something else happens.
+  static bool openScrollRun() {
+    if (_scrolling) {
+      return false;
+    }
+    _scrolling = true;
+    return true;
+  }
+
+  /// Closes an open run of scrolls, capturing where it landed.
+  ///
+  /// [coveredByCaller] is how the duplicate is avoided: an action that takes
+  /// its own *before* frame is already photographing the screen the scrolling
+  /// landed on, and so is the frame a step takes when it ends. Only when
+  /// nothing else is about to look — a scroll followed by typing, say — does
+  /// the landing need a picture of its own.
+  static Future<void> closeScrollRun(
+    Future<void> Function(String name) shoot, {
+    required bool coveredByCaller,
+  }) async {
+    if (!_scrolling) {
+      return;
+    }
+    _scrolling = false;
+    if (!coveredByCaller) {
+      await shoot('after scrolling');
+    }
+  }
+
+  /// Runs [body] with [value] in force, then puts back what was there.
+  ///
+  /// Any run of scrolls left open ends with the body: the step's own frame is
+  /// the last word on where it finished.
+  static Future<T> runWith<T>(bool value, Future<T> Function() body) async {
+    final bool previous = _enabled;
+    final bool wasScrolling = _scrolling;
+    _enabled = value;
+    _scrolling = false;
+    try {
+      return await body();
+    } finally {
+      _enabled = previous;
+      _scrolling = wasScrolling;
+    }
+  }
+}
+
+/// Captures either side of [action]: the screen it starts from, and the one
+/// it leaves behind.
+///
+/// The state *before* an action is the one that disappears. A form submitted
+/// with the wrong data is gone the instant it is sent — the screen that
+/// answers "what exactly did we type?" only exists until the tap lands — and
+/// the automatic frame a step takes shows where the step ended, which is
+/// already the other side of it.
+///
+/// The [after] frame is taken even when the action throws, because that is
+/// when both pictures matter most: the form as it was, and whatever the
+/// product did with it.
+///
+/// [shoot] is how a frame is taken; [BaseSteps.capturing] passes its own.
+Future<T> captureAround<T>(
+  Future<void> Function(String name) shoot,
+  Future<T> Function() action, {
+  required String before,
+  required String after,
+}) async {
+  await shoot(before);
+  try {
+    return await action();
+  } finally {
+    await shoot(after);
+  }
+}
+
 /// Gives Patrol the screenshot API it does not ship on the web.
 ///
 /// Patrol's web automation exposes taps, text, cookies, dialogs and window

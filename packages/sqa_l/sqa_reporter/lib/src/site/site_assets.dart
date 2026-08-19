@@ -108,6 +108,20 @@ const String wordmarkMark = '''
 <rect x="13.5" y="27" width="13" height="2.2" rx="1.1" fill="#d7dde6"/>
 </svg>''';
 
+/// The screenshot viewer's markup, on every page that shows a capture.
+///
+/// One per page rather than one per picture: it shows whichever was clicked,
+/// and a dialog that can be closed needs exactly one close button. The pages
+/// that carry no screenshot do not carry this either — see how `siteJs` does
+/// nothing when it is absent.
+const String shotViewer = '''
+<div class="lightbox" role="dialog" aria-modal="true" aria-label="Screenshot" hidden>
+  <button class="lightbox-close" title="Close (Esc)" aria-label="Close">×</button>
+  <img class="lightbox-image" src="" alt=""/>
+  <p class="lightbox-caption"></p>
+</div>
+''';
+
 /// The stylesheet, written to `sqa-reporter.css` beside `index.html`.
 const String siteCss = '''
 /* SQA Reporter — all rules authored for this generator. */
@@ -657,6 +671,58 @@ table.table tbody tr:hover { background: var(--hover); }
 
 .key-statistics td:nth-child(2n) { color: var(--title); font-weight: 600; }
 
+/* ── Feature search ─────────────────────────────────────────────────── */
+
+.feature-search {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.feature-search input {
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 0.4em 0.7em;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--ink);
+  min-width: 16em;
+}
+
+.feature-search input:focus { outline: 2px solid var(--data); outline-offset: 1px; }
+.filter-count { color: var(--muted); font-size: 0.85rem; }
+
+/* The caret that folds an epic in the coverage panel. Same control as the
+   step tree's, so a reader learns it once. */
+.requirement-row .caret {
+  color: var(--muted);
+  font-size: 0.85em;
+  transform: rotate(0deg);
+  transition: transform 0.12s ease;
+}
+
+.requirement-row .caret.open { transform: rotate(90deg); }
+
+/* ── Severity ───────────────────────────────────────────────────────── */
+
+/* Not a verdict, so it borrows none of the verdict colours: what a failure
+   *would* cost is a different question from what happened, and painting it
+   red would have the table shouting about a scenario that passed. Weight
+   carries it instead — the two levels somebody acts on are set solid in the
+   title navy, the rest recede. */
+.severity {
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.severity.blocker, .severity.critical { color: var(--title); font-weight: 700; }
+.severity.none { letter-spacing: 0; }
+
 /* ── Result markers ─────────────────────────────────────────────────── */
 
 .result-icon {
@@ -1199,6 +1265,70 @@ table.step-table.nested td { border-bottom: 1px solid var(--rule-soft); }
 }
 
 .bullet.active { background: var(--link); color: #fff; }
+
+/* ── Screenshot viewer ──────────────────────────────────────────────── */
+
+/* A screenshot in the carousel is capped at 60vh so the caption and the
+   controls stay on screen, which is right for walking through a run and
+   wrong for reading an error message in the app. Clicking one opens it over
+   the page at its own size.
+   
+   It is a dialog, so it closes the three ways a dialog closes: the button,
+   Escape, and clicking the darkness around it. The button exists because the
+   other two are conventions somebody has to already know. */
+.slides img { cursor: zoom-in; }
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 3.5rem 1.5rem 2rem 1.5rem;
+  background: rgba(11, 37, 69, 0.9);
+}
+
+.lightbox[hidden] { display: none; }
+
+.lightbox-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+  background: var(--card);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+}
+
+.lightbox-caption {
+  color: #e8edf5;
+  font-size: 0.9rem;
+  text-align: center;
+  max-width: 60rem;
+}
+
+.lightbox-close {
+  position: absolute;
+  top: 1rem;
+  right: 1.25rem;
+  width: 2.4rem;
+  height: 2.4rem;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  cursor: pointer;
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.lightbox-close:hover { background: rgba(255, 255, 255, 0.24); }
+.lightbox-close:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+/* Nothing scrolls behind the viewer. */
+body.viewing-shot { overflow: hidden; }
 ''';
 
 /// The site's only script: the dashboard's tab switch and the detail page's
@@ -1391,6 +1521,130 @@ document.querySelectorAll("[data-result]").forEach(function (target) {
   });
 });
 
+// The coverage panel folds by epic, so its height is set by how many epics a
+// project has rather than by how many features. Paging it was the other
+// option and it breaks the thing it is paging: an epic ends up on one page
+// and its features on the next, each of them a row with no heading.
+document.querySelectorAll("[data-fold]").forEach(function (caret) {
+  caret.addEventListener("click", function () {
+    var open = !caret.classList.contains("open");
+    caret.classList.toggle("open", open);
+    caret.setAttribute("aria-expanded", open ? "true" : "false");
+    document
+      .querySelectorAll('[data-under="' + caret.dataset.fold + '"]')
+      .forEach(function (row) { row.hidden = !open; });
+  });
+});
+
+// The tree page filters by name. A feature that matches brings its epic with
+// it: a row that says "75% passing" under no heading is a fact about nothing.
+(function () {
+  var filter = document.querySelector(".feature-filter");
+  if (!filter) { return; }
+  var table = document.querySelector("[data-features]");
+  var count = document.querySelector(".filter-count");
+  var features = document.querySelectorAll("tr.feature-row");
+  var epics = document.querySelectorAll("tr.epic-row");
+  var total = table ? parseInt(table.dataset.features, 10) : features.length;
+
+  filter.addEventListener("input", function () {
+    var needle = filter.value.trim().toLowerCase();
+    var shown = 0;
+    var keep = {};
+    features.forEach(function (row) {
+      var hit = !needle || (row.dataset.name || "").indexOf(needle) >= 0;
+      row.hidden = !hit;
+      if (hit) {
+        shown += 1;
+        if (row.dataset.of) { keep[row.dataset.of] = true; }
+      }
+    });
+    epics.forEach(function (row) {
+      row.hidden = Boolean(needle) && !keep[row.dataset.epic];
+    });
+    if (count) {
+      count.hidden = !needle;
+      count.textContent = shown + " of " + total + " features";
+    }
+  });
+})();
+
+// The screenshot viewer: one per page, opened from anywhere that shows a
+// capture — the gallery's slides and the thumbnails on the step table.
+//
+// A screenshot is displayed small in both places for the same reason: the
+// page around it has to stay readable. This is where it is read rather than
+// glanced at, so it opens over everything at its own size, and it closes the
+// three ways a dialog closes.
+var shotViewer = (function () {
+  var box = document.querySelector(".lightbox");
+  if (!box) { return null; }
+  var full = box.querySelector(".lightbox-image");
+  var caption = box.querySelector(".lightbox-caption");
+  var close = box.querySelector(".lightbox-close");
+  var opener = null;
+
+  function captionOf(image) {
+    var slide = image.closest(".slide");
+    var figcaption = slide ? slide.querySelector("figcaption") : null;
+    if (figcaption) { return figcaption.textContent; }
+    // On the step table the picture belongs to a step, and the step's own
+    // text says more than the file name ever will.
+    var row = image.closest("tr");
+    var step = row ? row.querySelector(".step-text") : null;
+    return step ? step.textContent : image.getAttribute("alt") || "";
+  }
+
+  function open(image) {
+    opener = image;
+    full.src = image.getAttribute("src");
+    full.alt = image.getAttribute("alt") || "";
+    caption.textContent = captionOf(image);
+    box.hidden = false;
+    document.body.classList.add("viewing-shot");
+    close.focus();
+  }
+
+  function closeShot() {
+    box.hidden = true;
+    document.body.classList.remove("viewing-shot");
+    // Back to whatever opened it, so a keyboard reader is not returned to the
+    // top of the page each time.
+    if (opener) { opener.focus({ preventScroll: true }); opener = null; }
+  }
+
+  close.addEventListener("click", closeShot);
+  // The darkness around the picture closes it; the picture itself does not,
+  // or every attempt to look closely would shut the thing.
+  box.addEventListener("click", function (event) {
+    if (event.target === box || event.target === caption) { closeShot(); }
+  });
+  document.addEventListener("keydown", function (event) {
+    if (!box.hidden && event.key === "Escape") { closeShot(); }
+  });
+
+  return { open: open, close: closeShot, isOpen: function () { return !box.hidden; } };
+})();
+
+// Every capture on the page opens it. The gallery's slides are images inside
+// a figure; a thumbnail on the step table is an image inside a link to the
+// gallery — the link stays, so a middle click still opens the gallery and the
+// page keeps working with no script at all, but a plain click reads the
+// picture where the reader already is.
+if (shotViewer) {
+  document.querySelectorAll(".slides img").forEach(function (image) {
+    image.addEventListener("click", function () { shotViewer.open(image); });
+  });
+  document.querySelectorAll("a.shot-link").forEach(function (link) {
+    link.addEventListener("click", function (event) {
+      var image = link.querySelector("img");
+      if (!image || event.metaKey || event.ctrlKey || event.shiftKey) { return; }
+      event.preventDefault();
+      shotViewer.open(image);
+    });
+  });
+}
+
 document.querySelectorAll(".carousel").forEach(function (carousel) {
   var slides = carousel.querySelectorAll(".slide");
   var bullets = carousel.querySelectorAll(".bullet");
@@ -1430,5 +1684,15 @@ document.querySelectorAll(".carousel").forEach(function (carousel) {
   // gallery on that slide rather than on the first.
   var requested = new URLSearchParams(window.location.search).get("screenshot");
   show(parseInt(requested, 10) || 0);
+
+  // Walking the run inside the viewer: the arrows already moved the carousel
+  // above, so the picture on top follows it.
+  document.addEventListener("keydown", function (event) {
+    if (!shotViewer || !shotViewer.isOpen()) { return; }
+    if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+      var image = slides[current].querySelector("img");
+      if (image) { shotViewer.open(image); }
+    }
+  });
 });
 ''';

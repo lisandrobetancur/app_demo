@@ -9,5 +9,7 @@ library;
 export 'package:patrol_kit/patrol_kit.dart';
 
 export 'app_launcher.dart';
+export 'epics.dart';
+export 'features.dart';
 export 'test_data.dart';
 export 'widget_probes.dart';

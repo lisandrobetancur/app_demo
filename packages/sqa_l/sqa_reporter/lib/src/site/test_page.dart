@@ -106,6 +106,7 @@ String testPageHtml(
     ..write(_failure(testCase, result))
     ..writeln('</div>')
     ..writeln('</div>')
+    ..write(hasShots ? shotViewer : '')
     ..write(pageFooter())
     ..writeln('<script>$siteJs</script>')
     ..writeln('</body>')
@@ -256,8 +257,13 @@ class _StepTable {
 
   String _thumbs(StepNode step) => <String>[
     for (final CapturedShot shot in step.shots)
-      '<a href="$gallery?screenshot=${slideOf[shot] ?? 0}" '
-          'title="Open the screenshots gallery here">'
+      // Still a link, and still to this capture's place in the gallery: a
+      // middle click opens it there, and with no script at all the thumbnail
+      // keeps working. A plain click opens the viewer instead, because
+      // somebody reading a step wants to see *this* picture, not to leave the
+      // page they are reading.
+      '<a class="shot-link" href="$gallery?screenshot=${slideOf[shot] ?? 0}" '
+          'title="Open this screenshot">'
           '<img class="screenshot" src="${shotNames[shot]}" '
           'alt="${escapeHtml(shot.name)}" width="48" height="48"/></a>',
   ].join(' ');

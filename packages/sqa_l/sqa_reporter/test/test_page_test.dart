@@ -149,8 +149,26 @@ void main() {
       }
     });
 
+    test('a thumbnail opens the picture here, without leaving the steps', () {
+      expect(passingPage, contains('<a class="shot-link"'));
+      expect(
+        passingPage,
+        contains('<div class="lightbox"'),
+        reason: 'reading a step and reading its picture are the same task',
+      );
+      expect(passingPage, contains('<button class="lightbox-close"'));
+      // Still a link to the gallery underneath: a middle click opens it
+      // there, and with no script at all the thumbnail keeps working.
+      expect(passingPage, contains('?screenshot='));
+    });
+
     test('the column is absent when a test captured nothing', () {
       expect(brokenPage, isNot(contains('Screenshots')));
+      expect(
+        brokenPage,
+        isNot(contains('class="lightbox"')),
+        reason: 'no captures, nothing to view',
+      );
     });
   });
 

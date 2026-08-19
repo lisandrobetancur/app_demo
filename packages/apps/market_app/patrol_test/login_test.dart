@@ -3,31 +3,21 @@ import 'package:patrol/patrol.dart';
 import 'steps/steps.dart';
 import 'support/support.dart';
 
-/// F04 · Login and session.
-///
-/// The test body only speaks business language; every locator lives in a page
-/// object and every interaction in a step.
 void main() {
   e2eTest(
-    'logs in with the seeded demo account',
+    'Inicio de sesión con usuario y contraseña correctos',
     tags: <String>[Tags.smoke, Tags.success],
     (PatrolIntegrationTester $) async {
       scenario(
-        epic: 'Access',
-        feature: 'Authentication',
+        feature: Features.authentication,
         severity: Severity.blocker,
         description:
-            'Without login there is no cart, no orders and no profile: it is '
-            'the door to everything else.',
+            'El usuario debe poder iniciar sesión con credenciales válidas y ser recibido por su nombre en el dashboard.',
       );
 
       await launchMarketApp($);
       final Steps steps = Steps($);
 
-      // `testParam` goes AFTER the launch, not before: it reads from
-      // `TestData`, and the data lives in the asset bundle, which does not
-      // exist until the app has launched. It also records what the test
-      // actually used, rather than what it meant to use.
       testParam('User', TestData.demoEmail);
 
       await steps.auth.loginAsDemoUser();
@@ -35,27 +25,19 @@ void main() {
   );
 
   e2eTest(
-    'rejects wrong credentials without revealing the email',
+    'Intento inicio de sesión con credenciales inválidas',
     tags: <String>[Tags.smoke, Tags.negative],
     (PatrolIntegrationTester $) async {
       scenario(
-        epic: 'Access',
-        feature: 'Authentication',
+        feature: Features.authentication,
         severity: Severity.critical,
         description:
-            'The message must stay generic: telling "no such email" apart from '
-            '"wrong password" lets an attacker enumerate registered accounts. '
-            'The cases come from patrol_test/data/invalid_logins.json.',
+            'El usuario no debe poder iniciar sesión con credenciales inválidas.',
       );
 
       await launchMarketApp($);
       final Steps steps = Steps($);
 
-      // One test, several cases. Walking the rows inside the test rather than
-      // generating a test per row is deliberate: the data is read from the
-      // asset bundle, which only exists once the app has launched — and
-      // `main()` runs before that. They also share a single launch, which is
-      // the expensive part of an E2E.
       for (final DataRecord row in TestData.invalidLogins) {
         final String label = row.string('case');
         testParam(label, '${row.string('email')} / ${row.string('password')}');
@@ -72,16 +54,14 @@ void main() {
   );
 
   e2eTest(
-    'keeps submission blocked while the form is invalid',
+    'Validación de los campos de inicio de sesión',
     tags: <String>[Tags.regression, Tags.negative],
     (PatrolIntegrationTester $) async {
       scenario(
-        epic: 'Access',
-        feature: 'Authentication',
+        feature: Features.authentication,
         severity: Severity.normal,
         description:
-            'Live validation must stop the submission before it spends a call '
-            'on the backend.',
+            'Los campos del formulario de inicio de sesión deben validarse en tiempo real.',
       );
       testParam('Invalid email', 'not-an-email');
 

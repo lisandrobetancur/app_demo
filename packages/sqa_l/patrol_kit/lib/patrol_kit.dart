@@ -32,5 +32,6 @@ export 'src/money.dart';
 export 'src/scenario.dart';
 export 'src/screenshot.dart';
 export 'src/tags.dart';
+export 'src/taxonomy.dart';
 export 'src/test_data.dart';
 export 'src/widget_probes.dart';

@@ -41,21 +41,44 @@ abstract class BaseSteps {
   /// (and its screenshot) before the error propagates, so the report shows
   /// what the screen looked like when it broke.
   ///
+  /// [capture] decides whether that automatic frame is taken at all. The
+  /// default keeps it; [Capture.onFailure] drops it while the step behaves,
+  /// and [Capture.none] drops it entirely — for a step that takes its own
+  /// with [shot]:
+  ///
+  /// ```dart
+  /// await step('Apply the coupon', capture: Capture.none, () async {
+  ///   await cart.openCouponField();
+  ///   await shot('coupon field, before typing');
+  ///   await cart.applyCoupon(TestData.validCoupon);
+  ///   await shot('coupon applied');
+  /// });
+  /// ```
+  ///
   /// A step that ends badly is reported as **failed** or **broken**, never
   /// just "red" — see [stepOutcomeOf].
-  Future<T> step<T>(String name, Future<T> Function() body) async {
+  Future<T> step<T>(
+    String name,
+    Future<T> Function() body, {
+    Capture capture = Capture.auto,
+  }) async {
     final int id = _sequence++;
     debugPrintSynchronously('$_marker|begin|$id|$name');
     Log.debug('Step ▸ $name');
     try {
-      final T result = await body();
+      final T result = await ActionCapture.runWith(
+        capture.bracketsActions,
+        body,
+      );
       // Raise anything the step collected, before it is called passed. A soft
       // failure that never surfaced would leave a green step in the report
       // covering a broken expectation — the classic way soft assertions go
       // wrong. The throw lands in the catch below, so the failure still gets
       // its screenshot and its outcome marker.
       softly.assertAll();
-      await $.takeScreenshot(name);
+      if (capture.capturesOnSuccess) {
+        await $.takeScreenshot(name);
+      }
       debugPrintSynchronously('$_marker|end|$id|passed');
       return result;
     } on Object catch (error) {
@@ -64,11 +87,58 @@ abstract class BaseSteps {
       // first, and `broken` versus `failed` is the difference between "the
       // product is wrong" and "the test could not tell".
       Log.error('Step ✗ $name ($outcome)', data: '$error'.split('\n').first);
-      await $.takeScreenshot('$name ($outcome)');
+      if (capture.capturesOnFailure) {
+        await $.takeScreenshot('$name ($outcome)');
+      }
       debugPrintSynchronously('$_marker|end|$id|$outcome');
       rethrow;
     }
   }
+
+  /// Captures the screen right now, under [name].
+  ///
+  /// The automatic frame a step takes shows where it *ended*; this one shows
+  /// a moment chosen by whoever wrote the step — the dialog before it is
+  /// dismissed, the list before the filter is applied, the form with the
+  /// error message still on it. Called inside a step, the picture hangs off
+  /// that step in the report, in the order the calls ran.
+  ///
+  /// A step can take as many as it likes, with or without its automatic one:
+  /// see [Capture].
+  ///
+  /// It never fails a test. A missing screenshot is a worse report, not a
+  /// wrong result.
+  Future<void> shot(String name) => $.takeScreenshot(name);
+
+  /// Runs [action] between two screenshots.
+  ///
+  /// For the moment that vanishes: a form as it was filled, right before the
+  /// submit that replaces it.
+  ///
+  /// ```dart
+  /// await step('Log in', () async {
+  ///   await login.enterEmail(email);
+  ///   await login.enterPassword(password);
+  ///   await capturing(
+  ///     () => login.submit(),
+  ///     before: 'Credentials as typed',
+  ///     after: 'What the submit produced',
+  ///   );
+  /// });
+  /// ```
+  ///
+  /// Both names are yours because both are captions in the report, and a
+  /// caption that says "before" tells a reader nothing they could not see.
+  ///
+  /// The [after] frame is taken even if [action] throws — that is the case
+  /// the pair exists for. When the action is the last thing a step does, that
+  /// frame and the step's own automatic one show the same screen; pass
+  /// `capture: Capture.none` to [step] to keep just this one.
+  Future<T> capturing<T>(
+    Future<T> Function() action, {
+    required String before,
+    required String after,
+  }) => captureAround(shot, action, before: before, after: after);
 
   /// Checks one or more expectations together.
   ///

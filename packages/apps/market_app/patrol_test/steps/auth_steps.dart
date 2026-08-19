@@ -3,17 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import '../pages/pages.dart';
 import '../support/support.dart';
 
-/// Business steps around authentication and session.
-///
-/// The contract of this layer:
-///
-///  * a step reads like something a person does ("log in as the demo user"),
-///    not like a sequence of taps;
-///  * a step may compose several pages and may assert the outcome it
-///    promises, so a test does not have to;
-///  * a step never contains a locator — those live in the page objects;
-///  * every step goes through [step], which names it, captures the screen it
-///    left behind and reports its outcome to the report.
+
 class AuthSteps extends BaseSteps {
   AuthSteps(super.$)
     : _login = LoginPage($),
@@ -24,21 +14,19 @@ class AuthSteps extends BaseSteps {
   final OnboardingPage _onboarding;
   final DashboardPage _dashboard;
 
-  /// Fills the form and submits, without asserting the outcome — used by both
-  /// the happy path and the failure cases.
+
   Future<void> submitCredentials({
     required String email,
     required String password,
-  }) => step('Submit credentials for $email', () async {
+  }) => step('Ingresa el email: $email y la contraseña: $password', () async {
     await _login.waitUntilVisible();
     await _login.enterEmail(email);
     await _login.enterPassword(password);
     await _login.submit();
   });
 
-  /// Logs in with the seeded demo account and asserts the dashboard greets
-  /// that user.
-  Future<void> loginAsDemoUser() => step('Log in as the demo user', () async {
+
+  Future<void> loginAsDemoUser() => step('Ingresa usuario y contraseña correctos', () async {
     await submitCredentials(
       email: TestData.demoEmail,
       password: TestData.demoPassword,
@@ -46,19 +34,15 @@ class AuthSteps extends BaseSteps {
     await _dashboard.waitUntilVisible();
     should(
       seeThat(
-        'the dashboard greets the logged-in user by name',
+        'En el dashboard se saluda por su nombre al usuario que ha iniciado sesión',
         () => _dashboard.greetingText,
         contains(TestData.demoFullName),
       ),
     );
   });
 
-  /// Asserts the login screen rejected the attempt and stayed put.
   Future<void> expectLoginRejected() =>
-      step('Expect the login to be rejected', () async {
-        // One claim with two halves that fail for different reasons: "still
-        // on login" and "also reached the dashboard" point at very different
-        // bugs, so the batch checks both.
+    step('Expect the login to be rejected', () async {
         should(
           seeThat(
             'a failed login keeps the user on the login screen',

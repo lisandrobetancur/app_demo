@@ -192,6 +192,89 @@ launcher wraps around the app and streams it as base64 in 800-character chunks �
 a single long line gets mangled on the way out of the browser. Turn it off with
 `--dart-define=E2E_SCREENSHOTS=false`.
 
+Every step captures its end state, and that default is the right one: the
+picture nobody thought to ask for is the one wanted at three in the morning
+when a step failed on CI. Two things override it.
+
+**`capture:` decides whether the automatic frame is taken**, per step:
+
+| | Passed | Broke |
+|---|---|---|
+| `Capture.auto` (default) | frame | frame |
+| `Capture.aroundActions` | frame, plus two per click and per clear, plus one per run of scrolls | frame |
+| `Capture.onFailure` | — | frame |
+| `Capture.none` | — | — |
+
+**`Capture.aroundActions` brackets the clicks and the clears of a step**,
+which is what you want when the interesting screen is the one an action
+destroys:
+
+```dart
+await step('Log in', capture: Capture.aroundActions, () async {
+  await login.email.type(email);       // no frames
+  await login.password.type(password); // no frames
+  await login.submit.click();          // frame before ← the form as filled
+                                       // frame after  ← what it produced
+});
+```
+
+Typing is not bracketed on purpose: a field with text in it is the same screen
+with text in it, and a frame either side of every field would bury the two that
+matter. The filled form is still captured — it is the *before* of the click
+that sends it. Reading a value is out because it changes nothing.
+
+Key presses follow the same rule as clicks, decided by what the key does:
+Enter and Space act on the screen and are bracketed, Tab and the arrows only
+move the focus and are not. The exception is the Tab that reaches a submit
+button and fires it — that press *is* the submit, so it says so:
+
+```dart
+await login.password.pressTab(acts: true);   // frame before ← the form as filled
+                                             // frame after  ← what it produced
+await login.password.pressEnter();           // bracketed by default
+await login.email.pressTab();                // just moving on: no frames
+```
+
+Scrolling is a run, not a call. A step that walks down a long form scrolls
+three or four times, and a frame either side of each would be four pictures of
+the same page sliding past — so the **first** scroll takes a frame and the run
+stays open until something else happens. Where it landed is normally
+photographed by whatever comes next (the next click's *before*, or the frame
+the step takes when it ends); only when nothing else is about to look — a
+scroll followed by typing — does the landing get a frame of its own.
+
+**`capturing(action, before:, after:)` brackets one action**, with captions you
+write, for when the whole step does not need it:
+
+```dart
+await capturing(
+  () => login.submit(),
+  before: 'Credentials as typed',
+  after: 'What the submit produced',
+);
+```
+
+The `after` frame is taken even if the action throws — that is the case the
+pair exists for.
+
+**`shot(name)` takes one whenever you want**, which is how you capture a moment
+*inside* a step rather than at its end — the dialog before it is dismissed, the
+list before the filter is applied:
+
+```dart
+await step('Apply the coupon', capture: Capture.none, () async {
+  await cart.openCouponField();
+  await shot('coupon field, before typing');
+  await cart.applyCoupon(TestData.validCoupon);
+  await shot('coupon applied');
+});
+```
+
+A step can take as many as it likes, with or without its automatic one. They
+hang off that step in the report, in the order the calls ran, and the gallery
+walks them in the same order. Neither ever fails a test: a missing screenshot
+is a worse report, not a wrong result.
+
 ## Locale
 
 `Money.parse` reads prices back off the screen, and separators are
