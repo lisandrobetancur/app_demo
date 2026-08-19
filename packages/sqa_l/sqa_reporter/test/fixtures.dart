@@ -2,6 +2,13 @@
 /// marker — the formats are the ones the parsers read in
 /// production, so both consumers of the stream are tested against the same
 /// contract.
+///
+/// Including the detail that is easiest to get wrong: every timestamp Patrol
+/// writes comes from `DateTime.now().toIso8601String()` and therefore carries
+/// **no zone**, while the transports' own times (Playwright's `startTime`)
+/// are real UTC and say so with a `Z`. A fixture that put a `Z` on Patrol's
+/// stamps would be testing a stream nobody produces, and would hide exactly
+/// the bug that made Android print the wrong hour.
 library;
 
 import 'dart:convert';
@@ -24,8 +31,8 @@ String passingStdout() {
     'PATROL_STEP|begin|1|Log in as the demo user',
     // A capture that fits in one chunk: the other shape of the marker.
     'PATROL_SHOT|before_login|0|1|$tinyPngBase64',
-    'PATROL_LOG ${jsonEncode(<String, String>{'type': 'step', 'timestamp': '2026-08-18T10:00:01.000Z', 'action': 'tap login_submit_button', 'status': 'start'})}',
-    'PATROL_LOG ${jsonEncode(<String, String>{'type': 'step', 'timestamp': '2026-08-18T10:00:02.500Z', 'action': 'tap login_submit_button', 'status': 'success'})}',
+    'PATROL_LOG ${jsonEncode(<String, String>{'type': 'step', 'timestamp': '2026-08-18T10:00:01.000', 'action': 'tap login_submit_button', 'status': 'start'})}',
+    'PATROL_LOG ${jsonEncode(<String, String>{'type': 'step', 'timestamp': '2026-08-18T10:00:02.500', 'action': 'tap login_submit_button', 'status': 'success'})}',
     'PATROL_ASSERT ${jsonEncode(<String, String>{'name': 'the dashboard greets the user', 'status': 'passed', 'expected': 'Hola, Ana', 'actual': 'Hola, Ana'})}',
     'PATROL_SHOT|after_login|0|2|$chunk1',
     'PATROL_STEP|end|1|passed',
@@ -42,7 +49,7 @@ String passingStdout() {
 /// was broken.
 String brokenStdout() => <String>[
   'PATROL_STEP|begin|1|Open the catalog',
-  'PATROL_LOG ${jsonEncode(<String, String>{'type': 'step', 'timestamp': '2026-08-18T10:01:00.000Z', 'action': 'tap missing_button', 'status': 'start'})}',
+  'PATROL_LOG ${jsonEncode(<String, String>{'type': 'step', 'timestamp': '2026-08-18T10:01:00.000', 'action': 'tap missing_button', 'status': 'start'})}',
   'PATROL_STEP|end|1|broken',
 ].join('\n');
 
@@ -112,8 +119,8 @@ String playwrightReport() => jsonEncode(<String, Object>{
 /// patrol-log` consumes.
 String patrolLog() => <String>[
   '08-18 10:00:00.000  1234  5678 I flutter : device noise before',
-  'PATROL_LOG ${jsonEncode(<String, String>{'type': 'test', 'status': 'start', 'name': 'login_test logs in with the seeded demo account', 'timestamp': '2026-08-18T10:00:00.500Z'})}',
+  'PATROL_LOG ${jsonEncode(<String, String>{'type': 'test', 'status': 'start', 'name': 'login_test logs in with the seeded demo account', 'timestamp': '2026-08-18T10:00:00.500'})}',
   passingStdout(),
-  'PATROL_LOG ${jsonEncode(<String, String>{'type': 'test', 'status': 'success', 'name': 'login_test logs in with the seeded demo account', 'timestamp': '2026-08-18T10:00:03.100Z'})}',
+  'PATROL_LOG ${jsonEncode(<String, String>{'type': 'test', 'status': 'success', 'name': 'login_test logs in with the seeded demo account', 'timestamp': '2026-08-18T10:00:03.100'})}',
   '08-18 10:00:04.000  1234  5678 I flutter : device noise after',
 ].join('\n');

@@ -107,6 +107,48 @@ PATROL_STEP|end|1|passed
     });
   });
 
+  group('a timestamp Patrol wrote', () {
+    const Duration bogota = Duration(hours: -5);
+    final int noon = DateTime.utc(
+      2026,
+      8,
+      18,
+      15,
+    ).millisecondsSinceEpoch; // 10:00 in Bogotá
+
+    test('names an instant only once you say which clock it was on', () {
+      expect(epochOfStamp('2026-08-18T10:00:00.000', zone: bogota), noon);
+      expect(
+        epochOfStamp('2026-08-18T10:00:00.000'),
+        DateTime.utc(2026, 8, 18, 10).millisecondsSinceEpoch,
+        reason: 'no zone given, none assumed: it reads as UTC',
+      );
+    });
+
+    test('is left alone when it already carries one', () {
+      // Playwright's `startTime` is this shape, and it is right as it stands.
+      expect(epochOfStamp('2026-08-18T15:00:00.000Z', zone: bogota), noon);
+      expect(epochOfStamp('2026-08-18T10:00:00.000-05:00', zone: bogota), noon);
+    });
+
+    test('reads the same on any machine, whatever its own zone is', () {
+      // `DateTime.parse` would resolve a naive stamp against the local zone,
+      // so the same log gave one answer on a CI runner in UTC and another on
+      // a laptop in Bogotá. The suite proves this by running under
+      // `TZ=America/Bogota` as well as under UTC.
+      expect(
+        epochOfStamp('2026-08-18T15:00:00.000'),
+        DateTime.utc(2026, 8, 18, 15).millisecondsSinceEpoch,
+      );
+    });
+
+    test('unreadable or absent leaves the clock where it was', () {
+      expect(epochOfStamp(null), isNull);
+      expect(epochOfStamp('  '), isNull);
+      expect(epochOfStamp('null'), isNull);
+    });
+  });
+
   group('what a dying test leaves open', () {
     test('is marked broken, because that is what actually broke', () {
       final MarkerParse parsed = parseMarkers(brokenStdout(), 0);

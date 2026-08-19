@@ -51,18 +51,72 @@ final RegExp _ansi = RegExp('\x1B?\\[[0-9;]*m');
 /// Strips the ANSI colour codes Patrol writes into its log lines.
 String stripAnsi(String text) => text.replaceAll(_ansi, '');
 
-/// How far the marker stream's clock has to move to land on the transport's.
+/// A stamp that says which clock it was read on: `…Z` or `…+05:30`.
+final RegExp _zoned = RegExp(r'(?:[zZ]|[+-]\d{2}:?\d{2})$');
+
+/// The instant a Patrol timestamp names, in milliseconds since the epoch.
 ///
-/// Patrol stamps its `PATROL_LOG` lines with the *device's* wall clock and no
-/// timezone: `2026-08-18T20:10:41.123` is whatever the phone or the browser
-/// thinks the time is, and reading it gives an instant only if you already
-/// know where that device was. The transport's own start — Playwright's
-/// `startTime`, which is real UTC — does not have that problem.
+/// Patrol stamps every log entry with `DateTime.now().toIso8601String()`, and
+/// `DateTime.now()` is local: the string that comes out carries no zone at all
+/// — `2026-08-19T10:00:41.123` is whatever the phone, emulator or browser
+/// thinks the time is, and it names an instant only for someone who knows
+/// where that device was.
 ///
-/// Mixing the two is what made a web run come out five hours long: the suite
-/// runs with `--web-timezone=America/Bogota`, so every marker read as UTC
-/// landed five hours before the test that produced it, and widening the test
-/// to cover its steps stretched it across the gap.
+/// [zone] is that missing knowledge, and the report already holds it: the
+/// pages are drawn on one clock (`--utc-offset`, UTC−5 by default), and the
+/// devices the suite runs on are set to it. So the rule is the one a reader
+/// would apply without thinking — *a timestamp with no zone belongs to the
+/// clock the report is set to* — and reading it back on that same clock shows
+/// the time the device showed. Android was an hour or five out precisely
+/// because this step was missing: the naive stamp went in as if it were UTC
+/// and then came out shifted by the display offset.
+///
+/// A stamp that does carry a zone is left alone, whatever [zone] says: it
+/// already names an instant, and Playwright's `startTime` is exactly that.
+///
+/// Reading a naive stamp is deliberately not left to `DateTime.parse`, which
+/// would resolve it against *this machine's* zone and give one answer on a CI
+/// runner in UTC and another on a laptop in Bogotá — the same log, two
+/// reports.
+int? epochOfStamp(String? text, {Duration zone = Duration.zero}) {
+  final String stamp = (text ?? '').trim();
+  if (stamp.isEmpty) {
+    return null;
+  }
+  final DateTime? read = DateTime.tryParse(stamp);
+  if (read == null) {
+    return null;
+  }
+  if (_zoned.hasMatch(stamp)) {
+    return read.millisecondsSinceEpoch;
+  }
+  return DateTime.utc(
+        read.year,
+        read.month,
+        read.day,
+        read.hour,
+        read.minute,
+        read.second,
+        read.millisecond,
+        read.microsecond,
+      ).millisecondsSinceEpoch -
+      zone.inMilliseconds;
+}
+
+/// How far the marker stream's clock has to move to land on the transport's,
+/// after [epochOfStamp] has already put the naive stamps on the report's
+/// clock.
+///
+/// That rule handles the case the suite controls: devices set to the zone the
+/// report is drawn in. This handles the one it does not — a runner whose
+/// browser or emulator turns out to be somewhere else — by measuring the
+/// stream against something that cannot be mistaken, the transport's own
+/// start: Playwright's `startTime` is real UTC and says so.
+///
+/// Getting this wrong is what made a web run come out five hours long: the
+/// suite runs with `--web-timezone=America/Bogota`, so every marker read as
+/// UTC landed five hours before the test that produced it, and widening the
+/// test to cover its steps stretched it across the gap.
 ///
 /// The drift between the first marker and the test's start is therefore two
 /// things added together: real elapsed time, in seconds, and a difference of
@@ -72,8 +126,9 @@ String stripAnsi(String text) => text.replaceAll(_ansi, '');
 /// seconds of real waiting survive, which matters because that gap is the app
 /// launching before the first interaction.
 ///
-/// Both clocks the same, as on a device log where the start comes from the
-/// stream itself: the drift is seconds, it rounds to zero, and nothing moves.
+/// Both clocks the same — a device log, whose start comes from the stream
+/// itself, or a browser on the zone the report is drawn in: the drift is
+/// seconds, it rounds to zero, and nothing moves.
 ///
 /// Bounded by what a timezone can actually be — the inhabited world spans
 /// UTC−12 to UTC+14 — so a drift larger than that is not a timezone and gets
@@ -98,7 +153,14 @@ int _clockShift(int firstMarker, int startTime) {
 ///
 /// [startTime] is also the reference the marker clock is put back onto when
 /// the two disagree — see [_clockShift].
-MarkerParse parseMarkers(String stdout, int startTime) {
+///
+/// [zone] is the clock the timestamps in the stream were written on, for the
+/// ones that do not say — see [epochOfStamp].
+MarkerParse parseMarkers(
+  String stdout,
+  int startTime, {
+  Duration zone = Duration.zero,
+}) {
   final List<StepNode> root = <StepNode>[];
   final List<StepNode> businessStack = <StepNode>[];
   final List<StepNode> interactionStack = <StepNode>[];
@@ -253,9 +315,7 @@ MarkerParse parseMarkers(String stdout, int startTime) {
     if (entry == null || entry['type'] != 'step') {
       continue;
     }
-    final int? stamped = DateTime.tryParse(
-      '${entry['timestamp']}',
-    )?.millisecondsSinceEpoch;
+    final int? stamped = epochOfStamp('${entry['timestamp']}', zone: zone);
     final int? at = stamped == null
         ? null
         : stamped - (clockShift ??= _clockShift(stamped, startTime));

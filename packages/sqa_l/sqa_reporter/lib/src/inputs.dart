@@ -38,7 +38,11 @@ const Map<String, RunStatus> _testEntryStatus = <String, RunStatus>{
 
 /// Web adapter: one case per Playwright result. Mostly a field rename, since
 /// Playwright already separated the tests and captured each one's stdout.
-ParsedRun parsePlaywright(File input) {
+///
+/// [zone] is the clock a timestamp with no zone was written on — see
+/// [epochOfStamp]. Playwright's own times carry `Z`, so it reaches only the
+/// markers the browser printed.
+ParsedRun parsePlaywright(File input, {Duration zone = Duration.zero}) {
   final Map<String, Object?> report =
       jsonDecode(input.readAsStringSync()) as Map<String, Object?>;
   final List<RunCase> cases = <RunCase>[];
@@ -60,17 +64,14 @@ ParsedRun parsePlaywright(File input) {
             '${specMap['title'] ?? ''}',
           );
           final int start =
-              DateTime.tryParse(
-                '${resultMap['startTime']}',
-              )?.millisecondsSinceEpoch ??
-              0;
+              epochOfStamp('${resultMap['startTime']}', zone: zone) ?? 0;
           final ({String? message, String? trace}) failure = _failureFrom(
             resultMap['errors'] as List<Object?>?,
           );
           final String stdout = _stdoutOf(
             resultMap['stdout'] as List<Object?>?,
           );
-          final MarkerParse parsed = parseMarkers(stdout, start);
+          final MarkerParse parsed = parseMarkers(stdout, start, zone: zone);
           cases.add(
             RunCase(
               suite: title.suite,
@@ -111,7 +112,13 @@ ParsedRun parsePlaywright(File input) {
 /// `start` entry opens a case and the next terminal entry closes it; every
 /// line in between belongs to that test, and anything printed between tests
 /// is device noise and is dropped.
-ParsedRun parsePatrolLog(File input) {
+///
+/// [zone] matters more here than on the web path: a device log has no
+/// real-UTC reference in it at all — the boundaries of every test are stamped
+/// by the same naive device clock as the markers — so the clock the report is
+/// drawn on is the only thing that says what those stamps mean. See
+/// [epochOfStamp].
+ParsedRun parsePatrolLog(File input, {Duration zone = Duration.zero}) {
   final List<RunCase> cases = <RunCase>[];
   _OpenCase? current;
 
@@ -127,11 +134,7 @@ ParsedRun parsePatrolLog(File input) {
         entry = null;
       }
       if (entry is Map<String, Object?> && entry['type'] == 'test') {
-        final int when =
-            DateTime.tryParse(
-              '${entry['timestamp']}',
-            )?.millisecondsSinceEpoch ??
-            0;
+        final int when = epochOfStamp('${entry['timestamp']}', zone: zone) ?? 0;
         if (entry['status'] == 'start') {
           final ({String suite, String name}) title = splitTitle(
             stripAnsi('${entry['name'] ?? ''}'),
@@ -140,6 +143,7 @@ ParsedRun parsePatrolLog(File input) {
             suite: title.suite,
             name: title.name,
             start: when,
+            zone: zone,
           );
         } else if (current != null) {
           final String? error = entry['error'] == null
@@ -216,11 +220,17 @@ String _stdoutOf(List<Object?>? chunks) => (chunks ?? <Object?>[])
 }
 
 class _OpenCase {
-  _OpenCase({required this.suite, required this.name, required this.start});
+  _OpenCase({
+    required this.suite,
+    required this.name,
+    required this.start,
+    required this.zone,
+  });
 
   final String suite;
   final String name;
   final int start;
+  final Duration zone;
   final List<String> lines = <String>[];
 
   RunCase close({
@@ -228,7 +238,11 @@ class _OpenCase {
     required RunStatus status,
     required String? error,
   }) {
-    final MarkerParse parsed = parseMarkers(lines.join('\n'), start);
+    final MarkerParse parsed = parseMarkers(
+      lines.join('\n'),
+      start,
+      zone: zone,
+    );
     return RunCase(
       suite: suite,
       name: name,
