@@ -162,10 +162,5 @@ $slides  </div>
     <button class="carousel-next" title="Next screenshot">›</button>
   </div>
 </div>
-<div class="lightbox" role="dialog" aria-modal="true" aria-label="Screenshot" hidden>
-  <button class="lightbox-close" title="Close (Esc)" aria-label="Close">×</button>
-  <img class="lightbox-image" src="" alt=""/>
-  <p class="lightbox-caption"></p>
-</div>
-''';
+$shotViewer''';
 }

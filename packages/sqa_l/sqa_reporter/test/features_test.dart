@@ -251,6 +251,17 @@ void main() {
       );
     });
 
+    test('lists the features under their epic, not just the epics', () {
+      final String index = File(
+        '${results.path}/index.html',
+      ).readAsStringSync();
+      // A project that declares epics used to get a panel of two rows leading
+      // to a page of everything. The feature is what a reader clicks.
+      final RequirementNode feature = roots.first.children.single;
+      expect(index, contains('href="${featureReportName(feature)}"'));
+      expect(index, contains('class="requirement-row level-1"'));
+    });
+
     test('the dashboard summarises coverage per root of the tree', () {
       final String index = File(
         '${results.path}/index.html',

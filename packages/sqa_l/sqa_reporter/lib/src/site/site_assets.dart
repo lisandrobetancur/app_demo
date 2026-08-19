@@ -108,6 +108,20 @@ const String wordmarkMark = '''
 <rect x="13.5" y="27" width="13" height="2.2" rx="1.1" fill="#d7dde6"/>
 </svg>''';
 
+/// The screenshot viewer's markup, on every page that shows a capture.
+///
+/// One per page rather than one per picture: it shows whichever was clicked,
+/// and a dialog that can be closed needs exactly one close button. The pages
+/// that carry no screenshot do not carry this either — see how `siteJs` does
+/// nothing when it is absent.
+const String shotViewer = '''
+<div class="lightbox" role="dialog" aria-modal="true" aria-label="Screenshot" hidden>
+  <button class="lightbox-close" title="Close (Esc)" aria-label="Close">×</button>
+  <img class="lightbox-image" src="" alt=""/>
+  <p class="lightbox-caption"></p>
+</div>
+''';
+
 /// The stylesheet, written to `sqa-reporter.css` beside `index.html`.
 const String siteCss = '''
 /* SQA Reporter — all rules authored for this generator. */
@@ -1473,6 +1487,82 @@ document.querySelectorAll("[data-result]").forEach(function (target) {
   });
 });
 
+// The screenshot viewer: one per page, opened from anywhere that shows a
+// capture — the gallery's slides and the thumbnails on the step table.
+//
+// A screenshot is displayed small in both places for the same reason: the
+// page around it has to stay readable. This is where it is read rather than
+// glanced at, so it opens over everything at its own size, and it closes the
+// three ways a dialog closes.
+var shotViewer = (function () {
+  var box = document.querySelector(".lightbox");
+  if (!box) { return null; }
+  var full = box.querySelector(".lightbox-image");
+  var caption = box.querySelector(".lightbox-caption");
+  var close = box.querySelector(".lightbox-close");
+  var opener = null;
+
+  function captionOf(image) {
+    var slide = image.closest(".slide");
+    var figcaption = slide ? slide.querySelector("figcaption") : null;
+    if (figcaption) { return figcaption.textContent; }
+    // On the step table the picture belongs to a step, and the step's own
+    // text says more than the file name ever will.
+    var row = image.closest("tr");
+    var step = row ? row.querySelector(".step-text") : null;
+    return step ? step.textContent : image.getAttribute("alt") || "";
+  }
+
+  function open(image) {
+    opener = image;
+    full.src = image.getAttribute("src");
+    full.alt = image.getAttribute("alt") || "";
+    caption.textContent = captionOf(image);
+    box.hidden = false;
+    document.body.classList.add("viewing-shot");
+    close.focus();
+  }
+
+  function closeShot() {
+    box.hidden = true;
+    document.body.classList.remove("viewing-shot");
+    // Back to whatever opened it, so a keyboard reader is not returned to the
+    // top of the page each time.
+    if (opener) { opener.focus({ preventScroll: true }); opener = null; }
+  }
+
+  close.addEventListener("click", closeShot);
+  // The darkness around the picture closes it; the picture itself does not,
+  // or every attempt to look closely would shut the thing.
+  box.addEventListener("click", function (event) {
+    if (event.target === box || event.target === caption) { closeShot(); }
+  });
+  document.addEventListener("keydown", function (event) {
+    if (!box.hidden && event.key === "Escape") { closeShot(); }
+  });
+
+  return { open: open, close: closeShot, isOpen: function () { return !box.hidden; } };
+})();
+
+// Every capture on the page opens it. The gallery's slides are images inside
+// a figure; a thumbnail on the step table is an image inside a link to the
+// gallery — the link stays, so a middle click still opens the gallery and the
+// page keeps working with no script at all, but a plain click reads the
+// picture where the reader already is.
+if (shotViewer) {
+  document.querySelectorAll(".slides img").forEach(function (image) {
+    image.addEventListener("click", function () { shotViewer.open(image); });
+  });
+  document.querySelectorAll("a.shot-link").forEach(function (link) {
+    link.addEventListener("click", function (event) {
+      var image = link.querySelector("img");
+      if (!image || event.metaKey || event.ctrlKey || event.shiftKey) { return; }
+      event.preventDefault();
+      shotViewer.open(image);
+    });
+  });
+}
+
 document.querySelectorAll(".carousel").forEach(function (carousel) {
   var slides = carousel.querySelectorAll(".slide");
   var bullets = carousel.querySelectorAll(".bullet");
@@ -1513,55 +1603,13 @@ document.querySelectorAll(".carousel").forEach(function (carousel) {
   var requested = new URLSearchParams(window.location.search).get("screenshot");
   show(parseInt(requested, 10) || 0);
 
-  // The viewer. A slide is capped at 60vh so its caption and the controls stay
-  // on screen; this is where the screenshot is read rather than glanced at.
-  var box = document.querySelector(".lightbox");
-  if (!box) { return; }
-  var full = box.querySelector(".lightbox-image");
-  var caption = box.querySelector(".lightbox-caption");
-  var close = box.querySelector(".lightbox-close");
-  var opener = null;
-
-  function openShot(image) {
-    opener = image;
-    full.src = image.getAttribute("src");
-    full.alt = image.getAttribute("alt") || "";
-    var figure = image.closest(".slide");
-    var text = figure ? figure.querySelector("figcaption") : null;
-    caption.textContent = text ? text.textContent : full.alt;
-    box.hidden = false;
-    document.body.classList.add("viewing-shot");
-    close.focus();
-  }
-
-  function closeShot() {
-    box.hidden = true;
-    document.body.classList.remove("viewing-shot");
-    // Back to the thumbnail that opened it, so a keyboard reader does not
-    // land at the top of the page each time.
-    if (opener) { opener.focus({ preventScroll: true }); opener = null; }
-  }
-
-  slides.forEach(function (slide) {
-    var image = slide.querySelector("img");
-    if (image) {
-      image.addEventListener("click", function () { openShot(image); });
-    }
-  });
-
-  close.addEventListener("click", closeShot);
-  // The darkness around the picture closes it; the picture itself does not,
-  // or every attempt to look closely would shut the thing.
-  box.addEventListener("click", function (event) {
-    if (event.target === box || event.target === caption) { closeShot(); }
-  });
+  // Walking the run inside the viewer: the arrows already moved the carousel
+  // above, so the picture on top follows it.
   document.addEventListener("keydown", function (event) {
-    if (box.hidden) { return; }
-    if (event.key === "Escape") { closeShot(); }
-    // Walking the run without leaving the viewer.
+    if (!shotViewer || !shotViewer.isOpen()) { return; }
     if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
       var image = slides[current].querySelector("img");
-      if (image) { openShot(image); }
+      if (image) { shotViewer.open(image); }
     }
   });
 });

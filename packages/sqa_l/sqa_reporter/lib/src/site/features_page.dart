@@ -286,30 +286,45 @@ String _coverageBar(RequirementNode node) {
   return bar.toString();
 }
 
+/// One line of the dashboard's coverage panel.
+///
+/// A feature goes to its own page, which is where its scenarios are. An epic
+/// has no page — it is a branch — so it lands on its row in the tree, and
+/// reads as the heading of the features indented beneath it.
+String _coverageRow(RequirementNode node, {required int level}) {
+  final String href = node.type == 'feature'
+      ? featureReportName(node)
+      : 'features.html#${rowAnchorOf(node)}';
+  final double? rate = node.passRate;
+  return '<tr class="requirement-row level-$level">'
+      '<td style="padding-left:${0.75 + level * 1.5}em">'
+      '<a href="$href">${escapeHtml(node.name)}</a></td>'
+      '<td>${node.testCount}</td>'
+      '<td>${rate == null ? '—' : '${rate.round()}%'}</td>'
+      '<td class="coverage-column">${_coverageBar(node)}</td>'
+      '</tr>\n';
+}
+
 /// The dashboard's functional-coverage panel: the same tree, summarised, on
 /// the page a reader opens first.
 String coverageOverview(List<RequirementNode> roots) {
   if (roots.isEmpty) {
     return '';
   }
+  // Epics with their features under them, the same shape as the tree page.
+  //
+  // Listing only the roots meant that a project which declares epics — most
+  // of them — got a panel of two rows leading to a page of everything, which
+  // is the opposite of what a reader clicking a name wants. What they are
+  // after is *that* feature: its scenarios, its coverage. So the features are
+  // here, each going straight to its own page, and the epic above them is the
+  // grouping rather than the destination.
   final StringBuffer rows = StringBuffer();
   for (final RequirementNode root in roots) {
-    // Straight to the thing that was clicked. A feature has a page of its own
-    // and that is where its scenarios are; an epic does not, so the link
-    // lands on its row in the tree. Sending both to the top of a page listing
-    // every feature — which is what this did — answers a question nobody
-    // asked.
-    final String href = root.type == 'feature'
-        ? featureReportName(root)
-        : 'features.html#${rowAnchorOf(root)}';
-    rows.writeln(
-      '<tr>'
-      '<td><a href="$href">${escapeHtml(root.name)}</a></td>'
-      '<td>${root.testCount}</td>'
-      '<td>${root.passRate == null ? '—' : '${root.passRate!.round()}%'}</td>'
-      '<td class="coverage-column">${_coverageBar(root)}</td>'
-      '</tr>',
-    );
+    rows.write(_coverageRow(root, level: 0));
+    for (final RequirementNode child in root.children) {
+      rows.write(_coverageRow(child, level: 1));
+    }
   }
   return '''
 <h4>Functional Coverage</h4>
