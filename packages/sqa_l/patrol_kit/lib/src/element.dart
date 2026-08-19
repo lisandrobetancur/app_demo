@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:patrol/patrol.dart';
 
 import 'locator.dart';
+import 'screenshot.dart';
 import 'widget_probes.dart';
 
 /// One element on screen, with the operations a test performs on it.
@@ -37,17 +38,38 @@ class UiElement {
   // --- Interaction ---------------------------------------------------------
 
   /// Taps the element. Patrol settles the tree afterwards.
-  Future<void> click() => finder.tap();
+  Future<void> click() => _acting('click on ${loc.description}', finder.tap);
 
   /// Types [text] into the element.
   ///
   /// Named `type` rather than `sendKeys` because it *replaces* the content
   /// instead of appending to it — which is what `enterText` does, and calling
   /// it `sendKeys` would promise the opposite.
-  Future<void> type(String text) => finder.enterText(text);
+  Future<void> type(String text) => _acting(
+    'type "$text" into ${loc.description}',
+    () => finder.enterText(text),
+  );
 
   /// Empties the field.
-  Future<void> clear() => finder.enterText('');
+  Future<void> clear() =>
+      _acting('clear ${loc.description}', () => finder.enterText(''));
+
+  /// Runs an interaction, capturing either side of it when the step asked
+  /// for that — see [Capture.aroundActions].
+  ///
+  /// Only interactions go through here. Reading a value changes nothing, and
+  /// two identical frames around a getter would be noise; `scrollTo` is left
+  /// out for the same reason, since what it produces is the next
+  /// interaction's *before*.
+  Future<T> _acting<T>(String what, Future<T> Function() body) =>
+      ActionCapture.enabled
+      ? captureAround(
+          $.takeScreenshot,
+          body,
+          before: 'before $what',
+          after: 'after $what',
+        )
+      : body();
 
   /// Scrolls until the element is on screen.
   ///

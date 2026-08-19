@@ -51,6 +51,15 @@ enum Capture {
   /// A frame when the step ends, and another if it breaks. The default.
   auto,
 
+  /// The default, plus a frame either side of **every interaction** the step
+  /// performs — each click, each field typed into, each one cleared.
+  ///
+  /// For the steps where what vanishes is the point: a form as it was filled,
+  /// a menu before the tap that closes it, a field before it is overwritten.
+  /// Costs two frames per interaction, which is why it is asked for rather
+  /// than given.
+  aroundActions,
+
   /// Nothing while the step behaves; a frame if it breaks.
   ///
   /// For steps whose end state says nothing — but whose failure still needs
@@ -64,13 +73,75 @@ enum Capture {
   none;
 
   /// Whether a step that behaved should be captured.
-  bool get capturesOnSuccess => this == Capture.auto;
+  bool get capturesOnSuccess =>
+      this == Capture.auto || this == Capture.aroundActions;
+
+  /// Whether every interaction inside the step captures either side of
+  /// itself.
+  bool get bracketsActions => this == Capture.aroundActions;
 
   /// Whether a step that broke should be captured.
   ///
   /// True for everything except [none]: a failure with no picture is the
   /// case the screenshots exist for.
   bool get capturesOnFailure => this != Capture.none;
+}
+
+/// Whether interactions are currently bracketing themselves with frames.
+///
+/// Ambient rather than passed down, because the alternative is threading a
+/// flag through every page object and every element — the page layer would
+/// have to know about screenshots to stay out of their way, which is exactly
+/// the coupling the layers exist to prevent.
+///
+/// A single mutable field is enough: a Patrol test owns its isolate and runs
+/// its steps one after another, so there is never a second step reading this
+/// at the same time. [runWith] restores what it found, so nesting works and
+/// an exception cannot leave it stuck on.
+abstract final class ActionCapture {
+  static bool _enabled = false;
+
+  /// True while interactions should capture either side of themselves.
+  static bool get enabled => _enabled;
+
+  /// Runs [body] with [value] in force, then puts back what was there.
+  static Future<T> runWith<T>(bool value, Future<T> Function() body) async {
+    final bool previous = _enabled;
+    _enabled = value;
+    try {
+      return await body();
+    } finally {
+      _enabled = previous;
+    }
+  }
+}
+
+/// Captures either side of [action]: the screen it starts from, and the one
+/// it leaves behind.
+///
+/// The state *before* an action is the one that disappears. A form submitted
+/// with the wrong data is gone the instant it is sent — the screen that
+/// answers "what exactly did we type?" only exists until the tap lands — and
+/// the automatic frame a step takes shows where the step ended, which is
+/// already the other side of it.
+///
+/// The [after] frame is taken even when the action throws, because that is
+/// when both pictures matter most: the form as it was, and whatever the
+/// product did with it.
+///
+/// [shoot] is how a frame is taken; [BaseSteps.capturing] passes its own.
+Future<T> captureAround<T>(
+  Future<void> Function(String name) shoot,
+  Future<T> Function() action, {
+  required String before,
+  required String after,
+}) async {
+  await shoot(before);
+  try {
+    return await action();
+  } finally {
+    await shoot(after);
+  }
 }
 
 /// Gives Patrol the screenshot API it does not ship on the web.

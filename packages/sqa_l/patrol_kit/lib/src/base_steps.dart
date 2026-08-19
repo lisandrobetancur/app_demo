@@ -66,7 +66,10 @@ abstract class BaseSteps {
     debugPrintSynchronously('$_marker|begin|$id|$name');
     Log.debug('Step ▸ $name');
     try {
-      final T result = await body();
+      final T result = await ActionCapture.runWith(
+        capture.bracketsActions,
+        body,
+      );
       // Raise anything the step collected, before it is called passed. A soft
       // failure that never surfaced would leave a green step in the report
       // covering a broken expectation — the classic way soft assertions go
@@ -106,6 +109,36 @@ abstract class BaseSteps {
   /// It never fails a test. A missing screenshot is a worse report, not a
   /// wrong result.
   Future<void> shot(String name) => $.takeScreenshot(name);
+
+  /// Runs [action] between two screenshots.
+  ///
+  /// For the moment that vanishes: a form as it was filled, right before the
+  /// submit that replaces it.
+  ///
+  /// ```dart
+  /// await step('Log in', () async {
+  ///   await login.enterEmail(email);
+  ///   await login.enterPassword(password);
+  ///   await capturing(
+  ///     () => login.submit(),
+  ///     before: 'Credentials as typed',
+  ///     after: 'What the submit produced',
+  ///   );
+  /// });
+  /// ```
+  ///
+  /// Both names are yours because both are captions in the report, and a
+  /// caption that says "before" tells a reader nothing they could not see.
+  ///
+  /// The [after] frame is taken even if [action] throws — that is the case
+  /// the pair exists for. When the action is the last thing a step does, that
+  /// frame and the step's own automatic one show the same screen; pass
+  /// `capture: Capture.none` to [step] to keep just this one.
+  Future<T> capturing<T>(
+    Future<T> Function() action, {
+    required String before,
+    required String after,
+  }) => captureAround(shot, action, before: before, after: after);
 
   /// Checks one or more expectations together.
   ///
