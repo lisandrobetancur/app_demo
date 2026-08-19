@@ -14,7 +14,7 @@ import 'epics.dart';
 abstract final class Features {
   /// Signing in and being rejected: the door, and the lock on it.
   static const Feature authentication = Feature(
-    'Authentication',
+    'Inicio de sesión',
     epic: Epics.access,
   );
 

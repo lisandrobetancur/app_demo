@@ -12,7 +12,7 @@ import 'package:patrol_kit/patrol_kit.dart';
 abstract final class Epics {
   /// Getting into the product and staying in: sign-in, sessions, the account
   /// itself. Everything else is behind it.
-  static const Epic access = Epic('Access');
+  static const Epic access = Epic('Autenticación y Gestión de Usuarios');
 
   /// Finding something and paying for it — the path the business lives on.
   static const Epic purchase = Epic('Purchase');
