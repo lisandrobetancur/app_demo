@@ -16,6 +16,11 @@
 #       ├── android_run.log the captured logcat
 #       └── sqa_reporter/report
 #
+# Two things fall outside that root because the tools that write them accept
+# no other path: patrol_cli's `test_bundle.dart`, and — when someone runs
+# `patrol test` by hand rather than through `run_web.sh` — Playwright's
+# `test-results/` and `playwright-report/` in the app package.
+#
 # That is what makes this cleanup trustworthy. The artifacts used to be spread
 # across four places in the repository and this script had to enumerate them
 # one by one — and it forgot the ones nobody remembered existed: `test-results/`
@@ -67,6 +72,22 @@ targets=(
   "$APP_DIR/test_bundle.dart"
   "$APP_DIR/patrol_test/test_bundle.dart"
 )
+
+# Playwright's two default outputs, and the second exception to the one-root
+# rule for the same reason as the bundle: they are written relative to the
+# process's own directory, not to a path we choose. `run_web.sh` redirects
+# both (`--web-results-dir`, `--web-report-dir`) so a normal run never creates
+# them; someone running `patrol test` by hand does, and then they sit in the
+# app package until somebody notices. Gitignored, so nobody ever does.
+#
+# Web only: they are Playwright's, and an Android run neither writes them nor
+# has any business deleting them.
+if [[ "$PLATFORM" == "web" ]]; then
+  targets+=(
+    "$APP_DIR/test-results"
+    "$APP_DIR/playwright-report"
+  )
+fi
 
 removed=0
 for target in "${targets[@]}"; do

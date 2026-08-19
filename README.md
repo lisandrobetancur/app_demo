@@ -389,9 +389,13 @@ build/e2e/
 ```
 
 `build/` is already gitignored, so nothing generated needs a rule of its own.
-The one exception is `test_bundle.dart`, which patrol_cli writes at the package
-root and accepts no other path for — nor could it, being Dart source that has
-to compile inside the package. The clean script deletes it by name.
+The exceptions are the files whose writers accept no other path:
+`test_bundle.dart`, which patrol_cli puts at the package root — nor could it,
+being Dart source that has to compile inside the package — and Playwright's
+`test-results/` and `playwright-report/`, which appear in the app package when
+someone runs `patrol test` by hand instead of through `run_web.sh` (which
+redirects both). The clean script deletes all three by name, the Playwright
+pair on the web platform only.
 
 Cleaning happens at the **start** of a run, not the end: clearing up afterwards
 leaves a tidy machine but also deletes the evidence of what just failed.
