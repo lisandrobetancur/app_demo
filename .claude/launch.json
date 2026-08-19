@@ -15,28 +15,28 @@
       "port": 8384
     },
     {
-      "name": "allure-android",
-      "runtimeExecutable": "python3",
-      "runtimeArgs": [
-        "-m",
-        "http.server",
-        "4041",
-        "--directory",
-        "allure/android/report"
-      ],
-      "port": 4041
-    },
-    {
-      "name": "allure-web",
+      "name": "report-web",
       "runtimeExecutable": "python3",
       "runtimeArgs": [
         "-m",
         "http.server",
         "4042",
         "--directory",
-        "allure/web/report"
+        "build/e2e/web/sqa_reporter/report"
       ],
       "port": 4042
+    },
+    {
+      "name": "report-android",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "4041",
+        "--directory",
+        "build/e2e/android/sqa_reporter/report"
+      ],
+      "port": 4041
     }
   ]
 }

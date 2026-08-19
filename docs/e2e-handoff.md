@@ -8,9 +8,9 @@ studying this POC.
 - **Reference repository (public):** https://github.com/lisandrobetancur/app_demo
 - **Phased migration prompt:** [`docs/prompt-migracion-patrol.md`](./prompt-migracion-patrol.md)
 - **Report generator prompt:** [`docs/prompt-sqa-reporter.md`](./prompt-sqa-reporter.md)
-  — a separate line of work: replacing Allure with a Serenity-shaped report
-  written in Dart. Unrelated to migrating the suite; listed here because
-  this document is where someone looks for what exists.
+  — a separate line of work: the report, written in Dart. Unrelated to
+  migrating the suite; listed here because this document is where someone
+  looks for what exists.
 
 ## How to start on another account
 
@@ -35,7 +35,7 @@ reference repo inside the environment, or paste the prompt's content by hand
 An offline-first Flutter vehicle marketplace. A Melos monorepo with 36 packages
 under `packages/{apps,features,shared,ui,development}`. It runs on Android, iOS
 and web from a single shell. The E2E suite is built with **Patrol 4.9.0**, with
-an Allure report and CI on GitHub Actions.
+its own report generator (SQA Reporter) and CI on GitHub Actions.
 
 **It is not a template to copy as-is.** It is a POC built without constraints,
 where any file could be touched. An app in production has different
@@ -53,8 +53,8 @@ between what Patrol **requires** and what this POC merely **chose**.
 | `patrol_test/support/screenshot.dart` | Per-step capture — **without touching the app** |
 | `packages/apps/market_app/pubspec.yaml` | The `patrol:` block and the `dev_dependency` |
 | `android/app/build.gradle.kts` | Runner + orchestrator, with the reasoning in comments |
-| `pubspec.yaml` (root) | Melos scripts: `e2eWeb`, `e2eAndroid`, `allureWeb` |
-| `packages/sqa_l/tool/allure/`, `packages/sqa_l/tool/e2e/` | Allure conversion and logcat capture |
+| `pubspec.yaml` (root) | Melos scripts: `e2eWeb`, `e2eAndroid`, `sqaWeb` |
+| `packages/sqa_l/sqa_reporter/`, `packages/sqa_l/tool/e2e/` | The report generator, and the run scripts with the logcat capture |
 | `.github/workflows/e2e-*.yml` | Web and Android CI |
 
 ## Conclusion of the analysis: Patrol's real footprint

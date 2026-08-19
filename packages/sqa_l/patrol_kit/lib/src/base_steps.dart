@@ -8,7 +8,7 @@ import 'consequence.dart';
 import 'log.dart';
 import 'screenshot.dart';
 
-/// Marker the Allure converter reads to rebuild the business steps.
+/// Marker the report generator reads to rebuild the business steps.
 const String _marker = 'PATROL_STEP';
 
 /// Base of every steps class.

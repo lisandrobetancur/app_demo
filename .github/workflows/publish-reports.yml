@@ -92,6 +92,7 @@ jobs:
                    font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
             main { max-width:44rem; margin:0 auto; }
             h1 { font-size:1.5rem; margin:0 0 .25rem; }
+            h2 { font-size:1rem; font-weight:600; color:var(--muted); margin:2rem 0 .75rem; }
             p.sub { color:var(--muted); margin:0 0 2rem; }
             .card { display:block; padding:1.25rem 1.5rem; margin-bottom:1rem; text-decoration:none;
                     border:1px solid var(--line); border-radius:12px; background:var(--card); color:inherit; }
@@ -105,9 +106,10 @@ jobs:
           </style>
           <main>
             <h1>Market · end-to-end reports</h1>
-            <p class="sub">Patrol suite, one report per platform. Each is rebuilt from scratch on every run.</p>
-            $(have web '<a class="card" href="web/"><b>Web</b><span>Chromium, driven by Playwright</span></a>' 'Web')
-            $(have android '<a class="card" href="android/"><b>Android</b><span>emulator, API 31, native instrumentation</span></a>' 'Android')
+            <p class="sub">Patrol suite, one report per platform, rebuilt from scratch on every run.</p>
+            <h2>SQA Reporter</h2>
+            $(have web '<a class="card" href="web/"><b>Web E2E Test Report</b><span>Chromium, driven by Playwright</span></a>' 'Web E2E Test Report')
+            $(have android '<a class="card" href="android/"><b>Android E2E Test Report</b><span>emulator, API 31, native instrumentation</span></a>' 'Android E2E Test Report')
             <footer>
               Published by run
               <a href="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}">#${GITHUB_RUN_NUMBER}</a>

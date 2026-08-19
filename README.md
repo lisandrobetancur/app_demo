@@ -67,7 +67,7 @@ packages/
 ├── development/lint/                shared analysis_options
 ├── sqa_l/                           everything the automation framework owns
 │   ├── patrol_kit/                  reusable E2E scaffolding — Flutter + Patrol only
-│   └── tool/{allure,e2e}/           Allure conversion and the run scripts
+│   └── tool/e2e/                    the run scripts
 ├── shared/                          pure logic, ZERO widgets
 │   ├── typing/                      base ViewModel, Clock, IdGenerator, ViewStatus
 │   ├── database/                    connection, schema, migrations, seed, base DAO
@@ -347,19 +347,19 @@ as green. Opening it stays separate, because generating and opening are
 different decisions and CI only ever wants the first:
 
 ```bash
-melos run allureServeWeb          # open build/e2e/web/allure/report
-melos run allureServeAndroid
+melos run sqaOpenWeb              # open build/e2e/web/sqa_reporter/report
+melos run sqaOpenAndroid
 
 melos run e2eWebReport            # run, then open
 melos run e2eWebHeadedReport
 ```
 
 Rebuilding a report from results already on disk, without re-running the
-suite — for when you changed the converter and want to see the effect:
+suite — for when you changed the generator and want to see the effect:
 
 ```bash
-melos run allureWeb
-melos run allureAndroid
+melos run sqaWeb
+melos run sqaAndroid
 ```
 
 Cleaning on its own. Per platform, because a web report and a device report
@@ -382,16 +382,20 @@ build/e2e/
 ├── web/
 │   ├── playwright/            results.json, results.xml, Playwright's HTML
 │   ├── test-results/          per-test traces and attachments
-│   └── allure/{results,report}
+│   └── sqa_reporter/report    the report, its JSON results and screenshots
 └── android/
     ├── android_run.log        the captured logcat
-    └── allure/{results,report}
+    └── sqa_reporter/report
 ```
 
 `build/` is already gitignored, so nothing generated needs a rule of its own.
-The one exception is `test_bundle.dart`, which patrol_cli writes at the package
-root and accepts no other path for — nor could it, being Dart source that has
-to compile inside the package. The clean script deletes it by name.
+The exceptions are the files whose writers accept no other path:
+`test_bundle.dart`, which patrol_cli puts at the package root — nor could it,
+being Dart source that has to compile inside the package — and Playwright's
+`test-results/` and `playwright-report/`, which appear in the app package when
+someone runs `patrol test` by hand instead of through `run_web.sh` (which
+redirects both). The clean script deletes all three by name, the Playwright
+pair on the web platform only.
 
 Cleaning happens at the **start** of a run, not the end: clearing up afterwards
 leaves a tidy machine but also deletes the evidence of what just failed.
@@ -446,11 +450,13 @@ Building and opening the report is a separate step on purpose, so a run does
 not force a browser window on you:
 
 ```bash
-melos run allureWeb && melos run allureServeWeb
+melos run sqaWeb && melos run sqaOpenWeb
 ```
 
-`allureServeWeb` opens the default browser itself, on a random free port. When
-you do want the whole thing in one command, these chain the three steps:
+`sqaOpenWeb` opens the report in the default browser straight off the
+filesystem — the site is static and self-contained, so there is no server to
+start and none to remember to stop. When you do want the whole thing in one
+command, these chain the three steps:
 
 ```bash
 melos run e2eWebReport        # headless, then open the report
@@ -465,11 +471,12 @@ The run itself uses three reporters, each for a different reader:
 | Reporter | For whom | Output |
 |---|---|---|
 | `list` | the terminal | live progress |
-| `json` | the Allure converter | `build/e2e/web/playwright/results.json` |
-| `junit` | CI | `build/e2e/web/playwright/results.xml` — GitLab, Jenkins and Azure turn it into a test tab, which a static Allure site cannot do |
+| `json` | the report generator | `build/e2e/web/playwright/results.json` |
+| `junit` | CI | `build/e2e/web/playwright/results.xml` — GitLab, Jenkins and Azure turn it into a test tab, which a static report site cannot do |
 
 Patrol only accepts that whitelist, so no third-party reporter can be plugged
-in — which is why Allure is fed by a converter instead.
+in — which is why the report is built from the `json` output afterwards
+instead.
 
 `json` is not optional here, and not only for its metadata: Playwright's
 per-test stdout capture is the **only channel** that carries the screenshot
@@ -544,41 +551,48 @@ while; the pairing above is the one CI runs. Check the
 [compatibility table](https://patrol.leancode.co/documentation/compatibility-table)
 before moving either.
 
-### Allure report
+### The report — SQA Reporter
 
 ```bash
 melos run e2eWeb        # runs the suite, emitting Playwright JSON
 ```
 
 ```bash
-melos run allureWeb     # converts that JSON and rebuilds the report
+melos run sqaWeb        # rebuilds the report from that JSON
 ```
 
 ```bash
-melos run allureServeWeb  # opens the report in a browser
+melos run sqaOpenWeb    # opens the report in a browser
 ```
 
-Everything Allure produces lives under a single directory, one subdirectory per
-platform, and each script wipes its own before rebuilding:
+The generator is a Dart package, `packages/sqa_l/sqa_reporter`, and it owns the
+whole output: the JSON results, the screenshots and the static pages that read
+them, all under one directory per platform which it writes from scratch every
+time.
 
 ```
-allure/
-├── web/{results,report}
-└── android/{results,report}
+build/e2e/
+├── web/sqa_reporter/report
+└── android/sqa_reporter/report
 ```
 
-Why a converter (`packages/sqa_l/tool/allure/patrol_to_allure.mjs`) instead of the usual
-`allure-playwright` reporter: Patrol owns the Playwright config that runs the
-web suite, and its `mapReporters` accepts only a whitelist — `html`, `json`,
-`junit`, `list`, `dot`, `line`, `github`, `null` — and throws on anything else.
-So the pipeline uses the supported `json` reporter and translates it.
+The site is **self-contained** — no libraries, no fonts, no network requests at
+all — so a browser opens it straight off the filesystem and there is no server
+to start. The charts are CSS (a conic-gradient doughnut, flex bars) and the
+table's filter, sort and pagination are its own sixty lines of script.
 
-The translation is not a straight copy. Patrol prints a structured
-`PATROL_LOG {…}` line for every interaction, so each `tap`, `enterText` and
-`waitUntilVisible` becomes a real Allure **step** with its own duration, and a
-step still open when a test dies is marked `broken` — which is usually the one
-that actually failed. Tests are grouped by the Dart file they came from
-(`login_test`, `purchase_flow_test`) under a `Patrol web E2E` parent suite.
+Why a generator of our own rather than an off-the-shelf reporter: Patrol owns
+the Playwright config that runs the web suite, and its `mapReporters` accepts
+only a whitelist — `html`, `json`, `junit`, `list`, `dot`, `line`, `github`,
+`null` — and throws on anything else. So the pipeline uses the supported `json`
+reporter and reads it afterwards.
+
+Reading it is not a straight copy. Patrol prints a structured `PATROL_LOG {…}`
+line for every interaction, so each `tap`, `enterText` and `waitUntilVisible`
+becomes a **step** with its own duration, and a step still open when a test
+dies is marked `broken` — which is usually the one that actually failed. Tests
+are grouped by the feature their `scenario()` declared, and by the Dart file
+they came from (`login_test`, `purchase_flow_test`) when they declared none.
 
 Four markers of the suite's own travel the same stdout channel and are
 translated alongside Patrol's:
@@ -610,8 +624,7 @@ wait timed out, a value could not be read; the product may be fine, nobody
 checked.
 
 WebDriver suites live by this distinction — an assertion failure versus a
-`NoSuchElementException` — and Allure reports it as **failed** versus
-**broken**. The suite decides it in `stepOutcomeOf`, on the error object,
+`NoSuchElementException` — and the report says **failed** versus **broken**. The suite decides it in `stepOutcomeOf`, on the error object,
 where the type is still known: a `TestFailure` is `failed`, anything else is
 `broken`. Deciding it downstream would mean pattern-matching a message, and a
 message is not a contract.
@@ -622,36 +635,38 @@ widget tapped without being asserted is the suite's. `seeThatIsPresent` on an
 absent widget is *failed* — the test asked, the answer was no. A bare `.tap()`
 on that same widget is *broken* — nobody asked, the test assumed.
 
-The converter carries the verdict up: Playwright reports one `failed` for both
+The generator carries the verdict up: Playwright reports one `failed` for both
 cases, so a test whose only casualty was a stale locator is promoted to
 *broken* rather than being read as a product defect.
 
-`scenario()` supplies the business taxonomy. `epic` and `feature` drive
-Allure's **Behaviors** view, which groups by functionality instead of by file,
-and `severity` drives its filter. There is deliberately no `story`: Allure's
-taxonomy offers one, but a story is a unit of work while a test is a unit of
+`scenario()` supplies the business taxonomy. `epic` and `feature` drive the
+report's **Features** page, which groups by functionality instead of by file,
+and `severity` is carried as a tag. There is deliberately no `story`: the
+taxonomy this borrows from offers one, but a story is a unit of work while a
+test is a unit of
 verification, so the level pays for itself only when one story holds several
 tests. Declared one-to-one with the tests, as it was here, it was a second name
 for each of them and grouped nothing. The test's own name is the leaf. `testParam()` records the data a case
 ran with — user, coupon, amounts — so a failure can be reproduced without
 opening the test. Neither touches the app: both just print to stdout.
 
-Allure 3 is used through its npm package, so **no Java is required**. The
-converter has no dependencies beyond Node itself.
+The generator is plain Dart with no dependencies beyond the SDK — **no Java,
+no Node, no npm package** — so building a report needs nothing the repository
+does not already have to run the suite.
 
 ### Counting what the report actually holds
 
 A green suite and a suite that verified something are not the same claim, and
 the difference is invisible from the outside. The assertions travel from the
 browser console — or from logcat, on a device — through the per-test capture
-and into the converter, and a break anywhere along that chain is silent: the
+and into the report, and a break anywhere along that chain is silent: the
 tests still pass, the report just holds nothing behind them.
 
-So both CI jobs run `packages/sqa_l/tool/allure/summarize_assertions.mjs` after building the
+So both CI jobs run `dart run sqa_reporter:assertion_summary` after building the
 report and write the count into the job summary, where it is readable from the
 pull request without downloading an artifact:
 
-| Escenario | Aserciones | Pasadas | Fallidas |
+| Scenario | Assertions | Passed | Failed |
 |---|--:|--:|--:|
 | buys a product from the catalog… | 16 | 16 | 0 |
 
@@ -659,7 +674,7 @@ The step **fails** when the report holds no assertions at all. A notice in a
 summary nobody opens would not protect against the very thing this exists to
 catch — a suite that stayed green while it stopped verifying anything. What it
 does *not* do is add a second red mark to a run that produced no results at
-all: a cancelled run, or a converter that already failed, is someone else's
+all: a cancelled run, or a suite that never got far enough, is someone else's
 red, and the step says so and leaves.
 
 The pipe into `$GITHUB_STEP_SUMMARY` runs under `shell: bash` on purpose. That
@@ -667,42 +682,34 @@ is what sets `pipefail`; with the default shell, `tee` would return its own
 success and swallow the script's exit code, turning the check quietly back
 into a notice.
 
-Two traps worth knowing: Allure 3's CLI has no `--clean`, and generating into
-a directory that already holds a report **nests the new one under `awesome/`**
-instead of replacing it — so the scripts delete the output first, otherwise you
-end up reading a stale report.
-
 ### Every run starts from nothing
 
 A report describes the run that produced it, and nothing else. Three things
 enforce that, because deleting the report alone is not enough:
 
-- `allureWeb` / `allureAndroid` delete `build/e2e/<platform>/allure/` before
-  rebuilding it, results and report alike.
+- `sqaWeb` / `sqaAndroid` write `build/e2e/<platform>/sqa_reporter/report` from
+  scratch, results and pages alike.
 - Every run deletes `build/e2e/<platform>/` before starting. Patrol overwrites
   its results on success anyway, but a run that dies early would leave the
   previous `results.json` in place — and the next report would be built from it
   without a word, stamped with today's date.
-- The converter prints the age of its input and warns past ten minutes, since
-  the generated page carries the time it was *generated*, never the time the
-  tests ran.
+- Rebuilding from results already on disk is a normal thing to do, so instead
+  of warning on the command line the page itself says when the run it describes
+  finished, beside the time the report was generated.
 
-No history is kept either. Allure can accumulate one with `--history-path`,
-which is what fills *Status dynamics*, *Status transitions* and *Durations
-dynamics* — those charts show a single point here. That is deliberate: history
-is state surviving between runs, and it would be the one thing a rebuild does
-not clear.
+No history is kept either, by choice: history is state surviving between runs,
+and it would be the one thing a rebuild does not clear.
 
 ### Running on Android
 
-The same suite runs on a physical device, and produces its own Allure report:
+The same suite runs on a physical device, and produces its own report:
 
 ```bash
 melos run e2eAndroid
 ```
 
 ```bash
-melos run allureAndroid
+melos run sqaAndroid
 ```
 
 Everything above the transport is shared — the tests, the steps, the pages and
@@ -713,15 +720,15 @@ how the results get out, and that is where the work was:
 |---|---|---|
 | Runner | Playwright + Chromium | native instrumentation (`PatrolJUnitRunner`) |
 | Marker transport | Playwright's per-test stdout capture | `adb logcat` |
-| Converter input | `build/e2e/web/playwright/results.json` | `build/e2e/android/android_run.log` |
-| Report | `build/e2e/web/allure/report` | `build/e2e/android/allure/report` |
+| Generator input | `build/e2e/web/playwright/results.json` | `build/e2e/android/android_run.log` |
+| Report | `build/e2e/web/sqa_reporter/report` | `build/e2e/android/sqa_reporter/report` |
 
-The converter has one adapter per transport (`fromPlaywright`, `fromPatrolLog`)
-feeding a single renderer, because the payload is identical: Patrol emits the
-same `PATROL_LOG` protocol on every platform, and a `TestEntry` carries the
-name, status, both timestamps and the error message — every field the web path
-takes from Playwright. `stepsFrom()`, which builds the step tree and reassembles
-the screenshots, is shared verbatim.
+The generator has one adapter per transport (`parsePlaywright`,
+`parsePatrolLog`) feeding a single model, because the payload is identical:
+Patrol emits the same `PATROL_LOG` protocol on every platform, and a case
+carries the name, status, both timestamps and the error message — every field
+the web path takes from Playwright. `parseMarkers`, which builds the step tree
+and reassembles the screenshots, is shared verbatim.
 
 Three things are worth knowing before running this on another machine.
 

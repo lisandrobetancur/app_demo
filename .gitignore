@@ -41,8 +41,8 @@ packages/apps/market_app/patrol_test/test_bundle.dart
 packages/apps/market_app/test-results/
 packages/apps/market_app/playwright-report/
 
-# Everything an E2E run generates — Playwright results, logcat, Allure results
-# and report — lives under `build/e2e/<platform>/`, already ignored by the
+# Everything an E2E run generates — Playwright results, logcat, and the
+# report — lives under `build/e2e/<platform>/`, already ignored by the
 # `build/` rule above. One root instead of four scattered paths: that way the
 # cleanup cannot forget anything, which is exactly how `test-results/` went
 # undeleted for months.

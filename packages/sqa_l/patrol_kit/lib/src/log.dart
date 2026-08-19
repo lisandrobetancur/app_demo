@@ -12,7 +12,7 @@ import 'package:flutter/foundation.dart';
 /// what circumstances.
 ///
 /// Lines travel as the `PATROL_TRACE` marker on stdout, the same channel the
-/// steps and screenshots already use, and the Allure converter turns them
+/// steps and screenshots already use, and the report generator turns them
 /// into a `run.log` attachment on the test. `warn` and `error` are *also*
 /// rendered as leaf steps in the tree, because a warning nobody opens the
 /// attachment to read is a warning that did not happen.
@@ -30,7 +30,7 @@ enum LogLevel {
   bool operator >=(LogLevel other) => index >= other.index;
 }
 
-/// Marker the Allure converter reads to rebuild the run log.
+/// Marker the report generator reads to rebuild the run log.
 const String _marker = 'PATROL_TRACE';
 
 /// The suite's logger.

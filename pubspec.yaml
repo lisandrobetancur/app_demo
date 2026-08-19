@@ -9,6 +9,7 @@ workspace:
   - packages/apps/market_app
   - packages/development/lint
   - packages/sqa_l/patrol_kit
+  - packages/sqa_l/sqa_reporter
   - packages/features/core/cart/constants
   - packages/features/core/cart/module
   - packages/features/core/cart/typing
@@ -86,20 +87,20 @@ melos:
     #
     #   1. deletes what the previous run left FOR THAT PLATFORM,
     #   2. runs the suite,
-    #   3. builds the Allure report — always, including when the suite failed.
+    #   3. builds the report — always, including when the suite failed.
     #
-    # This is Serenity's `aggregate` model: the report is part of running, not
-    # a step somebody has to remember to launch. Opening it stays separate
-    # (`allureServeWeb` / `allureServeAndroid`), because building and opening
-    # are different decisions and in CI only the first one exists.
+    # The report is part of running, not a step somebody has to remember to
+    # launch. Opening it stays separate (`sqaOpenWeb` / `sqaOpenAndroid`),
+    # because building and opening are different decisions and in CI only the
+    # first one exists.
     #
     # The exit code is the suite's, not the report's: a red run exits red even
     # when its report was built fine.
     #
     # Everything generated goes to ONE root per platform:
     #
-    #   build/e2e/web/{playwright,test-results,allure/{results,report}}
-    #   build/e2e/android/{android_run.log,allure/{results,report}}
+    #   build/e2e/web/{playwright,sqa_reporter/report}
+    #   build/e2e/android/{android_run.log,sqa_reporter/report}
     #
     # That is what makes the cleanup trustworthy: deleting the whole root
     # cannot leave anything behind, while enumerating four paths scattered
@@ -136,35 +137,32 @@ melos:
     e2eCleanAndroid: bash packages/sqa_l/tool/e2e/clean.sh android
 
     # Run and also OPEN the report. `e2eWeb` already builds it; this only adds
-    # the local server on top.
-    e2eWebReport: melos run e2eWeb && melos run allureServeWeb
-    e2eWebHeadedReport: melos run e2eWebHeaded && melos run allureServeWeb
+    # the opening on top.
+    e2eWebReport: melos run e2eWeb && melos run sqaOpenWeb
+    e2eWebHeadedReport: melos run e2eWebHeaded && melos run sqaOpenWeb
 
-    # Everything Allure produces lives under one directory:
+    # ── SQA Reporter ────────────────────────────────────────────────────
     #
-    #   allure/
-    #   ├── web/{results,report}
-    #   └── android/{results,report}
+    # The report, written in Dart and living in packages/sqa_l/sqa_reporter.
+    # `e2eWeb` and `e2eAndroid` already build it as part of running, and these
+    # are for rebuilding it from the results ALREADY on disk — when you change
+    # the generator and want to see the effect without paying for another
+    # suite run.
     #
     # One report per platform, kept apart on purpose: a web run and a device
     # run are different environments, and merging them would average away the
-    # differences worth seeing.
+    # differences worth seeing. No history is kept either, by choice: a report
+    # describes one execution and nothing else.
     #
-    # Every run starts from nothing: the platform directory is deleted before
-    # it is rebuilt, so a report only ever describes the run that produced it.
-    # That is not just tidiness — Allure 3 has no `--clean`, and generating
-    # into a directory that already holds a report nests the new one under
-    # `awesome/` instead of replacing it, which silently leaves you reading a
-    # stale report.
+    # One directory holds everything it produces: the JSON results, the
+    # screenshots and the pages that read them. It writes that directory from
+    # scratch every time, so a report only ever describes one run.
     #
-    # No history is kept, by choice. Allure can accumulate one with
-    # `--history-path` to draw Status dynamics and Durations dynamics, but
-    # that file is state surviving between runs, and here a report is meant to
-    # describe one execution and nothing else.
-    # Rebuild the report from the results ALREADY on disk, without running the
-    # suite again. `e2eWeb` and `e2eAndroid` already produce it; this is for
-    # when you change the converter and want to see the effect.
-    allureWeb: rm -rf build/e2e/web/allure && node packages/sqa_l/tool/allure/patrol_to_allure.mjs --platform web && pnpm --dir packages/sqa_l/tool/allure exec allure awesome build/e2e/web/allure/results --output build/e2e/web/allure/report --report-name "Market E2E · Web"
-    allureAndroid: rm -rf build/e2e/android/allure && node packages/sqa_l/tool/allure/patrol_to_allure.mjs --input build/e2e/android/android_run.log --platform android && pnpm --dir packages/sqa_l/tool/allure exec allure awesome build/e2e/android/allure/results --output build/e2e/android/allure/report --report-name "Market E2E · Android"
-    allureServeWeb: pnpm --dir packages/sqa_l/tool/allure exec allure serve build/e2e/web/allure/results
-    allureServeAndroid: pnpm --dir packages/sqa_l/tool/allure exec allure serve build/e2e/android/allure/results
+    # There is no `serve` counterpart on purpose. The site is static and
+    # self-contained — no libraries, no fonts, no requests — so a browser opens
+    # it straight off the filesystem and a local server would only be one more
+    # thing to remember to stop.
+    sqaWeb: dart run sqa_reporter --input build/e2e/web/playwright/results.json --platform web
+    sqaAndroid: dart run sqa_reporter --input build/e2e/android/android_run.log --format patrol-log --platform android
+    sqaOpenWeb: bash packages/sqa_l/tool/e2e/open_report.sh build/e2e/web/sqa_reporter/report/index.html
+    sqaOpenAndroid: bash packages/sqa_l/tool/e2e/open_report.sh build/e2e/android/sqa_reporter/report/index.html

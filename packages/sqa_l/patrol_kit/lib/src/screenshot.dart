@@ -23,7 +23,7 @@ const double _captureScale = 0.5;
 /// on the way out of the browser.
 const int _chunkSize = 800;
 
-/// Marker the Allure converter looks for in the test's stdout.
+/// Marker the report generator looks for in the test's stdout.
 const String _marker = 'PATROL_SHOT';
 
 /// Capturing costs roughly 150 ms, so a run that only needs a pass/fail
@@ -46,7 +46,7 @@ const bool screenshotsEnabled = bool.fromEnvironment(
 ///
 /// The frame is rasterised inside the app from [appBoundaryKey] and printed
 /// to the browser console, which the Playwright bridge forwards into the
-/// test's stdout, where the Allure converter reassembles it.
+/// test's stdout, where the report generator reassembles it.
 extension PatrolScreenshot on PatrolIntegrationTester {
   /// Captures the current frame and streams it to the runner under [name].
   ///

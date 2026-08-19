@@ -301,7 +301,7 @@ failed so I can give you the corrected one.
 
 ### Phase 4 — Evidence and reporting *(optional, zero footprint)*
 
-Screenshots per business step and a navigable report (Allure or another).
+Screenshots per business step and a navigable report.
 
 **Allowed files:** only `<test_folder>/` and a new tooling folder at the root.
 

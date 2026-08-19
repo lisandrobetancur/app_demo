@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Marker carrying one assertion and its outcome to the Allure converter.
+/// Marker carrying one assertion and its outcome to the report generator.
 const String assertMarker = 'PATROL_ASSERT';
 
 /// Reports one assertion, passed or failed.
@@ -66,7 +66,7 @@ String describeValue(Object? value) =>
 ///    The product may be fine; nobody checked. `broken`.
 ///
 /// It is the distinction WebDriver suites live by — an assertion failure
-/// versus a `NoSuchElementException` — and the one Allure reports as *failed*
+/// versus a `NoSuchElementException` — and the one the report calls *failed*
 /// versus *broken*, so a reader can tell "the app is wrong" from "the suite
 /// needs fixing" without opening a stack trace.
 ///

@@ -7,7 +7,7 @@
 # Three things in one command, in this order: clean up after the previous run,
 # run, and build the report. This is Serenity's `aggregate` model — the report
 # is part of running, not a step somebody has to remember to launch afterwards.
-# Opening it stays separate (`melos run allureServeWeb`): building and opening
+# Opening it stays separate (`melos run sqaOpenWeb`): building and opening
 # are different decisions, and in CI only the first one exists.
 #
 # THE DELICATE PART is the exit code. The report has to be built EVEN WHEN the
@@ -83,7 +83,7 @@ OUT="$PWD/build/e2e/web"
 # the machine happens to be.
 #
 # Three reporters, one per reader: `list` for the terminal, `json` for the
-# Allure converter and `junit` for CI. The `json` one is not optional:
+# report generator and `junit` for CI. The `json` one is not optional:
 # Playwright's per-test capture is the only channel carrying the screenshot
 # markers out of the browser.
 #
@@ -142,14 +142,14 @@ if [[ -n "$BROWSER" && "$status" -ne 0 ]]; then
 fi
 
 echo
-echo "── Building the report ───────────────────────────────────────────────"
+echo "── Building the reports ──────────────────────────────────────────────"
 # Deliberately not chained with `&&` to the above: a red suite is exactly when
 # the report is needed.
-node packages/sqa_l/tool/allure/patrol_to_allure.mjs --platform web \
-  && pnpm --dir packages/sqa_l/tool/allure exec allure awesome "$OUT/allure/results" \
-       --output "$OUT/allure/report" --report-name "Market E2E · Web" \
+#
+dart run sqa_reporter --input "$OUT/playwright/results.json" --platform web \
   || echo "The report could not be built (the suite exited with $status)." >&2
 
 echo
-echo "Report:  build/e2e/web/allure/report  ·  open it with: melos run allureServeWeb"
+echo "Report:"
+echo "  build/e2e/web/sqa_reporter/report   ·  melos run sqaOpenWeb"
 exit "$status"

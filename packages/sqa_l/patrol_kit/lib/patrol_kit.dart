@@ -15,7 +15,7 @@
 ///    They hold neither locators nor assertions.
 ///
 /// The report is built from markers printed to stdout while the suite runs;
-/// `packages/sqa_l/tool/allure/patrol_to_allure.mjs` turns them into Allure results. Nothing
+/// `packages/sqa_l/sqa_reporter` turns them into a report. Nothing
 /// here writes files or talks to the network.
 library;
 
@@ -25,6 +25,7 @@ export 'src/base_page.dart';
 export 'src/base_steps.dart';
 export 'src/consequence.dart';
 export 'src/element.dart';
+export 'src/failure_report.dart';
 export 'src/locator.dart';
 export 'src/log.dart';
 export 'src/money.dart';
