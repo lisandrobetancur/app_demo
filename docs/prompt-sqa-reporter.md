@@ -4,6 +4,10 @@ Paste everything below the line into Claude Code (or another agent), opened on
 the `app_demo` repository. It is written to run in phases, with a mandatory stop
 between each one.
 
+> Written while a second, Node-based report pipeline was still in place. That
+> pipeline has since been removed and this generator is the only one; the
+> references below to "the existing pipeline" are read as history.
+
 ---
 
 ## ROLE
@@ -29,9 +33,9 @@ the **same JSON schema** Serenity's Gradle `aggregate` task produces.
   (Bootstrap, Chart.js, DataTables — MIT and similar). Their notices travel
   with their files, as everywhere else in the industry.
 
-This is an alternative to Allure, not an addition to it. The existing Allure
-pipeline keeps working untouched until the replacement is proven; the two
-coexist for the whole of this work.
+This is an alternative to the Node-based report pipeline this repository used
+at the time, not an addition to it. That pipeline keeps working untouched until
+the replacement is proven; the two coexist for the whole of this work.
 
 Your priorities, in this order:
 
@@ -58,9 +62,9 @@ they are the only input:
 | `PATROL_TAGS` | `tags.dart` | the test's tags |
 | `PATROL_TRACE` | `log.dart` | log lines |
 
-`packages/sqa_l/tool/allure/patrol_to_allure.mjs` already parses this
-stream for Allure, on two transports — Playwright's JSON on web, the device log
-on Android. **Read it first.** It is the working reference for how the markers
+The Node converter under `packages/sqa_l/tool/` already parses this stream for
+the report of the day, on two transports — Playwright's JSON on web, the device
+log on Android. **Read it first.** It is the working reference for how the markers
 arrive, how the two transports differ, and where the edges are; you are writing
 a second consumer of the same stream, not inventing an input format.
 
@@ -103,10 +107,11 @@ not a technical one, and I want to see it stated rather than assumed.
    documented intermediate model and writes files. Same rule that already
    governs `patrol_kit`, and its pubspec should enforce it the same way.
 4. **No state between runs.** No history, no trends, no comparison with the
-   previous execution. This repository already decided that for Allure and the
-   reasoning is in the melos scripts; a report describes one run.
-5. **The Allure pipeline keeps working** until I say otherwise. You add; you do
-   not replace.
+   previous execution. This repository already decided that for the existing
+   pipeline and the reasoning is in the melos scripts; a report describes one
+   run.
+5. **The existing pipeline keeps working** until I say otherwise. You add; you
+   do not replace.
 6. **Every phase is verified by producing real output**, from a real run, and
    opening it. "It compiles" is not verification.
 7. **If a Serenity detail cannot be determined from the source, say so** and
@@ -151,8 +156,9 @@ JSON. No HTML yet.
 **Allowed files:** `packages/sqa_l/sqa_reporter/**` (new package), and the root
 `pubspec.yaml` to add it to the workspace.
 
-The name is free: the existing Node converter stays `tool/allure/`, which is
-what it is — a converter to Allure. `sqa_reporter` is reserved for this.
+The name is free: the existing Node converter stays where it is, under
+`tool/`, named for the format it converts to. `sqa_reporter` is reserved for
+this.
 
 The package holds two things kept apart: a **model** of a run (tests, steps,
 assertions, screenshots, metadata) that owes nothing to any output format, and
@@ -222,7 +228,7 @@ map cleanly. **Propose the mapping and stop.**
 ### Phase 6 — Wiring
 
 **Goal:** `melos run sqaReportWeb` and the Android equivalent, beside the
-existing Allure scripts, and a CI step that publishes both.
+existing report scripts, and a CI step that publishes both.
 
 **Allowed files:** root `pubspec.yaml`, `packages/sqa_l/tool/e2e/*.sh`,
 `.github/workflows/e2e-*.yml`.
