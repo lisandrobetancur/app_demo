@@ -2,7 +2,8 @@
 #
 # Runs the E2E suite in the browser and leaves the report built.
 #
-#   packages/sqa_l/tool/e2e/run_web.sh [--headed] [--tags=<expression>] [--browser=<channel>]
+#   packages/sqa_l/tool/e2e/run_web.sh [--headed] [--tags=<expression>]
+#                                      [--browser=<channel>] [--verbose]
 #
 # Three things in one command, in this order: clean up after the previous run,
 # run, and build the report. This is Serenity's `aggregate` model — the report
@@ -36,6 +37,11 @@ APP_DIR="packages/apps/market_app"
 HEADLESS_FLAG=--web-headless
 TAGS=()
 BROWSER=""
+# `patrol test --verbose` is the only way to see what Playwright wrote to its
+# own stderr; the CLI swallows it otherwise. It lives here rather than in the
+# caller so that a diagnosis runs the suite the same way the suite ran — see
+# the note by the flags below.
+VERBOSE=()
 
 # The browsers Playwright will accept as a `channel`. Checked here rather than
 # left to Playwright because the failure is expensive and late: the app is built
@@ -46,6 +52,7 @@ CHANNELS="chrome chrome-beta chrome-dev chrome-canary msedge msedge-beta msedge-
 for arg in "$@"; do
   case "$arg" in
     --headed) HEADLESS_FLAG=--no-web-headless ;;
+    --verbose) VERBOSE=(--verbose) ;;
     --tags=*) TAGS=(--tags "${arg#--tags=}") ;;
     --browser=*)
       BROWSER="${arg#--browser=}"
@@ -58,7 +65,7 @@ for arg in "$@"; do
       ;;
     *)
       echo "unrecognized argument: $arg" >&2
-      echo "usage: packages/sqa_l/tool/e2e/run_web.sh [--headed] [--tags=<expression>] [--browser=<channel>]" >&2
+      echo "usage: packages/sqa_l/tool/e2e/run_web.sh [--headed] [--tags=<expression>] [--browser=<channel>] [--verbose]" >&2
       exit 2
       ;;
   esac
@@ -81,6 +88,13 @@ OUT="$PWD/build/e2e/web"
 # local and CI agree, and the suite asserts on Spanish text. The timezone is
 # pinned for the same reason, before a date assertion comes to depend on where
 # the machine happens to be.
+#
+# Which is why every way of launching this suite goes through this script,
+# including the one CI uses to diagnose a failure. A `patrol test` typed out
+# somewhere else drops these flags and hits the locale crash the flags exist to
+# prevent — and then reports that crash as the reason for a failure that had
+# nothing to do with it. That happened: the web job's diagnosis step ran its
+# own command and blamed the locale for four tests that had timed out.
 #
 # Three reporters, one per reader: `list` for the terminal, `json` for the
 # report generator and `junit` for CI. The `json` one is not optional:
@@ -109,6 +123,7 @@ set +e
   cd "$APP_DIR" && patrol test \
     --device chrome \
     "${TAGS[@]+"${TAGS[@]}"}" \
+    "${VERBOSE[@]+"${VERBOSE[@]}"}" \
     --web-report-dir="$OUT/playwright" \
     --web-results-dir="$OUT/test-results" \
     "$HEADLESS_FLAG" \
