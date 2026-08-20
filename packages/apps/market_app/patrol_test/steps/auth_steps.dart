@@ -15,10 +15,16 @@ class AuthSteps extends BaseSteps {
   final DashboardPage _dashboard;
 
 
+  // The step name carries the email but NEVER the password: step names are
+  // published — they go through the marker stream into the HTML report, which
+  // CI uploads and GitHub Pages serves. Demo data today, but the day this
+  // suite points at a staging login, the wording of this line is the
+  // difference between a report and a leak. The obscured field keeps it out
+  // of the screenshots; this keeps it out of the text.
   Future<void> submitCredentials({
     required String email,
     required String password,
-  }) => step('Ingresa el email: $email y la contraseña: $password', () async {
+  }) => step('Ingresa el email: $email y la contraseña', () async {
     await _login.waitUntilVisible();
     await _login.enterEmail(email);
     await _login.enterPassword(password);
