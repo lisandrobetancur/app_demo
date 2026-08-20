@@ -114,6 +114,30 @@ OUT="$PWD/build/e2e/web"
 # Note what `--device chrome` above is NOT: that is Flutter's device — how the
 # app is built and served — not the browser driving the test. The two words
 # being the same is a coincidence worth not tripping over.
+# The same channel — the environment — carries three settings patrol_cli has
+# no flag for, all read by that playwright.config.ts. Each is overridable, so
+# a one-off investigation needs no edit here:
+#
+#   PATROL_WEB_TIMEOUT   how long one test may take before it is called hung.
+#     Patrol's default is ten minutes. Measured against this suite that is not
+#     a limit, it is an eternity: the six scenarios take 2, 3, 5, 10, 13 and 19
+#     seconds. A run where four of them hung therefore cost forty minutes to
+#     say what two would have said. Two minutes is six times the slowest
+#     scenario — room for a loaded runner and a cold first boot, and still
+#     eight minutes instead of forty when the browser stops answering.
+#
+#   PATROL_WEB_TRACE, PATROL_WEB_SCREENSHOT   what a failure leaves behind.
+#     Only on failure, because a trace per passing test is tens of megabytes
+#     for nothing. When four scenarios timed out we had no way to tell whether
+#     the app had painted a single frame; a trace answers exactly that, and it
+#     is the question that went unanswered.
+#
+# They land in the results directory below, which CI collects when the suite
+# goes red.
+export PATROL_WEB_TIMEOUT="${PATROL_WEB_TIMEOUT:-120000}"
+export PATROL_WEB_TRACE="${PATROL_WEB_TRACE:-retain-on-failure}"
+export PATROL_WEB_SCREENSHOT="${PATROL_WEB_SCREENSHOT:-only-on-failure}"
+
 status=0
 set +e
 (
