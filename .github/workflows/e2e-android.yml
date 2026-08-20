@@ -13,6 +13,10 @@ jobs:
   android:
     name: Android suite
     runs-on: ubuntu-latest
+    # The same backstop the web job carries, for the same reason: this one
+    # takes ten minutes, and an emulator that never finishes booting would
+    # otherwise hold a runner for six hours before anyone is told.
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
 
