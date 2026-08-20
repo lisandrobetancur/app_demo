@@ -275,7 +275,7 @@ String _row(
             'data-epic="${rowAnchorOf(node)}"'
       : 'class="requirement-row level-$level feature-row" '
             'data-name="${escapeHtml(node.name.toLowerCase())}"'
-            '${under == null ? '' : ' data-under="${rowAnchorOf(under)}"'}';
+            '${foldedUnder(under)}';
   return '<tr $marks id="${rowAnchorOf(node)}">'
       '<td class="requirement-name-column" '
       'style="padding-left:${0.75 + level * 1.5}em">'
@@ -295,17 +295,28 @@ String _row(
 /// not have to learn it twice. It is also the step tree's caret, down to the
 /// class, so that is once for the whole report.
 ///
-/// Always open to begin with. A report is opened to be read, not unpacked:
-/// what it holds should be on the page at a glance, and folding is for the
-/// reader who has seen enough of an epic and wants it out of the way. An epic
-/// with nothing under it gets no caret, because there is nothing to press it
-/// for.
+/// Closed to begin with, so what a reader meets is the list of epics: the
+/// shape of the project on one screen, and the features of the one they care
+/// about a click away. An epic with nothing under it gets no caret, because
+/// there is nothing to press it for.
 String foldCaret(RequirementNode node, {required bool foldable}) => foldable
-    ? '<button class="caret open" data-fold="${rowAnchorOf(node)}" '
-          'aria-expanded="true" '
+    ? '<button class="caret" data-fold="${rowAnchorOf(node)}" '
+          'aria-expanded="false" '
           'title="Show or hide the features of ${escapeHtml(node.name)}">'
           '▸</button> '
     : '';
+
+/// What a row under an epic carries so that folding and the page agree from
+/// the first paint.
+///
+/// Both halves are needed and for different readers: `hidden` is what the
+/// browser acts on, and `data-folded` is the reason, which the script consults
+/// before it shows the row again. Shipping only `hidden` would leave the
+/// script believing nothing was folded, and the first keystroke in the filter
+/// would reveal every row an epic was holding closed.
+String foldedUnder(RequirementNode? under) => under == null
+    ? ''
+    : ' data-under="${rowAnchorOf(under)}" data-folded="1" hidden';
 
 /// The pair of buttons that fold every epic at once, or none.
 ///
@@ -368,10 +379,7 @@ String _coverageRow(
       ? featureReportName(node)
       : 'features.html#${rowAnchorOf(node)}';
   final double? rate = node.passRate;
-  final String marks = under == null
-      ? ''
-      : ' data-under="${rowAnchorOf(under)}"';
-  return '<tr class="requirement-row level-$level"$marks>'
+  return '<tr class="requirement-row level-$level"${foldedUnder(under)}>'
       '<td style="padding-left:${0.75 + level * 1.5}em">'
       '${foldCaret(node, foldable: foldable)}'
       '<a href="$href">${escapeHtml(node.name)}</a></td>'
@@ -395,12 +403,11 @@ String coverageOverview(List<RequirementNode> roots) {
   // after is *that* feature: its scenarios, its coverage. So the features are
   // here, each going straight to its own page, and the epic above them is the
   // grouping rather than the destination.
-  // Every epic open, however many there are. Folding by row count was tried
-  // and it is the wrong instinct: it hides most of the panel on exactly the
-  // projects that have the most to show, and it makes the report open
-  // differently from one week to the next as an epic is added. What a reader
-  // wants on the page they open first is the coverage, all of it; the caret is
-  // there for the one who has read an epic and wants it out of the way.
+  // Every epic folded, however many there are. Folding by row count came
+  // first and was worse than either fixed answer: the report opened one way
+  // this week and another the next, as an epic was added. Closed is the
+  // steady one — the panel is a list of epics whatever the project grows
+  // into, and the features of the one a reader cares about are a click away.
   final StringBuffer rows = StringBuffer();
   for (final RequirementNode root in roots) {
     rows.write(

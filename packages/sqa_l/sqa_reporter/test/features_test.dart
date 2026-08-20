@@ -151,20 +151,19 @@ void main() {
       );
     });
 
-    test('folds by epic too, and opens with nothing folded', () {
+    test('folds by epic too, and opens with every epic closed', () {
       expect(featuresPage, contains('data-fold="req-access"'));
-      expect(featuresPage, contains('class="caret open"'));
-      expect(featuresPage, contains('aria-expanded="true"'));
+      expect(featuresPage, contains('aria-expanded="false"'));
       expect(
         featuresPage,
-        isNot(contains('aria-expanded="false"')),
-        reason: 'a report is opened to be read, not unpacked',
+        isNot(contains('class="caret open"')),
+        reason: 'what a reader meets is the list of epics',
       );
-      expect(
-        featuresPage,
-        isNot(matches(RegExp(r'<tr[^>]*\bhidden\b'))),
-        reason: 'nothing starts folded away',
-      );
+      // Both halves, and for different readers: `hidden` is what the browser
+      // acts on, `data-folded` is the reason the script consults before it
+      // shows a row again. Without the second, the first keystroke in the
+      // filter would reveal every row an epic was holding closed.
+      expect(featuresPage, contains('data-folded="1" hidden'));
     });
 
     test('carries the pair of buttons that fold every epic at once', () {
@@ -322,21 +321,25 @@ void main() {
       expect(index, contains('class="requirement-row level-1"'));
     });
 
-    test('an epic folds its features away, and the panel opens unfolded', () {
+    test('an epic folds its features away, and the panel opens closed', () {
       final String index = File(
         '${results.path}/index.html',
       ).readAsStringSync();
       expect(index, contains('data-fold="req-access"'));
       expect(index, contains('data-under="req-access"'));
-      expect(index, contains('aria-expanded="true"'));
+      expect(index, contains('aria-expanded="false"'));
       expect(
         index,
-        isNot(matches(RegExp(r'<tr[^>]*\bhidden\b'))),
-        // Folding by row count was tried and it is the wrong instinct: it
-        // hides most of the panel on the projects with the most to show, and
-        // it makes the report open differently from one week to the next as
-        // an epic is added.
-        reason: 'the coverage is what the first page is for',
+        contains('data-under="req-access" data-folded="1" hidden'),
+        // Folding by row count came first and was worse than either fixed
+        // answer: the panel opened one way this week and another the next, as
+        // an epic was added. Closed is the steady one.
+        reason: 'a list of epics, whatever the project grows into',
+      );
+      expect(
+        index,
+        isNot(contains('data-folded="1" hidden>\n<td')),
+        reason: 'an epic itself is never folded away — it is the handle',
       );
     });
 
