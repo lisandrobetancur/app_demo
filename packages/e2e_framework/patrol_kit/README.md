@@ -104,7 +104,7 @@ e2eTest(
 
 ```sh
 patrol test --device chrome --tags "smoke_test && negative"
-patrol test --device chrome --exclude-tags "wip"
+patrol test --device chrome --tags "regression && success"
 ```
 
 The filter is applied while the test bundle is generated, so an excluded test

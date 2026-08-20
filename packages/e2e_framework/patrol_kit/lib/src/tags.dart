@@ -30,7 +30,8 @@ const String _marker = 'PATROL_TAGS';
 /// A test usually carries one of each. Nothing forbids other strings; these
 /// are the ones the pipeline knows about.
 ///
-/// And one that is neither axis: [wip], which takes a test out of every run.
+/// And one that is neither axis: [wip], which reports a test as skipped
+/// instead of running it.
 class Tags {
   const Tags._();
 
@@ -48,19 +49,27 @@ class Tags {
   /// must refuse, and the assertion is on the refusal.
   static const String negative = 'negative';
 
-  /// Work in progress: being refactored or repaired, and **not run by
-  /// anyone** until the tag comes off.
+  /// Work in progress: being refactored or repaired, and **not executed**
+  /// until the tag comes off.
   ///
-  /// This is the one tag the runners act on by themselves. They pass
-  /// `--exclude-tags wip` on every invocation, so a test wearing it is left
-  /// out of the bundle before a browser or a device is even started — not run
-  /// and reported as skipped, but absent. A half-finished test that fails is
-  /// noise, and noise on a red suite is what teaches people to ignore it.
+  /// This is the one tag [e2eTest] acts on by itself: a test wearing it is
+  /// registered and reported as *skipped*, and its body never runs. So it
+  /// cannot fail — a half-finished test that fails is noise, and noise on a
+  /// red suite is what teaches people to ignore it — but it is still there,
+  /// counted under Skipped in the report, wearing the pale row of a test
+  /// nobody ran.
   ///
-  /// Which is also why it is a tag and not a comment: a commented-out test
-  /// stops compiling against the app and rots in silence, while a `wip` one
-  /// still has to build, still gets renamed by a refactor, and shows up in
-  /// `--wip` when somebody wants to see what is unfinished.
+  /// That visibility is the whole point. An excluded test is invisible and
+  /// rots; a skipped one is a debt somebody can see. It is also why this is a
+  /// tag and not a commented-out block: a commented test stops compiling
+  /// against the app and rots the same way, while this one still builds and
+  /// still gets renamed by a refactor.
+  ///
+  /// Nothing of what it declares reaches the report, because `scenario()` and
+  /// every step live inside the body that does not run: the row shows the
+  /// scenario's name and that it was skipped, and no steps.
+  ///
+  /// `melos run e2eWebWip` runs them and only them — see [runningWip].
   static const String wip = 'wip';
 
   /// Every tag the kit names.
@@ -71,6 +80,31 @@ class Tags {
     negative,
     wip,
   ];
+}
+
+/// Whether this run was asked for the work-in-progress tests.
+///
+/// Set by `--wip` on either runner, which passes
+/// `--dart-define PATROL_RUN_WIP=true`. It has to be a compile-time constant
+/// and not a flag read at run time: [Tags.wip] decides `skip`, and `skip` is
+/// read while the test is being *registered*, before any test body — or any
+/// environment lookup inside one — has had a chance to run.
+const bool runningWip = bool.fromEnvironment('PATROL_RUN_WIP');
+
+/// Whether a test carrying [tags] should be registered as skipped.
+///
+/// An explicit `skip:` always wins: a test that says why it is skipped knows
+/// better than a tag. Otherwise [Tags.wip] skips, unless this run asked for
+/// exactly those.
+///
+/// Returns null rather than false for "run it", because that is what
+/// `patrolTest` wants: false would still be an answer, and null is the
+/// absence of one.
+bool? skipFor(List<String> tags, {bool? explicit, bool wipRun = runningWip}) {
+  if (explicit != null) {
+    return explicit;
+  }
+  return tags.contains(Tags.wip) && !wipRun ? true : null;
 }
 
 /// A Patrol test that carries tags.
@@ -97,16 +131,14 @@ class Tags {
 ///
 /// ```sh
 /// patrol test --device chrome --tags "smoke_test && negative"
-/// patrol test --device chrome --exclude-tags "wip"
 /// ```
 ///
 /// Tags are matched against what the test declares, so a filter that names a
 /// tag nobody uses selects nothing and the run reports zero tests — which is
 /// why the vocabulary lives in [Tags] rather than in each test file.
 ///
-/// The second line is not an example anybody has to type: `run_web.sh` and
-/// `run_android.sh` pass it on every run, so [Tags.wip] takes a test out of
-/// the bundle by itself.
+/// One tag is read here rather than by the runner: [Tags.wip] decides
+/// `skip` — see [skipFor].
 @isTest
 void e2eTest(
   String description,
@@ -129,7 +161,9 @@ void e2eTest(
     // `dynamic` on Patrol's side; an empty list would mean "tagged with
     // nothing", which is not the same as untagged, so it is passed as null.
     tags: tags.isEmpty ? null : tags,
-    skip: skip,
+    // The tag decides, so an author writes `Tags.wip` and nothing else: no
+    // second thing to remember, and no way to tag one and forget the other.
+    skip: skipFor(tags, explicit: skip),
     timeout: timeout,
     semanticsEnabled: semanticsEnabled,
     config: config,

@@ -338,16 +338,24 @@ melos run e2eWebChrome            # installed Google Chrome
 melos run e2eWebEdge              # installed Microsoft Edge
 ```
 
-Every command above except the two `*Wip` ones passes `--exclude-tags wip`, so a test
-tagged `Tags.wip` is left out of the bundle — **absent, not skipped**, because
-the filter runs while the bundle is generated. That is what the tag is for: a
-test being refactored or repaired should not be failing in anybody's run, and a
-red suite people learn to ignore is worse than a smaller green one. The two
-`*Wip` commands are the way back in, running those tests and only those.
+A test tagged `Tags.wip` is **registered and reported as skipped**: `e2eTest`
+decides that while the test is being registered, so its body never runs and it
+cannot fail. It still reaches the report, counted under **Skipped** and wearing
+the pale row of a test nobody ran.
 
-A tag beats commenting the test out: the commented one stops compiling against
-the app and rots in silence, while a `wip` one still builds, still gets renamed
-by a refactor, and can be listed at any time.
+That visibility is the point. A test being refactored should not be failing in
+anybody's run — a red suite people learn to ignore is worse than a smaller
+green one — but an *excluded* test is invisible and rots, while a skipped one
+is a debt somebody can see. For the same reason a tag beats commenting the test
+out: the commented one stops compiling against the app and rots the same way.
+
+What does not reach the report is anything the body declares — feature, epic,
+severity, description, steps — because `scenario()` lives inside the body that
+never runs. The row shows the scenario's name and that it was skipped.
+
+The two `*Wip` commands are the way back in: they narrow the run to those tests
+and compile them without the skip, through a `--dart-define` the kit reads at
+registration time.
 
 The last two swap Playwright's bundled Chromium for a browser installed on the
 machine, through `run_web.sh --browser=<channel>`; `chrome-beta`, `msedge-dev`

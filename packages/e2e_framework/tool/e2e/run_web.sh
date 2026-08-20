@@ -43,15 +43,15 @@ BROWSER=""
 # the note by the flags below.
 VERBOSE=()
 
-# `wip` marks a test somebody is in the middle of, and the runner is what acts
-# on it rather than a convention people have to remember. `--exclude-tags` is
-# applied while the bundle is GENERATED, so such a test is never compiled in:
-# absent, not skipped. A half-finished test that fails is noise, and noise on
-# a red suite is what teaches people to stop reading it.
+# `wip` is decided in Dart, not here: `e2eTest` registers such a test as
+# skipped, so it reaches the report — counted under Skipped, with a pale row —
+# without its body ever running. An excluded test is invisible and rots; a
+# skipped one is a debt somebody can see.
 #
-# `--wip` is the way back in — it runs those and only those, which is what
-# somebody repairing one actually wants.
-EXCLUDE=(--exclude-tags wip)
+# `--wip` is the way back in. It narrows the run to those tests and compiles
+# them WITHOUT the skip, through a dart-define the kit reads at registration
+# time.
+WIP_DEFINE=()
 
 # The browsers Playwright will accept as a `channel`. Checked here rather than
 # left to Playwright because the failure is expensive and late: the app is built
@@ -63,7 +63,7 @@ for arg in "$@"; do
   case "$arg" in
     --headed) HEADLESS_FLAG=--no-web-headless ;;
     --verbose) VERBOSE=(--verbose) ;;
-    --wip) TAGS=(--tags wip); EXCLUDE=() ;;
+    --wip) TAGS=(--tags wip); WIP_DEFINE=(--dart-define PATROL_RUN_WIP=true) ;;
     --tags=*) TAGS=(--tags "${arg#--tags=}") ;;
     --browser=*)
       BROWSER="${arg#--browser=}"
@@ -159,7 +159,7 @@ set +e
     --device chrome \
     "${TAGS[@]+"${TAGS[@]}"}" \
     "${VERBOSE[@]+"${VERBOSE[@]}"}" \
-    "${EXCLUDE[@]+"${EXCLUDE[@]}"}" \
+    "${WIP_DEFINE[@]+"${WIP_DEFINE[@]}"}" \
     --web-report-dir="$OUT/playwright" \
     --web-results-dir="$OUT/test-results" \
     "$HEADLESS_FLAG" \

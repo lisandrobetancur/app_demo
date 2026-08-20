@@ -39,19 +39,19 @@ LOG="$OUT/android_run.log"
 
 TAGS=()
 
-# `wip` marks a test somebody is in the middle of, and the runner is what acts
-# on it rather than a convention people have to remember. `--exclude-tags` is
-# applied while the bundle is GENERATED, so such a test is never compiled in:
-# absent, not skipped. A half-finished test that fails is noise, and noise on
-# a red suite is what teaches people to stop reading it.
+# `wip` is decided in Dart, not here: `e2eTest` registers such a test as
+# skipped, so it reaches the report — counted under Skipped, with a pale row —
+# without its body ever running. An excluded test is invisible and rots; a
+# skipped one is a debt somebody can see.
 #
-# `--wip` is the way back in — it runs those and only those, which is what
-# somebody repairing one actually wants.
-EXCLUDE=(--exclude-tags wip)
+# `--wip` is the way back in. It narrows the run to those tests and compiles
+# them WITHOUT the skip, through a dart-define the kit reads at registration
+# time.
+WIP_DEFINE=()
 
 if [[ "${1:-}" == --wip || "${2:-}" == --wip ]]; then
   TAGS=(--tags wip)
-  EXCLUDE=()
+  WIP_DEFINE=(--dart-define PATROL_RUN_WIP=true)
 fi
 
 DEVICE="${1:-}"
@@ -86,7 +86,7 @@ trap 'kill "$LOGCAT_PID" 2>/dev/null || true' EXIT
 status=0
 set +e
 (cd "$APP_DIR" && patrol test --device "$DEVICE" \
-   "${TAGS[@]+"${TAGS[@]}"}" "${EXCLUDE[@]+"${EXCLUDE[@]}"}")
+   "${TAGS[@]+"${TAGS[@]}"}" "${WIP_DEFINE[@]+"${WIP_DEFINE[@]}"}")
 status=$?
 set -e
 

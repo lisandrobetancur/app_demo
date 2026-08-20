@@ -127,10 +127,10 @@ melos:
     e2eWebSmoke: bash packages/e2e_framework/tool/e2e/run_web.sh --tags=smoke_test
     e2eWebNegative: bash packages/e2e_framework/tool/e2e/run_web.sh --tags=negative
 
-    # `wip` is the one tag nobody has to ask for: every run above already
-    # excludes it, so a test being refactored is left out of the bundle rather
-    # than failing in it. This is the way back in — the tests being worked on,
-    # and only those.
+    # A test tagged `wip` is registered as skipped by `e2eTest` itself, so it
+    # reaches the report — counted under Skipped, with a pale row — without
+    # its body ever running. This is the way back in: the tests being worked
+    # on, and only those, compiled without the skip.
     e2eWebWip: bash packages/e2e_framework/tool/e2e/run_web.sh --wip
     e2eAndroidWip: bash packages/e2e_framework/tool/e2e/run_android.sh --wip
 

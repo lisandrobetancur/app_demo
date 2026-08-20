@@ -40,9 +40,16 @@ void main(List<String> argv) {
       ? parsePlaywright(input)
       : parsePatrolLog(input);
 
+  // A skipped test is not a silent one: it never ran, so of course it
+  // asserted nothing, and counting it among the scenarios that verify nothing
+  // would turn `Tags.wip` into a warning every time somebody pauses a test.
+  final List<RunCase> executed = run.cases
+      .where((RunCase c) => c.status != RunStatus.skipped)
+      .toList();
+
   final List<({String name, int total, int passed, int failed})> rows =
       <({String name, int total, int passed, int failed})>[
-        for (final RunCase testCase in run.cases)
+        for (final RunCase testCase in executed)
           (
             name: testCase.name,
             total: _count(testCase.steps, (StepNode _) => true),

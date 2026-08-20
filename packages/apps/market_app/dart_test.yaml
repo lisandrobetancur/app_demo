@@ -19,6 +19,6 @@ tags:
     description: Negative path — the assertion is on the refusal.
   wip:
     description: >-
-      Being refactored or repaired. The runners pass --exclude-tags wip on
-      every run, so a test wearing this is left out of the bundle; melos run
-      e2eWebWip is the way back in.
+      Being refactored or repaired. e2eTest registers such a test as skipped,
+      so it reaches the report under Skipped without its body running; melos
+      run e2eWebWip is the way back in.
