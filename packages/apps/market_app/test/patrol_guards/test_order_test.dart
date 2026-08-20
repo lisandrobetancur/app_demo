@@ -36,8 +36,12 @@ void main() {
   final Directory testDir = Directory('patrol_test');
 
   test('no test reads TestData before launching the app', () {
+    // Recursive, and that is not future-proofing: the scenarios live in
+    // `patrol_test/scenarios/` and `patrol test` finds them the same way. A
+    // guard that only looks where the files used to be reports "nothing to
+    // check" and passes, which is the one outcome worse than failing.
     final List<File> files = testDir
-        .listSync()
+        .listSync(recursive: true)
         .whereType<File>()
         .where((File f) => f.path.endsWith('_test.dart'))
         .toList();

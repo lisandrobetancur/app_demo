@@ -496,7 +496,7 @@ cd packages/apps/market_app && patrol test --device chrome
 ```
 
 ```bash
-cd packages/apps/market_app && patrol test --device chrome --target patrol_test/login_test.dart --web-headless=true
+cd packages/apps/market_app && patrol test --device chrome --target patrol_test/scenarios/login_test.dart --web-headless=true
 ```
 
 ### What the suite covers
@@ -516,11 +516,17 @@ Last verified run: **6 passed, 0 failed, 0 flaky in 55 s** on Chromium.
 
 ```
 patrol_test/
-├── support/     app launcher, fixed data mirroring the seed, takeScreenshot
+├── data/        the JSON the scenarios read, mirroring the seed
+├── support/     app launcher, the data façade, epics and features
 ├── pages/       Page Objects: locators and atomic interactions
 ├── steps/       business language composing pages, with its assertions
-└── *_test.dart  specs that read as sentences
+└── scenarios/   the tests themselves, reading as sentences
 ```
+
+`scenarios/` is named after the word the code already uses: `scenario()` opens
+every test, and "Scenario" is the column the report puts them under. The other
+four folders are what a scenario is built from, which is why only this one
+holds `*_test.dart`.
 
 The rule that keeps the layers honest: **a page knows where things are, a step
 knows what a person does, a test knows what the product promises.** A locator

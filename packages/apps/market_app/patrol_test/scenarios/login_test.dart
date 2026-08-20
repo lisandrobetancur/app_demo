@@ -1,7 +1,7 @@
 import 'package:patrol/patrol.dart';
 
-import 'steps/steps.dart';
-import 'support/support.dart';
+import '../steps/steps.dart';
+import '../support/support.dart';
 
 void main() {
   e2eTest(

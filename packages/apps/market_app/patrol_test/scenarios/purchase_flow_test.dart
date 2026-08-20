@@ -1,7 +1,7 @@
 import 'package:patrol/patrol.dart';
 
-import 'steps/steps.dart';
-import 'support/support.dart';
+import '../steps/steps.dart';
+import '../support/support.dart';
 
 /// F07 → F08 → F11 → F12 · From the catalog to a confirmed order.
 ///
