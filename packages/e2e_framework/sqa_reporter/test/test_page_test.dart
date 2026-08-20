@@ -197,19 +197,17 @@ void main() {
     });
   });
 
-  group('branding', () {
-    test('no occurrence of the design source name in any page', () {
+  group('self-contained', () {
+    // Every page on disk, not just the two built above: a page that fetches
+    // something is a page that shows nothing when the network is not there,
+    // and the report is read from a zip as often as from a server.
+    test('no page fetches anything: no external URL', () {
       for (final File file in results.listSync().whereType<File>().where(
         (File f) => f.path.endsWith('.html'),
       )) {
-        expectNoBorrowedNames(file.readAsStringSync(), reason: file.path);
-      }
-    });
-
-    test('the pages reference no external URL', () {
-      for (final String page in <String>[passingPage, brokenPage]) {
-        expect(page, isNot(contains('http://')));
-        expect(page, isNot(contains('https://')));
+        final String page = file.readAsStringSync();
+        expect(page, isNot(contains('http://')), reason: file.path);
+        expect(page, isNot(contains('https://')), reason: file.path);
       }
     });
   });

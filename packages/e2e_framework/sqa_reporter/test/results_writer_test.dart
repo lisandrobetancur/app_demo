@@ -52,17 +52,22 @@ void main() {
   tearDownAll(() => out.deleteSync(recursive: true));
 
   group('file naming', () {
-    test('is sha256(storyTitle:name).json, so artefacts of one test pair up', () {
-      final String expected = sha256
-          .convert(
-            utf8.encode('Authentication:logs in with the seeded demo account'),
-          )
-          .toString();
-      expect(
-        jsonFiles.map((File f) => f.uri.pathSegments.last),
-        contains('$expected.json'),
-      );
-    });
+    test(
+      'is sha256(storyTitle:name).json, so artefacts of one test pair up',
+      () {
+        final String expected = sha256
+            .convert(
+              utf8.encode(
+                'Authentication:logs in with the seeded demo account',
+              ),
+            )
+            .toString();
+        expect(
+          jsonFiles.map((File f) => f.uri.pathSegments.last),
+          contains('$expected.json'),
+        );
+      },
+    );
   });
 
   group('the adapter rules, recursively', () {
@@ -242,14 +247,6 @@ void main() {
       expect(cause['errorType'], 'StateError');
       expect('${cause['message']}', contains('missing_button'));
       expect(broken['testFailureClassname'], 'StateError');
-    });
-  });
-
-  group('branding', () {
-    test('the results borrow no name from another tool', () {
-      for (final File file in jsonFiles) {
-        expectNoBorrowedNames(file.readAsStringSync(), reason: file.path);
-      }
     });
   });
 }

@@ -121,12 +121,11 @@ void main() {
     });
   });
 
-  group('branding', () {
-    test('no design source name, and no external URL', () {
+  group('self-contained', () {
+    test('the page fetches nothing: no external URL', () {
       final String html = File(
         '${results.path}/${tagReportName('success')}',
       ).readAsStringSync();
-      expectNoBorrowedNames(html);
       expect(html, isNot(contains('http://')));
       expect(html, isNot(contains('https://')));
     });

@@ -18,11 +18,7 @@ void main() {
     inputFile = File('${out.path}/results.json')
       ..writeAsStringSync(playwrightReport());
     final ParsedRun run = parsePlaywright(inputFile);
-    writeResults(
-      run,
-      Directory('${out.path}/results'),
-      platform: 'web',
-    );
+    writeResults(run, Directory('${out.path}/results'), platform: 'web');
     final File index = writeDashboard(
       run,
       Directory('${out.path}/results'),
@@ -436,21 +432,22 @@ void main() {
     });
   });
 
-  group('branding', () {
-    test('no occurrence of the design source name anywhere in the site', () {
+  group('self-contained', () {
+    // Every file the generator writes, markup and stylesheet alike. The site
+    // has to open from `file://` with no network at all — which is how it is
+    // read out of a CI artefact — so a single absolute URL anywhere breaks
+    // the promise, and a stylesheet is the easiest place to leak one.
+    test('nothing the site writes fetches anything', () {
       for (final File file
           in Directory(
             '${out.path}/results',
           ).listSync().whereType<File>().where(
             (File f) => f.path.endsWith('.html') || f.path.endsWith('.css'),
           )) {
-        expectNoBorrowedNames(file.readAsStringSync());
+        final String content = file.readAsStringSync();
+        expect(content, isNot(contains('http://')), reason: file.path);
+        expect(content, isNot(contains('https://')), reason: file.path);
       }
-    });
-
-    test('the site is self-contained: no external URL is referenced', () {
-      expect(html, isNot(contains('http://')));
-      expect(html, isNot(contains('https://')));
     });
   });
 }

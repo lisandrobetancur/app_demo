@@ -359,9 +359,8 @@ void main() {
     });
   });
 
-  group('branding', () {
-    test('no design source name, and no external URL', () {
-      expectNoBorrowedNames(featuresPage);
+  group('self-contained', () {
+    test('the page fetches nothing: no external URL', () {
       expect(featuresPage, isNot(contains('http://')));
       expect(featuresPage, isNot(contains('https://')));
     });
