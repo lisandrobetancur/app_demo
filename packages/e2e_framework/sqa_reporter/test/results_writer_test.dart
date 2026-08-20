@@ -7,10 +7,12 @@ import 'package:test/test.dart';
 
 import 'fixtures.dart';
 
-/// The conformance suite: the written JSON against the schema documented in
-/// `docs/sqa-reporter/00-serenity-spec.md`, rule by rule — required fields,
-/// the adapter conventions, the result vocabulary, file naming, and the step
-/// tree's shape. This is the Phase 1 exit criterion, executable.
+/// The conformance suite: the written JSON against the schema, rule by rule —
+/// required fields, the serialisation conventions, the result vocabulary, file
+/// naming and the step tree's shape.
+///
+/// There is no specification document to consult: this file *is* it. A change
+/// to the schema that these tests still pass is a change nobody agreed to.
 void main() {
   late Directory out;
   late File inputFile;
@@ -23,7 +25,7 @@ void main() {
     inputFile = File('${out.path}/results.json')
       ..writeAsStringSync(playwrightReport());
     final ParsedRun run = parsePlaywright(inputFile);
-    final int written = writeSerenityResults(
+    final int written = writeResults(
       run,
       Directory('${out.path}/results'),
       platform: 'web',
@@ -50,7 +52,7 @@ void main() {
   tearDownAll(() => out.deleteSync(recursive: true));
 
   group('file naming', () {
-    test('is sha256(storyTitle:name).json, like ReportNamer compressed', () {
+    test('is sha256(storyTitle:name).json, so artefacts of one test pair up', () {
       final String expected = sha256
           .convert(
             utf8.encode('Authentication:logs in with the seeded demo account'),
@@ -109,7 +111,7 @@ void main() {
       }
     });
 
-    test('result uses the Serenity vocabulary', () {
+    test('result uses the vocabulary the pages read', () {
       const Set<String> vocabulary = <String>{
         'SUCCESS',
         'FAILURE',
@@ -150,7 +152,7 @@ void main() {
       expect(
         numbers,
         List<int>.generate(numbers.length, (int i) => i + 1),
-        reason: 'TestStep.number is a sequence across the whole test',
+        reason: 'the step number is a sequence across the whole test',
       );
     });
 
@@ -244,12 +246,9 @@ void main() {
   });
 
   group('branding', () {
-    test('the output contains no occurrence of the design source name', () {
+    test('the results borrow no name from another tool', () {
       for (final File file in jsonFiles) {
-        expect(
-          file.readAsStringSync().toLowerCase(),
-          isNot(contains('serenity')),
-        );
+        expectNoBorrowedNames(file.readAsStringSync(), reason: file.path);
       }
     });
   });

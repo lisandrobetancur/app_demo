@@ -25,7 +25,7 @@ void main() {
     run = parsePlaywright(input);
     passing = run.cases.first;
     broken = run.cases.last;
-    writeSerenityResults(run, results, platform: 'web');
+    writeResults(run, results, platform: 'web');
     writeTestPages(
       run,
       results,
@@ -204,7 +204,7 @@ void main() {
 
   group('branding', () {
     test('no design source name, and no external URL', () {
-      expect(gallery.toLowerCase(), isNot(contains('serenity')));
+      expectNoBorrowedNames(gallery);
       expect(gallery, isNot(contains('http://')));
       expect(gallery, isNot(contains('https://')));
     });

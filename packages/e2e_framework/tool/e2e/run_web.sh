@@ -6,8 +6,8 @@
 #                                      [--browser=<channel>] [--verbose] [--wip]
 #
 # Three things in one command, in this order: clean up after the previous run,
-# run, and build the report. This is Serenity's `aggregate` model — the report
-# is part of running, not a step somebody has to remember to launch afterwards.
+# run, and build the report. The report is part of running, not a step
+# somebody has to remember to launch afterwards.
 # Opening it stays separate (`melos run sqaOpenWeb`): building and opening
 # are different decisions, and in CI only the first one exists.
 #

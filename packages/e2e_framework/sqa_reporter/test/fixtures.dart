@@ -13,6 +13,8 @@ library;
 
 import 'dart:convert';
 
+import 'package:test/test.dart';
+
 /// A 1×1 transparent PNG, the smallest real image that decodes.
 const String tinyPngBase64 =
     'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8'
@@ -124,3 +126,27 @@ String patrolLog() => <String>[
   'PATROL_LOG ${jsonEncode(<String, String>{'type': 'test', 'status': 'success', 'name': 'login_test logs in with the seeded demo account', 'timestamp': '2026-08-18T10:00:03.100'})}',
   '08-18 10:00:04.000  1234  5678 I flutter : device noise after',
 ].join('\n');
+
+/// Names that must never appear in anything the generator writes.
+///
+/// The report was built without copying a file from any other tool, and this
+/// is what keeps that true rather than merely intended: a page, a stylesheet
+/// or a result file that names one of these has borrowed something.
+///
+/// It is the only place in the repository where these words are written, and
+/// they are written here to be *forbidden*, not referenced. Removing this list
+/// would not remove the words from the product — it would remove the check
+/// that they never get there.
+const List<String> namesNeverWritten = <String>[
+  'serenity',
+  'ferguson',
+  'thucydides',
+];
+
+/// Fails when [content] carries any of [namesNeverWritten].
+void expectNoBorrowedNames(String content, {String? reason}) {
+  final String haystack = content.toLowerCase();
+  for (final String name in namesNeverWritten) {
+    expect(haystack, isNot(contains(name)), reason: reason ?? 'found "$name"');
+  }
+}

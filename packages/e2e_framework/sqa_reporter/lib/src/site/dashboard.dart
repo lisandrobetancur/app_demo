@@ -13,7 +13,7 @@ import 'dart:io';
 import '../markers.dart';
 import '../model.dart';
 import '../requirements.dart';
-import '../serenity_writer.dart';
+import '../results_writer.dart';
 import 'charts.dart';
 import 'features_page.dart' show coverageOverview;
 import 'page_chrome.dart';
@@ -551,7 +551,7 @@ class _Row {
       stepCount: testCase.steps.length,
       startMs: bounds.start,
       stopMs: bounds.stop,
-      result: serenityResult[status]!,
+      result: resultName[status]!,
       href: htmlReportName(testCase),
       tags: testCase.tags,
     );

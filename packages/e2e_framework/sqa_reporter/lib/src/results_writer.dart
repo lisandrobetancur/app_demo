@@ -1,11 +1,15 @@
-/// The Serenity-schema serialiser: the model in, one JSON file per test out.
+/// The results serialiser: the model in, one JSON file per test out.
 ///
-/// The schema it writes is the one documented in
-/// `docs/sqa-reporter/00-serenity-spec.md`, derived from Serenity's own
-/// source (serenity-core @ 5ad4ad7): the JSON is Gson field reflection over
-/// `TestOutcome`, so the field list *is* the schema, plus the adapter rules —
-/// nulls omitted, empty collections omitted, dates as ISO strings, enums by
-/// name, `File` values as bare names. [prune] is those adapters in one place.
+/// The schema is defined by this file and pinned by `results_writer_test.dart`
+/// — there is no external specification to consult, and the tests are what a
+/// change has to get past. Its rules, all in [prune]: nulls omitted, empty
+/// collections omitted, dates as ISO-8601 strings, enums by name, file values
+/// as bare names.
+///
+/// The JSON exists because a report is two audiences. The HTML is for people;
+/// this is for whatever reads a run afterwards — a dashboard, a trend, a
+/// script that counts. Keeping it separate means the pages can be rewritten
+/// without breaking anything downstream.
 ///
 /// Nothing here knows where the model came from. A second output format is a
 /// second file like this one.
@@ -19,12 +23,13 @@ import 'package:crypto/crypto.dart';
 import 'markers.dart';
 import 'model.dart';
 
-/// Our vocabulary → Serenity's `TestResult` enum names.
+/// Our vocabulary → the names the JSON carries.
 ///
-/// The two models agree on the semantics: Serenity's FAILURE is a real
-/// assertion unmet and ERROR is a test that could not do its job — exactly
-/// the failed/broken distinction the suite already computes.
-const Map<RunStatus, String> serenityResult = <RunStatus, String>{
+/// The distinction worth keeping is FAILURE against ERROR: an assertion the
+/// product did not meet, versus a test that could not do its job. The suite
+/// already computes it — see `promoteStatus` — and losing it here would turn
+/// a stale locator into a product defect on every dashboard downstream.
+const Map<RunStatus, String> resultName = <RunStatus, String>{
   RunStatus.passed: 'SUCCESS',
   RunStatus.failed: 'FAILURE',
   RunStatus.broken: 'ERROR',
@@ -32,9 +37,9 @@ const Map<RunStatus, String> serenityResult = <RunStatus, String>{
   RunStatus.unknown: 'UNDEFINED',
 };
 
-/// Writes one Serenity-schema JSON per case, screenshots beside them, into
+/// Writes one JSON per case, screenshots beside them, into
 /// [outputDir]. Returns how many result files were written.
-int writeSerenityResults(
+int writeResults(
   ParsedRun run,
   Directory outputDir, {
   required String platform,
@@ -63,8 +68,9 @@ int writeSerenityResults(
 
 /// sha256 hex of the complete name — the digest that pairs every artefact of
 /// one test: `<digest>.json`, `<digest>.html`, and the `<digest12>-NN-*.png`
-/// screenshots, exactly as `ReportNamer` pairs them with filename compression
-/// on (its default).
+/// screenshots. A digest and not the test's name: names carry spaces,
+/// accents and slashes, and one of the three platforms would mangle any
+/// scheme that kept them.
 String reportDigest(RunCase testCase) =>
     sha256.convert(utf8.encode(completeNameOf(testCase))).toString();
 
@@ -75,9 +81,9 @@ String reportFileName(RunCase testCase) => '${reportDigest(testCase)}.json';
 /// without an index.
 String htmlReportName(RunCase testCase) => '${reportDigest(testCase)}.html';
 
-/// `storyTitle + ":" + name` (`TestOutcome.getCompleteName`). Our story title
-/// is the feature the scenario declared, or the suite file when it declared
-/// none.
+/// `storyTitle + ":" + name` — what makes a test identifiable across runs.
+/// The story title is the feature the scenario declared, or the suite file
+/// when it declared none.
 String completeNameOf(RunCase testCase) =>
     '${testCase.meta?.feature ?? testCase.suite}:${testCase.name}';
 
@@ -121,7 +127,7 @@ Map<String, Object?> _outcomeFor(
         'userStory': _userStory(meta, testCase.suite),
         'featureTag': featureTag,
         'tags': _tags(testCase, featureTag, platform),
-        'result': serenityResult[result],
+        'result': resultName[result],
         'startTime': isoUtc(start),
         'duration': duration,
         'durationInSeconds': duration / 1000,
@@ -136,9 +142,10 @@ Map<String, Object?> _outcomeFor(
                   .join(', '),
         if (testCase.failureMessage != null) ...<String, Object?>{
           'testFailureCause': <String, Object?>{
-            // G1 in the spec: the stream carries no exception class. The first
-            // line's leading identifier is the closest honest value when it looks
-            // like a type name; otherwise the generic verdict.
+            // The marker stream carries no exception class, so this is a
+            // reading rather than a fact: the first line's leading identifier
+            // when it looks like a type name, and the generic verdict when it
+            // does not.
             'errorType': _errorTypeFrom(testCase.failureMessage!),
             'message': testCase.failureTrace ?? testCase.failureMessage,
           },
@@ -174,7 +181,7 @@ Map<String, Object?> _featureTag(ScenarioMeta? meta, String storyTitle) {
   final String? epic = meta?.epic;
   final String feature = meta?.feature ?? storyTitle;
   return <String, Object?>{
-    // Serenity's nested requirement tags are parent/child by name, which is
+    // Nested requirement tags are parent/child by name, which is
     // what lets a two-level tree roll coverage up a branch.
     'name': epic == null ? feature : '$epic/$feature',
     'type': 'feature',
@@ -227,8 +234,9 @@ List<Map<String, Object?>> _tags(
 
 /// The steps a report presents for [testCase]: its own tree, plus a synthetic
 /// holder for any screenshot that arrived with no step open to own it —
-/// Serenity has no test-level screenshot slot (`TestOutcome.getScreenshots()`
-/// only walks the tree), so an orphan gets a step rather than being dropped.
+/// The schema has no test-level screenshot slot — a reader walks the step
+/// tree — so an orphan capture gets a step of its own rather than being
+/// dropped.
 List<StepNode> presentedStepsOf(RunCase testCase) {
   final List<StepNode> steps = List<StepNode>.of(testCase.steps);
   if (testCase.orphanShots.isNotEmpty) {
@@ -287,7 +295,7 @@ Map<CapturedShot, String> shotNamesFor(RunCase testCase) {
 }
 
 /// A step's one-line description. An assertion leaf folds expected/actual
-/// into it — G2 in the spec: Serenity has no structured slot for them, only
+/// into it: there is no structured slot for them, only
 /// the sentence.
 String stepDescription(StepNode step) {
   if (step.kind != StepKind.assertion) {
@@ -306,9 +314,10 @@ String stepDescription(StepNode step) {
 }
 
 /// Writes the step tree, numbering nodes with one global counter across the
-/// whole test — `TestStep.number` is a sequence, not a per-level index — and
+/// whole test — the step number is a sequence, not a per-level index — and
 /// writing each screenshot's bytes beside the JSON, referenced by bare name
-/// the way Serenity's `File` serialiser does.
+/// so a result file names the image rather than pointing at a path that only
+/// existed on the machine that wrote it.
 class _StepWriter {
   _StepWriter(this.outputDir, this.shotNames);
 
@@ -324,7 +333,7 @@ class _StepWriter {
           'description': stepDescription(step),
           'startTime': isoUtc(step.start),
           'duration': step.stop - step.start,
-          'result': serenityResult[step.status],
+          'result': resultName[step.status],
           'level': level,
           'precondition': false,
           'children': <Map<String, Object?>>[
@@ -351,8 +360,8 @@ class _StepWriter {
   }
 }
 
-/// Epoch ms → the ISO-8601 UTC instant Serenity's `ZonedDateTimeAdapter`
-/// accepts (`ZonedDateTime.parse` takes the plain offset form).
+/// Epoch ms → the ISO-8601 UTC instant the schema
+/// accepts, in the plain offset form every parser takes.
 String isoUtc(int epochMs) =>
     DateTime.fromMillisecondsSinceEpoch(epochMs, isUtc: true).toIso8601String();
 
@@ -364,8 +373,8 @@ String slugOf(String text) => text
     .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
     .replaceAll(RegExp(r'^_+|_+$'), '');
 
-/// The Gson adapter rules, applied recursively: null values and empty
-/// collections disappear (`CollectionAdapter` returns null for them, and Gson
+/// The serialisation rules, applied recursively: null values and empty
+/// collections disappear (they are indistinguishable from absent, and the encoder
 /// omits nulls). Returns null when the pruned value itself becomes empty, so
 /// containers collapse the same way all the way up.
 Object? prune(Object? value) {

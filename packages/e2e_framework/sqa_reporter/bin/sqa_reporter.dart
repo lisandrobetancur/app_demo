@@ -48,7 +48,7 @@ void main(List<String> argv) {
   final ParsedRun run = args.format == 'playwright'
       ? parsePlaywright(input, zone: args.offset!)
       : parsePatrolLog(input, zone: args.offset!);
-  final int written = writeSerenityResults(
+  final int written = writeResults(
     run,
     Directory(args.output),
     platform: args.platform,

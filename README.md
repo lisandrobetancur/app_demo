@@ -320,8 +320,8 @@ melos run testFast                # both
 ```
 
 End-to-end suite. Each of these **cleans that platform's previous artifacts,
-runs, and builds the report** — three things in one command, the way Serenity's
-`aggregate` is part of the build rather than a step someone has to remember:
+runs, and builds the report** — three things in one command, so the report is
+part of running rather than a step someone has to remember:
 
 ```bash
 melos run e2eWeb                  # headless, Playwright's bundled Chromium

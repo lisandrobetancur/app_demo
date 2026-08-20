@@ -15,7 +15,7 @@ import 'assert_d.dart';
 /// Reading can throw — `Money.parse` rejects a price it cannot read,
 /// `UiElement.text` rejects a locator that matched no text — and an eager
 /// argument would throw while the argument list was still being built, before
-/// `should` had a chance to collect anything. Serenity's `the(FIELD)` is lazy
+/// `should` had a chance to collect anything. A lazy read is
 /// for the same reason.
 @immutable
 class Consequence {

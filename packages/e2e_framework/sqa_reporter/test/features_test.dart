@@ -22,7 +22,7 @@ void main() {
       ..writeAsStringSync(playwrightReport());
     run = parsePlaywright(input);
     roots = requirementsOf(run);
-    writeSerenityResults(run, results, platform: 'web');
+    writeResults(run, results, platform: 'web');
     writeDashboard(
       run,
       results,
@@ -361,7 +361,7 @@ void main() {
 
   group('branding', () {
     test('no design source name, and no external URL', () {
-      expect(featuresPage.toLowerCase(), isNot(contains('serenity')));
+      expectNoBorrowedNames(featuresPage);
       expect(featuresPage, isNot(contains('http://')));
       expect(featuresPage, isNot(contains('https://')));
     });

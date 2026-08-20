@@ -16,7 +16,7 @@ library;
 
 import 'markers.dart';
 import 'model.dart';
-import 'serenity_writer.dart';
+import 'results_writer.dart';
 
 /// Severity order, worst first: a requirement reports the worst verdict among
 /// its tests, so a green feature really means nothing under it went wrong.
@@ -64,7 +64,7 @@ class RequirementNode {
     final Map<String, int> tally = <String, int>{};
     for (final RunCase testCase in allCases) {
       final String result =
-          serenityResult[promoteStatus(testCase.status, testCase.steps)]!;
+          resultName[promoteStatus(testCase.status, testCase.steps)]!;
       tally[result] = (tally[result] ?? 0) + 1;
     }
     return tally;

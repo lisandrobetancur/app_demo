@@ -19,7 +19,7 @@ void main() {
     final File input = File('${out.path}/results.json')
       ..writeAsStringSync(playwrightReport());
     run = parsePlaywright(input);
-    writeSerenityResults(run, results, platform: 'web');
+    writeResults(run, results, platform: 'web');
     writeDashboard(
       run,
       results,
@@ -126,7 +126,7 @@ void main() {
       final String html = File(
         '${results.path}/${tagReportName('success')}',
       ).readAsStringSync();
-      expect(html.toLowerCase(), isNot(contains('serenity')));
+      expectNoBorrowedNames(html);
       expect(html, isNot(contains('http://')));
       expect(html, isNot(contains('https://')));
     });

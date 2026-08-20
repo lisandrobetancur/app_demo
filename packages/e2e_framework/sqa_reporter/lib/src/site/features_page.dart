@@ -23,7 +23,7 @@ import 'dart:io';
 import '../markers.dart';
 import '../model.dart';
 import '../requirements.dart';
-import '../serenity_writer.dart';
+import '../results_writer.dart';
 import 'dashboard.dart' show compoundDuration, escapeHtml, resultIcon;
 import 'page_chrome.dart';
 import 'site_assets.dart';
@@ -180,7 +180,7 @@ String featurePageHtml(
   final StringBuffer scenarios = StringBuffer();
   for (final RunCase testCase in cases) {
     final String result =
-        serenityResult[promoteStatus(testCase.status, testCase.steps)]!;
+        resultName[promoteStatus(testCase.status, testCase.steps)]!;
     final ({int start, int stop}) bounds = widenedBoundsOf(testCase);
     final String? own = narrative == null ? testCase.meta?.description : null;
     scenarios.writeln(

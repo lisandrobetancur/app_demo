@@ -18,7 +18,7 @@ void main() {
     inputFile = File('${out.path}/results.json')
       ..writeAsStringSync(playwrightReport());
     final ParsedRun run = parsePlaywright(inputFile);
-    writeSerenityResults(
+    writeResults(
       run,
       Directory('${out.path}/results'),
       platform: 'web',
@@ -444,10 +444,7 @@ void main() {
           ).listSync().whereType<File>().where(
             (File f) => f.path.endsWith('.html') || f.path.endsWith('.css'),
           )) {
-        expect(
-          file.readAsStringSync().toLowerCase(),
-          isNot(contains('serenity')),
-        );
+        expectNoBorrowedNames(file.readAsStringSync());
       }
     });
 

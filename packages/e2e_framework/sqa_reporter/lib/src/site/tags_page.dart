@@ -10,7 +10,7 @@ import 'dart:io';
 
 import '../markers.dart';
 import '../model.dart';
-import '../serenity_writer.dart';
+import '../results_writer.dart';
 import 'dashboard.dart' show compoundDuration, escapeHtml, resultIcon;
 import 'page_chrome.dart';
 import 'site_assets.dart';
@@ -81,7 +81,7 @@ String tagPageHtml(
   final StringBuffer rows = StringBuffer();
   for (final RunCase testCase in sorted) {
     final String result =
-        serenityResult[promoteStatus(testCase.status, testCase.steps)]!;
+        resultName[promoteStatus(testCase.status, testCase.steps)]!;
     final ({int start, int stop}) bounds = widenedBoundsOf(testCase);
     rows.writeln(
       '<tr>'

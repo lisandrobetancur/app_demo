@@ -6,9 +6,9 @@
 ///    output format;
 ///  * the **inputs** (`inputs.dart`, `markers.dart`) — one adapter per
 ///    transport, both producing the model;
-///  * the **serialiser** (`serenity_writer.dart`) — writes Serenity-schema
-///    JSON from the model. A second output format is a second serialiser,
-///    not a rewrite;
+///  * the **serialiser** (`results_writer.dart`) — writes the JSON results
+///    from the model. A second output format is a second serialiser, not a
+///    rewrite;
 ///  * the **site** (`site/`) — the HTML report over the same model, all of
 ///    its markup and assets authored here (see `site_assets.dart` for where
 ///    the clean-room line runs).
@@ -26,7 +26,7 @@ export 'src/markers.dart'
 export 'src/model.dart';
 export 'src/requirements.dart'
     show RequirementNode, featuresIn, requirementsOf, resultSeverity;
-export 'src/serenity_writer.dart'
+export 'src/results_writer.dart'
     show
         Capture,
         capturesOf,
@@ -37,12 +37,12 @@ export 'src/serenity_writer.dart'
         prune,
         reportDigest,
         reportFileName,
-        serenityResult,
+        resultName,
         shotNamesFor,
         slugOf,
         stepDescription,
         widenedBoundsOf,
-        writeSerenityResults;
+        writeResults;
 export 'src/site/charts.dart'
     show
         chartLabels,

@@ -13,7 +13,7 @@ import 'dart:io';
 
 import '../markers.dart';
 import '../model.dart';
-import '../serenity_writer.dart';
+import '../results_writer.dart';
 import 'dashboard.dart' show escapeHtml, resultIcon;
 import 'features_page.dart' show featureReportNameOf;
 import 'page_chrome.dart';
@@ -60,7 +60,7 @@ String screenshotsPageHtml(
   Duration offset = reportOffset,
 }) {
   final RunStatus status = promoteStatus(testCase.status, testCase.steps);
-  final String result = serenityResult[status]!;
+  final String result = resultName[status]!;
   final String feature = testCase.meta?.feature ?? testCase.suite;
   final List<Capture> captures = capturesOf(testCase);
   final Map<CapturedShot, String> shotNames = shotNamesFor(testCase);
