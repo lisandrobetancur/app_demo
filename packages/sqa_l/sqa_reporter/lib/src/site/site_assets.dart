@@ -1071,9 +1071,14 @@ table.step-table.nested td { border-bottom: 1px solid var(--rule-soft); }
 
 .caret-spacer { display: inline-block; width: 1em; flex: none; }
 
-.step-tools { display: flex; gap: 0.5em; margin-bottom: 0.5em; }
+/* Two toolbars, one look: the step tree's and the epic tree's. They do the
+   same thing to two different trees, so a reader who has used one knows the
+   other on sight. */
+.step-tools,
+.tree-tools { display: flex; gap: 0.5em; margin-bottom: 0.5em; }
 
-.step-tools button {
+.step-tools button,
+.tree-tools button {
   background: var(--card);
   border: 1px solid var(--rule);
   border-radius: 8px;
@@ -1084,7 +1089,12 @@ table.step-table.nested td { border-bottom: 1px solid var(--rule-soft); }
   padding: 0.3em 0.8em;
 }
 
-.step-tools button:hover { background: var(--hover); }
+.step-tools button:hover,
+.tree-tools button:hover { background: var(--hover); }
+
+/* The tree page keeps its filter and its two buttons on one line, and lets
+   them wrap rather than shrink when the page is narrow. */
+.tree-tools { align-items: center; flex-wrap: wrap; }
 
 .caret {
   background: none;
@@ -1361,7 +1371,12 @@ function setAllStepSections(open) {
   document.querySelectorAll(".step-section").forEach(function (section) {
     section.hidden = !open;
   });
-  document.querySelectorAll(".caret").forEach(function (caret) {
+  // `[data-toggle]` and not every caret: the tree's carets and the epic-folding
+  // ones share a class, so the unqualified selector would spin an epic's arrow
+  // without moving the rows under it — a control lying about what it did. No
+  // page carries both today, and this is what stops the first one that does
+  // from being where we find out.
+  document.querySelectorAll(".caret[data-toggle]").forEach(function (caret) {
     caret.classList.toggle("open", open);
   });
 }
@@ -1521,19 +1536,50 @@ document.querySelectorAll("[data-result]").forEach(function (target) {
   });
 });
 
-// The coverage panel folds by epic, so its height is set by how many epics a
-// project has rather than by how many features. Paging it was the other
-// option and it breaks the thing it is paging: an epic ends up on one page
-// and its features on the next, each of them a row with no heading.
+// Both tables that show the epic → feature tree fold by epic: the dashboard's
+// coverage panel and the tree page. Paging them was the other option and it
+// breaks the thing it is paging — an epic ends up on one page and its features
+// on the next, each of them a row with no heading.
+//
+// Two things hide a row here, folding and filtering, and they are independent:
+// a feature can be filtered out of an open epic, and a matching feature can sit
+// inside one somebody folded. So neither writes `hidden` directly. Each records
+// its own reason and the row stays hidden while any reason stands — otherwise
+// whichever ran last would decide, and clearing a filter would reveal rows the
+// reader had folded away.
+function hideRowFor(row, reason, on) {
+  if (on) { row.dataset[reason] = "1"; } else { delete row.dataset[reason]; }
+  row.hidden = Boolean(row.dataset.folded) || Boolean(row.dataset.filtered);
+}
+
+function foldEpic(caret, open) {
+  caret.classList.toggle("open", open);
+  caret.setAttribute("aria-expanded", open ? "true" : "false");
+  document
+    .querySelectorAll('[data-under="' + caret.dataset.fold + '"]')
+    .forEach(function (row) { hideRowFor(row, "folded", !open); });
+}
+
 document.querySelectorAll("[data-fold]").forEach(function (caret) {
   caret.addEventListener("click", function () {
-    var open = !caret.classList.contains("open");
-    caret.classList.toggle("open", open);
-    caret.setAttribute("aria-expanded", open ? "true" : "false");
-    document
-      .querySelectorAll('[data-under="' + caret.dataset.fold + '"]')
-      .forEach(function (row) { row.hidden = !open; });
+    foldEpic(caret, !caret.classList.contains("open"));
   });
+});
+
+// Opening a dozen epics one caret at a time is the same tedium the step tree
+// already has a pair of buttons for, so it gets the same pair.
+function setAllEpics(open) {
+  document.querySelectorAll("[data-fold]").forEach(function (caret) {
+    foldEpic(caret, open);
+  });
+}
+
+document.querySelectorAll(".expand-epics").forEach(function (button) {
+  button.addEventListener("click", function () { setAllEpics(true); });
+});
+
+document.querySelectorAll(".collapse-epics").forEach(function (button) {
+  button.addEventListener("click", function () { setAllEpics(false); });
 });
 
 // The tree page filters by name. A feature that matches brings its epic with
@@ -1545,6 +1591,7 @@ document.querySelectorAll("[data-fold]").forEach(function (caret) {
   var count = document.querySelector(".filter-count");
   var features = document.querySelectorAll("tr.feature-row");
   var epics = document.querySelectorAll("tr.epic-row");
+  var carets = document.querySelectorAll("[data-fold]");
   var total = table ? parseInt(table.dataset.features, 10) : features.length;
 
   filter.addEventListener("input", function () {
@@ -1553,15 +1600,22 @@ document.querySelectorAll("[data-fold]").forEach(function (caret) {
     var keep = {};
     features.forEach(function (row) {
       var hit = !needle || (row.dataset.name || "").indexOf(needle) >= 0;
-      row.hidden = !hit;
+      hideRowFor(row, "filtered", !hit);
       if (hit) {
         shown += 1;
-        if (row.dataset.of) { keep[row.dataset.of] = true; }
+        if (row.dataset.under) { keep[row.dataset.under] = true; }
       }
     });
     epics.forEach(function (row) {
-      row.hidden = Boolean(needle) && !keep[row.dataset.epic];
+      hideRowFor(row, "filtered", Boolean(needle) && !keep[row.dataset.epic]);
     });
+    // A match inside a folded epic is a match nobody can see, under a count
+    // that claims otherwise. Searching opens what it finds.
+    if (needle) {
+      carets.forEach(function (caret) {
+        if (keep[caret.dataset.fold]) { foldEpic(caret, true); }
+      });
+    }
     if (count) {
       count.hidden = !needle;
       count.textContent = shown + " of " + total + " features";

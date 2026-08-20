@@ -113,7 +113,7 @@ void main() {
 
   group('features.html', () {
     test('lists the whole tree, features indented under their epic', () {
-      expect(featuresPage, contains('>Access<'));
+      expect(featuresPage, contains('Access</td>'));
       expect(featuresPage, contains('Authentication'));
       expect(
         featuresPage,
@@ -139,15 +139,55 @@ void main() {
     test('can be searched, and a match keeps the epic it belongs to', () {
       expect(featuresPage, contains('class="feature-filter"'));
       // The three things the filter reads off the rows: which are features,
-      // what each is called, and whose they are.
+      // what each is called, and whose they are. The last one is `data-under`,
+      // the same attribute the caret folds by — one fact, one name.
       expect(featuresPage, contains('data-name="authentication"'));
-      expect(featuresPage, contains('data-of="req-access"'));
+      expect(featuresPage, contains('data-under="req-access"'));
       expect(featuresPage, contains('data-features="2"'));
       expect(
         featuresPage,
         isNot(contains('class="pagination"')),
         reason: 'paging a tree orphans a feature from its epic',
       );
+    });
+
+    test('folds by epic too, and opens with nothing folded', () {
+      expect(featuresPage, contains('data-fold="req-access"'));
+      expect(featuresPage, contains('class="caret open"'));
+      expect(featuresPage, contains('aria-expanded="true"'));
+      expect(
+        featuresPage,
+        isNot(contains('aria-expanded="false"')),
+        reason: 'a report is opened to be read, not unpacked',
+      );
+      expect(
+        featuresPage,
+        isNot(matches(RegExp(r'<tr[^>]*\bhidden\b'))),
+        reason: 'nothing starts folded away',
+      );
+    });
+
+    test('carries the pair of buttons that fold every epic at once', () {
+      expect(featuresPage, contains('class="expand-epics"'));
+      expect(featuresPage, contains('class="collapse-epics"'));
+      expect(
+        featuresHtml(
+          <RequirementNode>[RequirementNode(name: 'Checkout', type: 'feature')],
+          platform: 'web',
+          generatedAt: DateTime.utc(2026),
+        ),
+        // The class name also occurs in the script every page carries, so the
+        // assertion is on the button, not on the word.
+        isNot(contains('class="expand-epics"')),
+        reason: 'a flat list has nothing to fold, so nothing to press',
+      );
+    });
+
+    test('an epic with no features under it gets no caret to press', () {
+      // The orphan feature stands at the root and is not an epic; either way
+      // there is nothing to fold, and a control that does nothing is worse
+      // than no control.
+      expect(featuresPage, isNot(contains('data-fold="req-catalog_test"')));
     });
 
     test('is called Features wherever the reader can see it', () {
@@ -282,7 +322,7 @@ void main() {
       expect(index, contains('class="requirement-row level-1"'));
     });
 
-    test('an epic folds its features away, and a short panel starts open', () {
+    test('an epic folds its features away, and the panel opens unfolded', () {
       final String index = File(
         '${results.path}/index.html',
       ).readAsStringSync();
@@ -291,9 +331,21 @@ void main() {
       expect(index, contains('aria-expanded="true"'));
       expect(
         index,
-        isNot(contains('data-under="req-access" hidden')),
-        reason: 'two rows need no folding to be readable',
+        isNot(matches(RegExp(r'<tr[^>]*\bhidden\b'))),
+        // Folding by row count was tried and it is the wrong instinct: it
+        // hides most of the panel on the projects with the most to show, and
+        // it makes the report open differently from one week to the next as
+        // an epic is added.
+        reason: 'the coverage is what the first page is for',
       );
+    });
+
+    test('the panel gets the same two buttons the tree page has', () {
+      final String index = File(
+        '${results.path}/index.html',
+      ).readAsStringSync();
+      expect(index, contains('class="expand-epics"'));
+      expect(index, contains('class="collapse-epics"'));
     });
 
     test('the dashboard summarises coverage per root of the tree', () {
