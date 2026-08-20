@@ -84,7 +84,7 @@ String tagPageHtml(
         resultName[promoteStatus(testCase.status, testCase.steps)]!;
     final ({int start, int stop}) bounds = widenedBoundsOf(testCase);
     rows.writeln(
-      '<tr>'
+      '<tr data-result="$result">'
       '<td>${escapeHtml(testCase.meta?.feature ?? testCase.suite)}</td>'
       '<td><a href="${htmlReportName(testCase)}">'
       '${escapeHtml(testCase.name)}</a></td>'

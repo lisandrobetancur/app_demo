@@ -996,6 +996,55 @@ th.sortable.desc::after { content: " ↓"; color: var(--link); }
 .test-title-bar.test-SKIPPED { border-left-color: var(--skip); background: #f2f5f8; }
 .test-title-bar.test-UNDEFINED { border-left-color: var(--undefined); background: #f4f1fc; }
 
+/* A scenario row wearing its verdict, in the tone its slice has on the chart
+   — the same five colours and the same five tints the test pages already use,
+   so the doughnut, the row and the page a reader lands on all agree.
+
+   A stripe down the left edge and a wash behind the row: the stripe is what
+   the eye catches scanning a long table, the wash is what keeps it caught
+   once the row is read. Both are the verdict's own hue, so no legend is
+   needed to know which is which.
+
+   Passing rows get NEITHER, deliberately. They are the majority and the
+   baseline, and tinting them green would drown the four rows somebody opened
+   the report to find — a table where everything is coloured says as little as
+   one where nothing is. Green stays on the icon, where it confirms; the
+   background is reserved for what needs attention. */
+.table tr[data-result] > td { border-left: 0 solid transparent; }
+
+.table tr[data-result="FAILURE"] > td:first-child,
+.table tr[data-result="ERROR"] > td:first-child,
+.table tr[data-result="SKIPPED"] > td:first-child,
+.table tr[data-result="UNDEFINED"] > td:first-child { border-left-width: 3px; }
+
+.table tr[data-result="FAILURE"] > td {
+  background: #fdeff1;
+  border-left-color: var(--fail);
+}
+
+.table tr[data-result="ERROR"] > td {
+  background: #fdf5eb;
+  border-left-color: var(--broken);
+}
+
+.table tr[data-result="SKIPPED"] > td {
+  background: #f2f5f8;
+  border-left-color: var(--skip);
+}
+
+.table tr[data-result="UNDEFINED"] > td {
+  background: #f4f1fc;
+  border-left-color: var(--undefined);
+}
+
+/* Hover still has to read as hover on a row that is already tinted, so it
+   deepens the row's own colour rather than replacing it with the neutral
+   one. */
+.table tr[data-result="FAILURE"]:hover > td { background: #fbe2e6; }
+.table tr[data-result="ERROR"]:hover > td { background: #fbecd9; }
+.table tr[data-result="SKIPPED"]:hover > td { background: #e8edf3; }
+.table tr[data-result="UNDEFINED"]:hover > td { background: #ebe5f9; }
+
 .test-description { color: var(--muted); font-style: italic; margin-top: 0.4em; }
 
 /* ── Step table ─────────────────────────────────────────────────────── */

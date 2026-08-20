@@ -184,7 +184,7 @@ String featurePageHtml(
     final ({int start, int stop}) bounds = widenedBoundsOf(testCase);
     final String? own = narrative == null ? testCase.meta?.description : null;
     scenarios.writeln(
-      '<tr>'
+      '<tr data-result="$result">'
       '<td><a href="${htmlReportName(testCase)}">'
       '${escapeHtml(testCase.name)}</a>'
       '${own == null ? '' : '<div class="scenario-narrative">'

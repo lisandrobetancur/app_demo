@@ -366,6 +366,42 @@ void main() {
       expect(html, contains('<tr data-result="ERROR">'));
     });
 
+    test('a row that needs attention wears its verdict, and a passing one '
+        'does not', () {
+      final String css = File(
+        '${out.path}/results/sqa-reporter.css',
+      ).readAsStringSync().replaceAll(RegExp(r'\s+'), ' ');
+      // The stripe and the wash are the verdict's own tone — the same one its
+      // slice has on the doughnut — so the chart, the row and the page a
+      // reader lands on cannot disagree.
+      for (final String result in <String>[
+        'FAILURE',
+        'ERROR',
+        'SKIPPED',
+        'UNDEFINED',
+      ]) {
+        expect(
+          css,
+          contains('.table tr[data-result="$result"] > td { background:'),
+          reason: '$result needs a background of its own',
+        );
+        expect(
+          css,
+          contains('border-left-color: ${_tokenFor(result)}'),
+          reason: '$result needs the stripe its chart slice has',
+        );
+      }
+      expect(
+        css,
+        isNot(contains('.table tr[data-result="SUCCESS"] > td { background:')),
+        // Passing is the majority and the baseline. Colouring it too would
+        // drown the handful of rows somebody opened the report to find: a
+        // table where everything is tinted says as little as one where
+        // nothing is.
+        reason: 'green belongs on the icon, not behind every second row',
+      );
+    });
+
     test('carries a filter, a page size and sortable headers', () {
       expect(html, contains('class="table-filter"'));
       expect(html, contains('class="page-size"'));
@@ -451,3 +487,11 @@ void main() {
     });
   });
 }
+
+/// The CSS variable each verdict's stripe is drawn with.
+String _tokenFor(String result) => switch (result) {
+  'FAILURE' => 'var(--fail)',
+  'ERROR' => 'var(--broken)',
+  'SKIPPED' => 'var(--skip)',
+  _ => 'var(--undefined)',
+};
