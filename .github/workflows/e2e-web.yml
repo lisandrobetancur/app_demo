@@ -15,6 +15,14 @@ jobs:
   web:
     name: Web suite
     runs-on: ubuntu-latest
+    # A backstop, not a budget. The job takes seven minutes; a red run with
+    # every test waiting out its own timeout took forty-four, and that one is
+    # still worth finishing, because its report is the point. What this stops
+    # is the third case: a step that hangs and never returns. GitHub's default
+    # would let it sit for six hours, and one did — three hours and forty-eight
+    # minutes inside `npx playwright install`, on a step that takes forty
+    # seconds, with nothing to show for any of it.
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
 
@@ -62,7 +70,14 @@ jobs:
       # only as "Playwright process exited unexpectedly with code 1". Doing the
       # install here makes both the dependencies and any error visible; the
       # install Patrol runs later then finds everything in place.
+      #
+      # Ten minutes for a step that takes forty seconds: `--with-deps` shells
+      # out to `apt-get`, and an apt mirror that stops answering hangs rather
+      # than fails. Failing here is worth far more than waiting — the run is
+      # already lost, and a job that ends in ten minutes gets re-run, while one
+      # that sits for hours only gets noticed.
       - name: Install Playwright and its system dependencies
+        timeout-minutes: 10
         run: |
           RUNNER_DIR="$(find "$HOME/.pub-cache/hosted/pub.dev" -maxdepth 1 -type d -name 'patrol-*' | head -1)/web_runner"
           cd "$RUNNER_DIR"
