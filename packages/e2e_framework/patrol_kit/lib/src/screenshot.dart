@@ -15,9 +15,22 @@ final GlobalKey appBoundaryKey = GlobalKey(debugLabel: 'patrol_app_boundary');
 
 /// How much the captured frame is scaled down before encoding.
 ///
-/// Screenshots travel to the runner as base64 inside console output, so they
-/// are deliberately small: legible for a report, cheap to move around.
-const double _captureScale = 0.5;
+/// Screenshots travel to the runner as base64 inside console output, in
+/// [_chunkSize] pieces, so every pixel has a price and the frame is scaled
+/// down before encoding.
+///
+/// Three quarters and not a half, which is where this started. At a half, a
+/// capture of a 1080-wide app came out 540 wide — and the report shows it at
+/// its own size, because upscaling a bitmap makes it bigger without making it
+/// legible. Half was too little to read an error message under a form field,
+/// which is the thing somebody opens a screenshot to read.
+///
+/// The cost is real and worth stating: three quarters is 2.25 times the
+/// pixels of a half, so roughly twice the base64 and twice the chunks per
+/// capture. That is paid on every screenshot of every run. Full resolution
+/// would double it again to read no better — the app is not rendering finer
+/// detail than this, it is rendering text.
+const double _captureScale = 0.75;
 
 /// Base64 is emitted in chunks because a single very long line gets mangled
 /// on the way out of the browser.
