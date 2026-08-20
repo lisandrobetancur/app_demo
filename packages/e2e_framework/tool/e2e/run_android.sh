@@ -24,7 +24,7 @@
 # failure — and is switched off only around the run, where a non-zero code is
 # the result.
 #
-#   packages/e2e_framework/tool/e2e/run_android.sh [device-serial]
+#   packages/e2e_framework/tool/e2e/run_android.sh [device-serial] [--wip]
 #
 set -euo pipefail
 
@@ -37,7 +37,25 @@ APP_DIR="packages/apps/market_app"
 OUT="build/e2e/android"
 LOG="$OUT/android_run.log"
 
+TAGS=()
+
+# `wip` marks a test somebody is in the middle of, and the runner is what acts
+# on it rather than a convention people have to remember. `--exclude-tags` is
+# applied while the bundle is GENERATED, so such a test is never compiled in:
+# absent, not skipped. A half-finished test that fails is noise, and noise on
+# a red suite is what teaches people to stop reading it.
+#
+# `--wip` is the way back in — it runs those and only those, which is what
+# somebody repairing one actually wants.
+EXCLUDE=(--exclude-tags wip)
+
+if [[ "${1:-}" == --wip || "${2:-}" == --wip ]]; then
+  TAGS=(--tags wip)
+  EXCLUDE=()
+fi
+
 DEVICE="${1:-}"
+[[ "$DEVICE" == --wip ]] && DEVICE=""
 if [[ -z "$DEVICE" ]]; then
   # `adb devices` prints a header line, then one line per device.
   DEVICE="$(adb devices | awk 'NR > 1 && $2 == "device" { print $1; exit }')"
@@ -67,7 +85,8 @@ trap 'kill "$LOGCAT_PID" 2>/dev/null || true' EXIT
 
 status=0
 set +e
-(cd "$APP_DIR" && patrol test --device "$DEVICE")
+(cd "$APP_DIR" && patrol test --device "$DEVICE" \
+   "${TAGS[@]+"${TAGS[@]}"}" "${EXCLUDE[@]+"${EXCLUDE[@]}"}")
 status=$?
 set -e
 

@@ -29,6 +29,8 @@ const String _marker = 'PATROL_TAGS';
 ///
 /// A test usually carries one of each. Nothing forbids other strings; these
 /// are the ones the pipeline knows about.
+///
+/// And one that is neither axis: [wip], which takes a test out of every run.
 class Tags {
   const Tags._();
 
@@ -46,8 +48,20 @@ class Tags {
   /// must refuse, and the assertion is on the refusal.
   static const String negative = 'negative';
 
-  /// Slow enough to be worth excluding from a quick loop.
-  static const String slow = 'slow';
+  /// Work in progress: being refactored or repaired, and **not run by
+  /// anyone** until the tag comes off.
+  ///
+  /// This is the one tag the runners act on by themselves. They pass
+  /// `--exclude-tags wip` on every invocation, so a test wearing it is left
+  /// out of the bundle before a browser or a device is even started — not run
+  /// and reported as skipped, but absent. A half-finished test that fails is
+  /// noise, and noise on a red suite is what teaches people to ignore it.
+  ///
+  /// Which is also why it is a tag and not a comment: a commented-out test
+  /// stops compiling against the app and rots in silence, while a `wip` one
+  /// still has to build, still gets renamed by a refactor, and shows up in
+  /// `--wip` when somebody wants to see what is unfinished.
+  static const String wip = 'wip';
 
   /// Every tag the kit names.
   static const List<String> all = <String>[
@@ -55,7 +69,7 @@ class Tags {
     regression,
     success,
     negative,
-    slow,
+    wip,
   ];
 }
 
@@ -83,12 +97,16 @@ class Tags {
 ///
 /// ```sh
 /// patrol test --device chrome --tags "smoke_test && negative"
-/// patrol test --device chrome --exclude-tags "slow"
+/// patrol test --device chrome --exclude-tags "wip"
 /// ```
 ///
 /// Tags are matched against what the test declares, so a filter that names a
 /// tag nobody uses selects nothing and the run reports zero tests — which is
 /// why the vocabulary lives in [Tags] rather than in each test file.
+///
+/// The second line is not an example anybody has to type: `run_web.sh` and
+/// `run_android.sh` pass it on every run, so [Tags.wip] takes a test out of
+/// the bundle by itself.
 @isTest
 void e2eTest(
   String description,

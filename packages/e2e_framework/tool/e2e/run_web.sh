@@ -3,7 +3,7 @@
 # Runs the E2E suite in the browser and leaves the report built.
 #
 #   packages/e2e_framework/tool/e2e/run_web.sh [--headed] [--tags=<expression>]
-#                                      [--browser=<channel>] [--verbose]
+#                                      [--browser=<channel>] [--verbose] [--wip]
 #
 # Three things in one command, in this order: clean up after the previous run,
 # run, and build the report. This is Serenity's `aggregate` model — the report
@@ -43,6 +43,16 @@ BROWSER=""
 # the note by the flags below.
 VERBOSE=()
 
+# `wip` marks a test somebody is in the middle of, and the runner is what acts
+# on it rather than a convention people have to remember. `--exclude-tags` is
+# applied while the bundle is GENERATED, so such a test is never compiled in:
+# absent, not skipped. A half-finished test that fails is noise, and noise on
+# a red suite is what teaches people to stop reading it.
+#
+# `--wip` is the way back in — it runs those and only those, which is what
+# somebody repairing one actually wants.
+EXCLUDE=(--exclude-tags wip)
+
 # The browsers Playwright will accept as a `channel`. Checked here rather than
 # left to Playwright because the failure is expensive and late: the app is built
 # and served first, so a typo surfaces a minute in, from inside the runner,
@@ -53,6 +63,7 @@ for arg in "$@"; do
   case "$arg" in
     --headed) HEADLESS_FLAG=--no-web-headless ;;
     --verbose) VERBOSE=(--verbose) ;;
+    --wip) TAGS=(--tags wip); EXCLUDE=() ;;
     --tags=*) TAGS=(--tags "${arg#--tags=}") ;;
     --browser=*)
       BROWSER="${arg#--browser=}"
@@ -65,7 +76,7 @@ for arg in "$@"; do
       ;;
     *)
       echo "unrecognized argument: $arg" >&2
-      echo "usage: packages/e2e_framework/tool/e2e/run_web.sh [--headed] [--tags=<expression>] [--browser=<channel>] [--verbose]" >&2
+      echo "usage: packages/e2e_framework/tool/e2e/run_web.sh [--headed] [--tags=<expression>] [--browser=<channel>] [--verbose] [--wip]" >&2
       exit 2
       ;;
   esac
@@ -148,6 +159,7 @@ set +e
     --device chrome \
     "${TAGS[@]+"${TAGS[@]}"}" \
     "${VERBOSE[@]+"${VERBOSE[@]}"}" \
+    "${EXCLUDE[@]+"${EXCLUDE[@]}"}" \
     --web-report-dir="$OUT/playwright" \
     --web-results-dir="$OUT/test-results" \
     "$HEADLESS_FLAG" \

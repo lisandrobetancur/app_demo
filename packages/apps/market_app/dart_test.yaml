@@ -17,5 +17,8 @@ tags:
     description: Happy path — the product is asked to do its job and does.
   negative:
     description: Negative path — the assertion is on the refusal.
-  slow:
-    description: Slow enough to be worth excluding from a quick loop.
+  wip:
+    description: >-
+      Being refactored or repaired. The runners pass --exclude-tags wip on
+      every run, so a test wearing this is left out of the bundle; melos run
+      e2eWebWip is the way back in.

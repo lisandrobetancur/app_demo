@@ -331,9 +331,23 @@ melos run e2eAndroid              # connected Android device
 melos run e2eWebSmoke             # only --tags "smoke_test"
 melos run e2eWebNegative          # only --tags "negative"
 
+melos run e2eWebWip               # only the tests being worked on
+melos run e2eAndroidWip           # the same, on a device
+
 melos run e2eWebChrome            # installed Google Chrome
 melos run e2eWebEdge              # installed Microsoft Edge
 ```
+
+Every command above except the two `*Wip` ones passes `--exclude-tags wip`, so a test
+tagged `Tags.wip` is left out of the bundle — **absent, not skipped**, because
+the filter runs while the bundle is generated. That is what the tag is for: a
+test being refactored or repaired should not be failing in anybody's run, and a
+red suite people learn to ignore is worse than a smaller green one. The two
+`*Wip` commands are the way back in, running those tests and only those.
+
+A tag beats commenting the test out: the commented one stops compiling against
+the app and rots in silence, while a `wip` one still builds, still gets renamed
+by a refactor, and can be listed at any time.
 
 The last two swap Playwright's bundled Chromium for a browser installed on the
 machine, through `run_web.sh --browser=<channel>`; `chrome-beta`, `msedge-dev`
