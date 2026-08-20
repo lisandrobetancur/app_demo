@@ -140,6 +140,21 @@ jobs:
           path: build/e2e/web/sqa_reporter/report
           retention-days: 14
 
+      # What the browser left behind when it went wrong: a Playwright trace and
+      # a screenshot per failing test, written by `run_web.sh`'s
+      # `retain-on-failure`. Produced and never collected they would be worth
+      # nothing, and this is the artefact that answers the question a hung run
+      # raises — whether the app painted anything at all. Seven days, not
+      # fourteen: a trace is large, and nobody opens one a week later.
+      - name: Upload the browser traces on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-traces
+          path: build/e2e/web/test-results
+          retention-days: 7
+          if-no-files-found: ignore
+
       # At the end of the job, and not next to the failure: this step runs the
       # suite again, which overwrites build/e2e/web/playwright/ — the results
       # the report and the JUnit check are built from. Placed earlier, a red
