@@ -2,7 +2,7 @@
 #
 # Opens a generated report in the default browser.
 #
-#   packages/sqa_l/tool/e2e/open_report.sh <path/to/index.html>
+#   packages/e2e_framework/tool/e2e/open_report.sh <path/to/index.html>
 #
 # The SQA report is a static, self-contained site, so opening it is opening a
 # file — no server, nothing left running afterwards. This exists only because
@@ -15,7 +15,7 @@ cd "$(git rev-parse --show-toplevel)"
 REPORT="${1:-}"
 
 if [[ -z "$REPORT" ]]; then
-  echo "usage: packages/sqa_l/tool/e2e/open_report.sh <path/to/index.html>" >&2
+  echo "usage: packages/e2e_framework/tool/e2e/open_report.sh <path/to/index.html>" >&2
   exit 2
 fi
 

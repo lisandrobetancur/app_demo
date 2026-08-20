@@ -67,7 +67,7 @@ they are the only input:
 | `PATROL_TAGS` | `tags.dart` | the test's tags |
 | `PATROL_TRACE` | `log.dart` | log lines |
 
-The Node converter under `packages/sqa_l/tool/` already parses this stream for
+The Node converter under `packages/e2e_framework/tool/` already parses this stream for
 the report of the day, on two transports — Playwright's JSON on web, the device
 log on Android. **Read it first.** It is the working reference for how the markers
 arrive, how the two transports differ, and where the edges are; you are writing
@@ -158,7 +158,7 @@ Report:
 **Goal:** a Dart package that reads the marker stream and writes Serenity-schema
 JSON. No HTML yet.
 
-**Allowed files:** `packages/sqa_l/sqa_reporter/**` (new package), and the root
+**Allowed files:** `packages/e2e_framework/sqa_reporter/**` (new package), and the root
 `pubspec.yaml` to add it to the workspace.
 
 The name is free: the existing Node converter stays where it is, under
@@ -235,7 +235,7 @@ map cleanly. **Propose the mapping and stop.**
 **Goal:** `melos run sqaReportWeb` and the Android equivalent, beside the
 existing report scripts, and a CI step that publishes both.
 
-**Allowed files:** root `pubspec.yaml`, `packages/sqa_l/tool/e2e/*.sh`,
+**Allowed files:** root `pubspec.yaml`, `packages/e2e_framework/tool/e2e/*.sh`,
 `.github/workflows/e2e-*.yml`.
 
 **Exit criterion:** a CI run produces both reports from one suite execution.

@@ -8,7 +8,7 @@ the source that was read, it is marked **UNVERIFIED** rather than guessed.
 
 The input side — how our own marker stream arrives — was read from the
 converter that consumed it at the time this was written; it now lives in
-`packages/sqa_l/sqa_reporter/lib/src/markers.dart`.
+`packages/e2e_framework/sqa_reporter/lib/src/markers.dart`.
 
 ---
 

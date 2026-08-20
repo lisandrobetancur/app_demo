@@ -65,8 +65,9 @@ Flutter SDK package, not a third party) to enable real paths on the web — see
 packages/
 ├── apps/market_app/                 shell: wiring only (router, DI, i18n, bootstrap)
 ├── development/lint/                shared analysis_options
-├── sqa_l/                           everything the automation framework owns
+├── e2e_framework/                   everything the automation framework owns
 │   ├── patrol_kit/                  reusable E2E scaffolding — Flutter + Patrol only
+│   ├── sqa_reporter/                the report generator, pure Dart
 │   └── tool/e2e/                    the run scripts
 ├── shared/                          pure logic, ZERO widgets
 │   ├── typing/                      base ViewModel, Clock, IdGenerator, ViewStatus
@@ -565,7 +566,7 @@ melos run sqaWeb        # rebuilds the report from that JSON
 melos run sqaOpenWeb    # opens the report in a browser
 ```
 
-The generator is a Dart package, `packages/sqa_l/sqa_reporter`, and it owns the
+The generator is a Dart package, `packages/e2e_framework/sqa_reporter`, and it owns the
 whole output: the JSON results, the screenshots and the static pages that read
 them, all under one directory per platform which it writes from scratch every
 time.
@@ -734,7 +735,7 @@ Three things are worth knowing before running this on another machine.
 
 **The markers come from the device log, not from the CLI.** `patrol_cli` parses
 `PATROL_LOG` to pretty-print it and silently drops every other line, so its
-stdout carries none of the step or screenshot markers. `packages/sqa_l/tool/e2e/run_android.sh`
+stdout carries none of the step or screenshot markers. `packages/e2e_framework/tool/e2e/run_android.sh`
 therefore reads logcat in parallel with the run. Logcat is also a ring buffer
 that drops lines under load, so the script raises it to 16 MB before starting;
 the converter skips a screenshot whose chunks are incomplete rather than failing

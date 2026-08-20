@@ -24,7 +24,7 @@
 # failure — and is switched off only around the run, where a non-zero code is
 # the result.
 #
-#   packages/sqa_l/tool/e2e/run_android.sh [device-serial]
+#   packages/e2e_framework/tool/e2e/run_android.sh [device-serial]
 #
 set -euo pipefail
 
@@ -50,7 +50,7 @@ if [[ -z "$DEVICE" ]]; then
   exit 1
 fi
 
-packages/sqa_l/tool/e2e/clean.sh android
+packages/e2e_framework/tool/e2e/clean.sh android
 
 mkdir -p "$OUT"
 echo "Running on $DEVICE ($(adb -s "$DEVICE" shell getprop ro.product.model | tr -d '\r'))"

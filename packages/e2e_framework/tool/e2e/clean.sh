@@ -2,8 +2,8 @@
 #
 # Deletes everything a run generates, for ONE platform.
 #
-#   packages/sqa_l/tool/e2e/clean.sh web
-#   packages/sqa_l/tool/e2e/clean.sh android
+#   packages/e2e_framework/tool/e2e/clean.sh web
+#   packages/e2e_framework/tool/e2e/clean.sh android
 #
 # Everything generated lives under a single root, one subfolder per platform:
 #
@@ -51,7 +51,7 @@ cd "$(git rev-parse --show-toplevel)"
 APP_DIR="packages/apps/market_app"
 
 usage() {
-  echo "usage: packages/sqa_l/tool/e2e/clean.sh <web|android>" >&2
+  echo "usage: packages/e2e_framework/tool/e2e/clean.sh <web|android>" >&2
   exit 2
 }
 

@@ -2,7 +2,7 @@
 #
 # Runs the E2E suite in the browser and leaves the report built.
 #
-#   packages/sqa_l/tool/e2e/run_web.sh [--headed] [--tags=<expression>]
+#   packages/e2e_framework/tool/e2e/run_web.sh [--headed] [--tags=<expression>]
 #                                      [--browser=<channel>] [--verbose]
 #
 # Three things in one command, in this order: clean up after the previous run,
@@ -65,13 +65,13 @@ for arg in "$@"; do
       ;;
     *)
       echo "unrecognized argument: $arg" >&2
-      echo "usage: packages/sqa_l/tool/e2e/run_web.sh [--headed] [--tags=<expression>] [--browser=<channel>] [--verbose]" >&2
+      echo "usage: packages/e2e_framework/tool/e2e/run_web.sh [--headed] [--tags=<expression>] [--browser=<channel>] [--verbose]" >&2
       exit 2
       ;;
   esac
 done
 
-packages/sqa_l/tool/e2e/clean.sh web
+packages/e2e_framework/tool/e2e/clean.sh web
 
 # ABSOLUTE paths, and that is not a matter of style. `--web-results-dir` and
 # `--web-report-dir` end up in the environment variables read by the
