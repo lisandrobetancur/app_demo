@@ -90,7 +90,7 @@ String featuresHtml(
 
   final StringBuffer rows = StringBuffer();
   for (final RequirementNode root in roots) {
-    rows.write(_row(root, level: 0));
+    rows.write(_row(root, level: 0, foldable: root.children.isNotEmpty));
     for (final RequirementNode child in root.children) {
       rows.write(_row(child, level: 1, under: root));
     }
@@ -126,12 +126,15 @@ String featuresHtml(
     // "everything" is forty features. No pagination: paging a tree either
     // orphans a feature from its epic or repeats the epic on every page, and
     // on a page with one job, scrolling beats both.
-    ..writeln('<div class="feature-search">')
+    // Filter and folding on one line: both narrow what the table shows, and
+    // a reader reaching for one has already considered the other.
+    ..writeln('<div class="feature-search tree-tools">')
     ..writeln(
       '<label class="filter">'
       '<input type="search" class="feature-filter" '
       'placeholder="Filter features"/></label>',
     )
+    ..writeln(treeTools(roots))
     ..writeln('<span class="filter-count" hidden></span>')
     ..writeln('</div>')
     ..writeln('<div class="table-scroll">')
@@ -254,6 +257,7 @@ String _summary(RequirementNode node) {
 String _row(
   RequirementNode node, {
   required int level,
+  bool foldable = false,
   RequirementNode? under,
 }) {
   final double? rate = node.passRate;
@@ -263,16 +267,19 @@ String _row(
       : '<a href="${featureReportName(node)}">${escapeHtml(node.name)}</a>';
   // What the filter reads: which rows are features, what each is called, and
   // which epic a feature belongs to — so a match can bring its heading with
-  // it instead of hanging in mid-air.
+  // it instead of hanging in mid-air. `data-under` is the same attribute the
+  // caret folds by, and deliberately so: "whose row am I under" is one fact,
+  // and two names for it is how the two behaviours would drift apart.
   final String marks = isEpic
       ? 'class="requirement-row level-$level epic-row" '
             'data-epic="${rowAnchorOf(node)}"'
       : 'class="requirement-row level-$level feature-row" '
             'data-name="${escapeHtml(node.name.toLowerCase())}"'
-            '${under == null ? '' : ' data-of="${rowAnchorOf(under)}"'}';
+            '${foldedUnder(under)}';
   return '<tr $marks id="${rowAnchorOf(node)}">'
       '<td class="requirement-name-column" '
-      'style="padding-left:${0.75 + level * 1.5}em">$name</td>'
+      'style="padding-left:${0.75 + level * 1.5}em">'
+      '${foldCaret(node, foldable: foldable)}$name</td>'
       '<td class="requirement-type">${node.type}</td>'
       '<td>${node.testCount}</td>'
       '<td>${rate == null ? '—' : '${rate.round()}%'}</td>'
@@ -280,6 +287,49 @@ String _row(
       '<td class="coverage-column">${_coverageBar(node)}</td>'
       '</tr>\n';
 }
+
+/// The control that folds the features under an epic away.
+///
+/// The same button on both tables that show the tree — the dashboard's panel
+/// and the tree page — because they show the same thing and a reader should
+/// not have to learn it twice. It is also the step tree's caret, down to the
+/// class, so that is once for the whole report.
+///
+/// Closed to begin with, so what a reader meets is the list of epics: the
+/// shape of the project on one screen, and the features of the one they care
+/// about a click away. An epic with nothing under it gets no caret, because
+/// there is nothing to press it for.
+String foldCaret(RequirementNode node, {required bool foldable}) => foldable
+    ? '<button class="caret" data-fold="${rowAnchorOf(node)}" '
+          'aria-expanded="false" '
+          'title="Show or hide the features of ${escapeHtml(node.name)}">'
+          '▸</button> '
+    : '';
+
+/// What a row under an epic carries so that folding and the page agree from
+/// the first paint.
+///
+/// Both halves are needed and for different readers: `hidden` is what the
+/// browser acts on, and `data-folded` is the reason, which the script consults
+/// before it shows the row again. Shipping only `hidden` would leave the
+/// script believing nothing was folded, and the first keystroke in the filter
+/// would reveal every row an epic was holding closed.
+String foldedUnder(RequirementNode? under) => under == null
+    ? ''
+    : ' data-under="${rowAnchorOf(under)}" data-folded="1" hidden';
+
+/// The pair of buttons that fold every epic at once, or none.
+///
+/// The same pair the step tree carries, doing the same thing to the other
+/// tree, so a reader who has used one knows this one on sight. Emitted only
+/// when something can actually be folded: two buttons that do nothing are
+/// worse than no buttons, and a project with no epics declared has a flat
+/// list and nothing to press them for.
+String treeTools(List<RequirementNode> roots) =>
+    roots.any((RequirementNode root) => root.children.isNotEmpty)
+    ? '<button class="expand-epics">Expand all</button>'
+          '<button class="collapse-epics">Collapse all</button>'
+    : '';
 
 /// Where a row lives on the features page, so the dashboard can land on it.
 ///
@@ -323,31 +373,16 @@ String _coverageRow(
   RequirementNode node, {
   required int level,
   bool foldable = false,
-  bool open = true,
-  bool hidden = false,
   RequirementNode? under,
 }) {
   final String href = node.type == 'feature'
       ? featureReportName(node)
       : 'features.html#${rowAnchorOf(node)}';
   final double? rate = node.passRate;
-  // The caret belongs to the epic and folds the features under it, so the
-  // panel's height is set by how many epics a project has rather than by how
-  // many features. An epic with nothing under it gets no caret to press.
-  final String caret = foldable
-      ? '<button class="caret${open ? ' open' : ''}" '
-            'data-fold="${rowAnchorOf(node)}" '
-            'aria-expanded="${open ? 'true' : 'false'}" '
-            'title="Show or hide the features of ${escapeHtml(node.name)}">'
-            '▸</button> '
-      : '';
-  final String marks = under == null
-      ? ''
-      : ' data-under="${rowAnchorOf(under)}"';
-  return '<tr class="requirement-row level-$level"$marks'
-      '${hidden ? ' hidden' : ''}>'
+  return '<tr class="requirement-row level-$level"${foldedUnder(under)}>'
       '<td style="padding-left:${0.75 + level * 1.5}em">'
-      '$caret<a href="$href">${escapeHtml(node.name)}</a></td>'
+      '${foldCaret(node, foldable: foldable)}'
+      '<a href="$href">${escapeHtml(node.name)}</a></td>'
       '<td>${node.testCount}</td>'
       '<td>${rate == null ? '—' : '${rate.round()}%'}</td>'
       '<td class="coverage-column">${_coverageBar(node)}</td>'
@@ -368,28 +403,24 @@ String coverageOverview(List<RequirementNode> roots) {
   // after is *that* feature: its scenarios, its coverage. So the features are
   // here, each going straight to its own page, and the epic above them is the
   // grouping rather than the destination.
-  // Open while the panel is short enough to read at a glance, folded once it
-  // is not. Twelve rows is about what fits beside Key Statistics without the
-  // summary turning into a list; past that, an epic that has to be opened is
-  // cheaper than a column nobody scrolls.
-  final int rowCount =
-      roots.length +
-      roots.fold(
-        0,
-        (int sum, RequirementNode root) => sum + root.children.length,
-      );
-  final bool open = rowCount <= 12;
-
+  // Every epic folded, however many there are. Folding by row count came
+  // first and was worse than either fixed answer: the report opened one way
+  // this week and another the next, as an epic was added. Closed is the
+  // steady one — the panel is a list of epics whatever the project grows
+  // into, and the features of the one a reader cares about are a click away.
   final StringBuffer rows = StringBuffer();
   for (final RequirementNode root in roots) {
-    final bool foldable = root.children.isNotEmpty;
-    rows.write(_coverageRow(root, level: 0, foldable: foldable, open: open));
+    rows.write(
+      _coverageRow(root, level: 0, foldable: root.children.isNotEmpty),
+    );
     for (final RequirementNode child in root.children) {
-      rows.write(_coverageRow(child, level: 1, under: root, hidden: !open));
+      rows.write(_coverageRow(child, level: 1, under: root));
     }
   }
+  final String tools = treeTools(roots);
   return '''
 <h4>Functional Coverage</h4>
+${tools.isEmpty ? '' : '<div class="tree-tools">$tools</div>'}
 <table class="table requirements-table">
 <thead><tr><th>Name</th><th>Tests</th><th>% Pass</th>
 <th class="coverage-column">Coverage</th></tr></thead>

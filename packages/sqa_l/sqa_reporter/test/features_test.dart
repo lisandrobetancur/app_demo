@@ -113,7 +113,7 @@ void main() {
 
   group('features.html', () {
     test('lists the whole tree, features indented under their epic', () {
-      expect(featuresPage, contains('>Access<'));
+      expect(featuresPage, contains('Access</td>'));
       expect(featuresPage, contains('Authentication'));
       expect(
         featuresPage,
@@ -139,15 +139,54 @@ void main() {
     test('can be searched, and a match keeps the epic it belongs to', () {
       expect(featuresPage, contains('class="feature-filter"'));
       // The three things the filter reads off the rows: which are features,
-      // what each is called, and whose they are.
+      // what each is called, and whose they are. The last one is `data-under`,
+      // the same attribute the caret folds by — one fact, one name.
       expect(featuresPage, contains('data-name="authentication"'));
-      expect(featuresPage, contains('data-of="req-access"'));
+      expect(featuresPage, contains('data-under="req-access"'));
       expect(featuresPage, contains('data-features="2"'));
       expect(
         featuresPage,
         isNot(contains('class="pagination"')),
         reason: 'paging a tree orphans a feature from its epic',
       );
+    });
+
+    test('folds by epic too, and opens with every epic closed', () {
+      expect(featuresPage, contains('data-fold="req-access"'));
+      expect(featuresPage, contains('aria-expanded="false"'));
+      expect(
+        featuresPage,
+        isNot(contains('class="caret open"')),
+        reason: 'what a reader meets is the list of epics',
+      );
+      // Both halves, and for different readers: `hidden` is what the browser
+      // acts on, `data-folded` is the reason the script consults before it
+      // shows a row again. Without the second, the first keystroke in the
+      // filter would reveal every row an epic was holding closed.
+      expect(featuresPage, contains('data-folded="1" hidden'));
+    });
+
+    test('carries the pair of buttons that fold every epic at once', () {
+      expect(featuresPage, contains('class="expand-epics"'));
+      expect(featuresPage, contains('class="collapse-epics"'));
+      expect(
+        featuresHtml(
+          <RequirementNode>[RequirementNode(name: 'Checkout', type: 'feature')],
+          platform: 'web',
+          generatedAt: DateTime.utc(2026),
+        ),
+        // The class name also occurs in the script every page carries, so the
+        // assertion is on the button, not on the word.
+        isNot(contains('class="expand-epics"')),
+        reason: 'a flat list has nothing to fold, so nothing to press',
+      );
+    });
+
+    test('an epic with no features under it gets no caret to press', () {
+      // The orphan feature stands at the root and is not an epic; either way
+      // there is nothing to fold, and a control that does nothing is worse
+      // than no control.
+      expect(featuresPage, isNot(contains('data-fold="req-catalog_test"')));
     });
 
     test('is called Features wherever the reader can see it', () {
@@ -282,18 +321,34 @@ void main() {
       expect(index, contains('class="requirement-row level-1"'));
     });
 
-    test('an epic folds its features away, and a short panel starts open', () {
+    test('an epic folds its features away, and the panel opens closed', () {
       final String index = File(
         '${results.path}/index.html',
       ).readAsStringSync();
       expect(index, contains('data-fold="req-access"'));
       expect(index, contains('data-under="req-access"'));
-      expect(index, contains('aria-expanded="true"'));
+      expect(index, contains('aria-expanded="false"'));
       expect(
         index,
-        isNot(contains('data-under="req-access" hidden')),
-        reason: 'two rows need no folding to be readable',
+        contains('data-under="req-access" data-folded="1" hidden'),
+        // Folding by row count came first and was worse than either fixed
+        // answer: the panel opened one way this week and another the next, as
+        // an epic was added. Closed is the steady one.
+        reason: 'a list of epics, whatever the project grows into',
       );
+      expect(
+        index,
+        isNot(contains('data-folded="1" hidden>\n<td')),
+        reason: 'an epic itself is never folded away — it is the handle',
+      );
+    });
+
+    test('the panel gets the same two buttons the tree page has', () {
+      final String index = File(
+        '${results.path}/index.html',
+      ).readAsStringSync();
+      expect(index, contains('class="expand-epics"'));
+      expect(index, contains('class="collapse-epics"'));
     });
 
     test('the dashboard summarises coverage per root of the tree', () {
