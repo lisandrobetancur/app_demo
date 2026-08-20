@@ -4,6 +4,12 @@ import 'package:flutter_test/flutter_test.dart';
 
 /// The one ordering rule an E2E test has to obey.
 ///
+/// It reads the scenarios rather than running them, and it lives under
+/// `test/` for the reason its neighbour explains: `flutter test` only looks
+/// here, and `patrol test` would take anything under `patrol_test/` onto a
+/// device. Living there it would also read itself, which is a small absurdity
+/// next to the large one of not running at all.
+///
 /// Test data is read from the asset bundle, and the bundle only exists once
 /// the app has been launched. So inside a test body, **nothing may read
 /// `TestData` before `launchMarketApp`** — and the natural way to write a test

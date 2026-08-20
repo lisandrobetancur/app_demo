@@ -1,9 +1,17 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:patrol_kit/patrol_kit.dart';
 
-import '../patrol_test/support/test_data.dart';
+import '../../patrol_test/support/test_data.dart';
 
 /// The data files this app actually ships to its tests.
+///
+/// Under `test/` and not with the scenarios it protects, which looks wrong
+/// until you try it: `patrol test` compiles every `*_test.dart` under
+/// `patrol_test/` into the native bundle, so this would be run on a device it
+/// has no use for — and `flutter test` only looks in `test/`, so moving it
+/// would leave the guard silently unrun. A guard that stops guarding without
+/// turning anything red is the failure this file exists to prevent, so it
+/// stays here, in a folder named after what it watches.
 ///
 /// The kit's own tests prove the loader; this one proves the wiring, which is
 /// the part that breaks silently. Three things can go wrong without anyone

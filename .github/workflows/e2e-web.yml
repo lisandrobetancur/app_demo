@@ -92,11 +92,12 @@ jobs:
       - name: Test the kit
         run: melos run testKit
 
-      # And the wiring: that the data JSON is declared as assets, that the
-      # index points at files that exist, and that the fields are named the way
-      # the façade believes. Break this and the E2E suite fails for what looks
-      # like a product defect.
-      - name: Test the data files
+      # And the wiring the suite stands on: that the data JSON is declared as
+      # assets, that the index points at files that exist, that the fields are
+      # named the way the façade believes, and that no scenario reads them
+      # before the app has launched. Break any of it and the E2E suite fails
+      # for what looks like a product defect.
+      - name: Test the E2E guards
         run: melos run testApp
 
       # Cleans up after the previous run, runs, and builds the report — all

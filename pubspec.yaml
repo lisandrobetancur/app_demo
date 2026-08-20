@@ -67,10 +67,15 @@ melos:
     # failed/broken classification.
     testKit: melos exec --scope=patrol_kit -- flutter test
 
-    # The app's unit tests. Today they are the ones checking that the data
-    # files exist, are declared as assets and hold the fields the façade reads
-    # — the wiring that, when broken, fails an E2E for what looks like a
-    # product reason.
+    # The app's own `flutter test` suite. Everything in it today lives under
+    # `test/patrol_guards/` and guards the E2E suite rather than the product:
+    # that the data files exist, are declared as assets and hold the fields the
+    # façade reads, and that no scenario reads them before the app has launched.
+    #
+    # They sit under `test/` and not beside the scenarios because `flutter
+    # test` only looks here, while `patrol test` would carry anything under
+    # `patrol_test/` onto a device. Moving them would leave them silently
+    # unrun, which is the exact failure they exist to catch.
     testApp: melos exec --scope=market_app -- flutter test
 
     # Everything that runs without a browser or a device, in one command.
