@@ -31,12 +31,12 @@ import 'tags_page.dart' show tagReportName;
 /// else is titled from the platform it was given, so an unexpected value is
 /// visible rather than quietly filed under one of the three.
 String projectTitleFor(String platform) => switch (platform) {
-  'web' => 'Web E2E Test Report',
-  'android' => 'Android E2E Test Report',
-  'ios' => 'iOS E2E Test Report',
+  'web' => 'Web Test Report',
+  'android' => 'Android Test Report',
+  'ios' => 'iOS Test Report',
   _ =>
     '${platform.isEmpty ? '' : '${platform[0].toUpperCase()}'
-              '${platform.substring(1)} '}E2E Test Report',
+              '${platform.substring(1)} '}Test Report',
 };
 
 /// Writes `index.html` and `sqa-reporter.css` into [outputDir], beside the

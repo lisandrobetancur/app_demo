@@ -126,7 +126,7 @@ const String shotViewer = '''
 
 /// The stylesheet, written to `sqa-reporter.css` beside `index.html`.
 const String siteCss = '''
-/* SQA Reporter — all rules authored for this generator. */
+/* E2E Framework — all rules authored for this generator. */
 
 /* Every colour in the report comes from here. Two families and nothing else:
    the neutrals that build the page, and the five verdict tones (mirrored from
@@ -231,7 +231,7 @@ a:hover { text-decoration: underline; }
 .wordmark-mark { display: block; flex: none; }
 
 .wordmark-text { font-size: 1.55rem; letter-spacing: 0.02em; }
-.wordmark-sqa { font-weight: 700; color: var(--title); letter-spacing: 0.04em; }
+.wordmark-lead { font-weight: 700; color: var(--title); letter-spacing: 0.04em; }
 .wordmark-name {
   font-weight: 300;
   color: var(--title-soft);

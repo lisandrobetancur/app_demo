@@ -47,13 +47,10 @@ void main() {
   });
 
   group('the banner', () {
-    test('names the report SQA Reporter, not the design source', () {
-      expect(
-        html,
-        contains('<title>SQA Reporter · Web E2E Test Report</title>'),
-      );
-      expect(html, contains('<span class="wordmark-sqa">SQA</span>'));
-      expect(html, contains('<span class="wordmark-name">Reporter</span>'));
+    test('names the report E2E Framework, not the design source', () {
+      expect(html, contains('<title>E2E Framework · Web Test Report</title>'));
+      expect(html, contains('<span class="wordmark-lead">E2E</span>'));
+      expect(html, contains('<span class="wordmark-name">Framework</span>'));
     });
 
     test('the wordmark links home, mark and all', () {
@@ -71,10 +68,10 @@ void main() {
     });
 
     test('carries one title line, worded by platform', () {
-      expect(html, contains('Web E2E Test Report'));
-      expect(projectTitleFor('web'), 'Web E2E Test Report');
-      expect(projectTitleFor('android'), 'Android E2E Test Report');
-      expect(projectTitleFor('ios'), 'iOS E2E Test Report');
+      expect(html, contains('Web Test Report'));
+      expect(projectTitleFor('web'), 'Web Test Report');
+      expect(projectTitleFor('android'), 'Android Test Report');
+      expect(projectTitleFor('ios'), 'iOS Test Report');
       expect(
         html,
         isNot(contains('projectsubtitle')),
@@ -84,8 +81,8 @@ void main() {
 
     test('an unexpected platform is named after itself, not filed under one '
         'of the three', () {
-      expect(projectTitleFor('macos'), 'Macos E2E Test Report');
-      expect(projectTitleFor(''), 'E2E Test Report');
+      expect(projectTitleFor('macos'), 'Macos Test Report');
+      expect(projectTitleFor(''), 'Test Report');
     });
   });
 
