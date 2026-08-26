@@ -19,14 +19,14 @@ abstract final class Features {
   );
 
   /// Browsing what is for sale, and what a seller sees on their own listing.
-  static const Feature catalog = Feature('Catalog', epic: Epics.purchase);
+  static const Feature catalog = Feature('Catálogo', epic: Epics.purchase);
 
   /// From the cart to a confirmed order, stock and all.
   static const Feature checkout = Feature(
-    'Cart and checkout',
+    'Carrito y pago',
     epic: Epics.purchase,
   );
 
   /// Discounts, and the ones the product has to refuse.
-  static const Feature coupons = Feature('Coupons', epic: Epics.purchase);
+  static const Feature coupons = Feature('Cupones', epic: Epics.purchase);
 }

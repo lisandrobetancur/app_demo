@@ -34,37 +34,95 @@ abstract class BaseSteps {
 
   static int _sequence = 0;
 
+  /// What [step] does about screenshots when it is not told otherwise.
+  ///
+  /// Named rather than written inline so the decision has somewhere to be
+  /// stated and somewhere to be tested — see `test/capture_test.dart`.
+  static const Capture defaultCapture = Capture.onFailure;
+
+  /// The step being run right now, or null outside any step.
+  ///
+  /// Kept so an unnamed [shot] can caption itself with the step it belongs
+  /// to. A single field is enough for the same reason [ActionCapture] gets
+  /// away with one: a Patrol test owns its isolate and runs its steps one
+  /// after another.
+  static String? _currentStep;
+
+  /// The caption an unnamed screenshot gets: the step it was taken in, and
+  /// the time on the clock.
+  ///
+  /// `Ingresa el email · 14:32:07.481`, or just the time when there is no
+  /// step around it. The step name is what makes it useful — a reader
+  /// scanning the gallery sees which part of the run they are looking at —
+  /// and the clock is what tells two frames of the same step apart.
+  ///
+  /// [tag] goes between the two, and the failure frame is what it is for:
+  /// `Los totales cuadran · failed · 14:32:07.481`. The word is the step's
+  /// real outcome rather than a flat "fail", because **failed** and
+  /// **broken** are the difference between the product being wrong and the
+  /// test being unable to tell — a distinction this report draws everywhere
+  /// else, and one a reader wants before opening the image.
+  static String captionNow({String? tag}) {
+    final String when = timeStamp();
+    final String? step = _currentStep;
+    return <String>[
+      if (step != null) step,
+      if (tag != null) tag,
+      when,
+    ].join(' · ');
+  }
+
   /// Runs [body] as a named business step.
   ///
-  /// The screenshot is taken after [body] settles, so the image shows the
-  /// state the step produced. A failing step still emits its `end` marker
-  /// (and its screenshot) before the error propagates, so the report shows
-  /// what the screen looked like when it broke.
-  ///
-  /// [capture] decides whether that automatic frame is taken at all. The
-  /// default keeps it; [Capture.onFailure] drops it while the step behaves,
-  /// and [Capture.none] drops it entirely — for a step that takes its own
-  /// with [shot]:
+  /// **No screenshot is taken unless the step asks for one.** Every frame in
+  /// the report is one somebody chose, with [shot] or [capturing], at the
+  /// moment they wanted it:
   ///
   /// ```dart
-  /// await step('Apply the coupon', capture: Capture.none, () async {
-  ///   await cart.openCouponField();
-  ///   await shot('coupon field, before typing');
-  ///   await cart.applyCoupon(TestData.validCoupon);
-  ///   await shot('coupon applied');
+  /// await step('Aplica el cupón', () async {
+  ///   await cart.enterCoupon(code);
+  ///   await capturing(
+  ///     () => cart.applyCoupon(),
+  ///     before: 'El cupón escrito, antes de aplicar',
+  ///     after: 'El descuento aplicado',
+  ///   );
   /// });
   /// ```
+  ///
+  /// This is a deliberate default, and it is the opposite of what most
+  /// frameworks do. An automatic frame is taken when the step *ends*, which
+  /// is a moment nobody chose: a step that finishes by navigating
+  /// photographs the screen it arrived at rather than the work it did, and a
+  /// report full of such frames costs a reader more time than it saves. The
+  /// author knows which moment is worth a picture; the framework does not.
+  ///
+  /// **A failed expectation is the exception, and it needs no help from the
+  /// author.** [should] evaluates and throws on the spot, so the error
+  /// travels straight from the failed expectation to the catch below with
+  /// nothing running in between: the frame taken there is the screen exactly
+  /// as the assertion found it. Nobody can place that shot by hand — the
+  /// whole point is that it was not expected — so [Capture.onFailure] is the
+  /// default and that one frame stays.
+  ///
+  /// [capture] is how a step changes the rest: [Capture.auto] brings back the
+  /// end-of-step frame, [Capture.aroundActions] brackets every click, and
+  /// [Capture.none] gives up even the failure frame.
   ///
   /// A step that ends badly is reported as **failed** or **broken**, never
   /// just "red" — see [stepOutcomeOf].
   Future<T> step<T>(
     String name,
     Future<T> Function() body, {
-    Capture capture = Capture.auto,
+    Capture capture = defaultCapture,
   }) async {
     final int id = _sequence++;
     debugPrintSynchronously('$_marker|begin|$id|$name');
     Log.debug('Step ▸ $name');
+    // Saved and restored rather than assigned, because steps nest: when an
+    // inner step ends, an unnamed shot taken by the outer one has to go back
+    // to reading the outer name, not keep the inner step's.
+    final String? outer = _currentStep;
+    _currentStep = name;
     try {
       final T result = await ActionCapture.runWith(
         capture.bracketsActions,
@@ -88,27 +146,33 @@ abstract class BaseSteps {
       // product is wrong" and "the test could not tell".
       Log.error('Step ✗ $name ($outcome)', data: '$error'.split('\n').first);
       if (capture.capturesOnFailure) {
-        await $.takeScreenshot('$name ($outcome)');
+        await $.takeScreenshot(captionNow(tag: outcome));
       }
       debugPrintSynchronously('$_marker|end|$id|$outcome');
       rethrow;
+    } finally {
+      _currentStep = outer;
     }
   }
 
   /// Captures the screen right now, under [name].
   ///
-  /// The automatic frame a step takes shows where it *ended*; this one shows
-  /// a moment chosen by whoever wrote the step — the dialog before it is
-  /// dismissed, the list before the filter is applied, the form with the
-  /// error message still on it. Called inside a step, the picture hangs off
-  /// that step in the report, in the order the calls ran.
+  /// This is the frame somebody chose — the dialog before it is dismissed,
+  /// the list before the filter is applied, the form with the error message
+  /// still on it. Called inside a step, the picture hangs off that step in
+  /// the report, in the order the calls ran.
   ///
-  /// A step can take as many as it likes, with or without its automatic one:
-  /// see [Capture].
+  /// [name] is optional. Left out, the caption under the image becomes the
+  /// step it was taken in plus the time — see [captionNow] — which is enough
+  /// to place a frame in the run without anybody having to think of a name.
+  ///
+  /// Worth naming anyway wherever the step takes more than one: the two
+  /// frames of a form being submitted both belong to the same step, and only
+  /// a name says which is the form and which is the answer.
   ///
   /// It never fails a test. A missing screenshot is a worse report, not a
   /// wrong result.
-  Future<void> shot(String name) => $.takeScreenshot(name);
+  Future<void> shot([String? name]) => $.takeScreenshot(name ?? timeStamp());
 
   /// Runs [action] between two screenshots.
   ///
@@ -127,18 +191,24 @@ abstract class BaseSteps {
   /// });
   /// ```
   ///
-  /// Both names are yours because both are captions in the report, and a
-  /// caption that says "before" tells a reader nothing they could not see.
+  /// Both names are optional and both are captions in the report. This is
+  /// the case where writing them earns the most: left out, the pair gets two
+  /// captions from [captionNow] that differ only by milliseconds, and a
+  /// reader has to open both to tell the form from what became of it.
   ///
   /// The [after] frame is taken even if [action] throws — that is the case
   /// the pair exists for. When the action is the last thing a step does, that
-  /// frame and the step's own automatic one show the same screen; pass
-  /// `capture: Capture.none` to [step] to keep just this one.
+  /// frame is the last word on what the step produced.
   Future<T> capturing<T>(
     Future<T> Function() action, {
-    required String before,
-    required String after,
-  }) => captureAround(shot, action, before: before, after: after);
+    String? before,
+    String? after,
+  }) => captureAround(
+    shot,
+    action,
+    before: before ?? captionNow(),
+    after: after ?? captionNow(),
+  );
 
   /// Checks one or more expectations together.
   ///
