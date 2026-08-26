@@ -124,8 +124,21 @@ melos:
     # the filter is applied while GENERATING the bundle: an excluded test is
     # never compiled into the binary — not compiled and then skipped. The
     # vocabulary lives in `Tags`, in the kit.
+    # Two axes, so two kinds of shortcut: how MUCH of the suite runs
+    # (smoke, regression) and what KIND of case (negative). Both platforms
+    # carry the same set — a filter that exists on one runner and not the
+    # other is the sort of asymmetry somebody discovers at the worst moment.
+    #
+    # These are the combinations worth a name, not the only ones available:
+    # Patrol takes boolean expressions, so `--tags "smoke_test && negative"`
+    # and `--tags "!smoke_test"` work without a script existing for them.
     e2eWebSmoke: bash packages/e2e_framework/tool/e2e/run_web.sh --tags=smoke_test
+    e2eWebRegression: bash packages/e2e_framework/tool/e2e/run_web.sh --tags=regression
     e2eWebNegative: bash packages/e2e_framework/tool/e2e/run_web.sh --tags=negative
+
+    e2eAndroidSmoke: bash packages/e2e_framework/tool/e2e/run_android.sh --tags=smoke_test
+    e2eAndroidRegression: bash packages/e2e_framework/tool/e2e/run_android.sh --tags=regression
+    e2eAndroidNegative: bash packages/e2e_framework/tool/e2e/run_android.sh --tags=negative
 
     # A test tagged `wip` is registered as skipped by `e2eTest` itself, so it
     # reaches the report — counted under Skipped, with a pale row — without
