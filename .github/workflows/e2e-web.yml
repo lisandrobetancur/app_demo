@@ -5,6 +5,16 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+  # Twice a day against main, so a regression that arrives from OUTSIDE a
+  # pull request — a dependency, a browser update on the runner image, an
+  # expired fixture — is caught within hours instead of on the next PR.
+  # Cron speaks UTC: these are 9:00 and 18:00 in America/Bogota (UTC-5,
+  # no daylight saving). GitHub treats the time as approximate (runs can
+  # start minutes late) and pauses schedules after ~60 days without repo
+  # activity, so a long-idle repo needs one manual run to resume them.
+  schedule:
+    - cron: '0 14 * * *'
+    - cron: '0 23 * * *'
 
 permissions:
   contents: read
