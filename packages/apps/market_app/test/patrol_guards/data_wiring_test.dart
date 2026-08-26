@@ -82,11 +82,16 @@ void main() {
     expect(TestData.validCouponDiscountPct, 10);
   });
 
-  test('every invalid-login row carries the fields the test reads', () {
-    final List<DataRecord> rows = TestData.invalidLogins;
-    expect(rows, isNotEmpty);
+  test('every invalid-login record carries the fields the test reads', () {
+    // The keys are load-bearing: each login test asks for its case by name,
+    // so a renamed key breaks here, headless, instead of as a broken E2E run.
+    expect(
+      TestData.invalidLogins.keys,
+      containsAll(<String>['wrongPassword', 'unknownEmail', 'foreignPassword']),
+    );
 
-    for (final DataRecord row in rows) {
+    for (final String key in TestData.invalidLogins.keys) {
+      final DataRecord row = TestData.invalidLogin(key);
       expect(row.string('case'), isNotEmpty);
       expect(row.string('email'), contains('@'));
       expect(row.string('password'), isNotEmpty);

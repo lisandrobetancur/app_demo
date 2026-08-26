@@ -34,7 +34,11 @@ void main() {
       testParam('Address', 'addr_demo_home');
       testParam('Payment method', 'Card');
 
-      await steps.auth.loginAsDemoUser();
+      await steps.auth.login(
+        email: TestData.demoEmail,
+        password: TestData.demoPassword,
+      );
+      await steps.auth.expectLoggedInAs(TestData.demoFullName);
       await steps.catalog.openCatalog();
       await steps.catalog.openProduct(TestData.buyableProductId);
       await steps.catalog.addCurrentProductToCart();
@@ -43,9 +47,12 @@ void main() {
       await steps.cart.openCart();
       // Checked on both sides of the coupon: the arithmetic has to hold with no
       // discount and with one applied, which is where it usually breaks.
-      await steps.cart.expectTotalsAddUp();
-      await steps.cart.applySeededValidCoupon();
-      await steps.cart.expectTotalsAddUp();
+      await steps.cart.expectTotalsAddUp(taxRate: TestData.taxRate);
+      await steps.cart.applyValidCoupon(
+        TestData.validCoupon,
+        discountPct: TestData.validCouponDiscountPct,
+      );
+      await steps.cart.expectTotalsAddUp(taxRate: TestData.taxRate);
 
       await steps.cart.checkoutWithCard(addressId: 'addr_demo_home');
       await steps.cart.expectOrderCreated();
@@ -73,7 +80,11 @@ void main() {
       testParam('User', TestData.demoEmail);
       testParam('Own product', TestData.ownProductName);
 
-      await steps.auth.loginAsDemoUser();
+      await steps.auth.login(
+        email: TestData.demoEmail,
+        password: TestData.demoPassword,
+      );
+      await steps.auth.expectLoggedInAs(TestData.demoFullName);
       await steps.catalog.openCatalog();
       await steps.catalog.openProduct(TestData.ownProductId);
 
@@ -102,7 +113,11 @@ void main() {
       testParam('User', TestData.demoEmail);
       testParam('Coupon', TestData.expiredCoupon);
 
-      await steps.auth.loginAsDemoUser();
+      await steps.auth.login(
+        email: TestData.demoEmail,
+        password: TestData.demoPassword,
+      );
+      await steps.auth.expectLoggedInAs(TestData.demoFullName);
       await steps.catalog.openCatalog();
       await steps.catalog.openProduct(TestData.buyableProductId);
       await steps.catalog.addCurrentProductToCart();

@@ -9,9 +9,12 @@ import 'locator.dart';
 ///
 ///  * a page knows **where** things are and **how** to touch them — nothing
 ///    else;
-///  * a page never asserts business rules, never chains flows and never
-///    reports: screenshots belong to the steps layer, which knows what a
-///    given interaction was *for*;
+///  * a page may compose **its own** interactions into the screen's flow — a
+///    login page owns `login()`, built from its fields and its button — but
+///    it never crosses into another screen and never asserts business rules;
+///    whether the flow *worked* is the steps layer's claim to make;
+///  * a page never reports: screenshots belong to the steps layer, which
+///    knows what a given interaction was *for*;
 ///  * a page may **read** values (a price, a label, whether a button is
 ///    enabled) because only it knows where they live — but never decides
 ///    whether the value is correct. That is the steps layer's call.

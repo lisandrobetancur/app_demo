@@ -63,6 +63,19 @@ class LoginPage extends BasePage {
 
   Future<void> submit() => submitButton.click();
 
+  /// The screen's own flow: fill the form and send it.
+  ///
+  /// Lives here and not in the steps layer because everything it touches is
+  /// this screen's — which fields, in what order, which button. What the
+  /// submission *led to* is not this page's business: the caller asserts
+  /// that, on whatever screen the app answers with.
+  Future<void> login({required String email, required String password}) async {
+    await waitUntilVisible();
+    await enterEmail(email);
+    await enterPassword(password);
+    await submit();
+  }
+
   Future<void> openRegister() => goToRegisterButton.click();
 
   Future<void> openPasswordRecovery() => goToRecoverPasswordButton.click();

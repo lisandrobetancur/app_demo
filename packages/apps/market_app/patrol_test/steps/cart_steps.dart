@@ -30,39 +30,37 @@ class CartSteps extends BaseSteps {
   ///
   /// Accepting the coupon and applying it correctly are two different claims:
   /// the applied-coupon row can appear while the discount stays at zero. Both
-  /// are checked, against the percentage the seed declares.
-  Future<void> applyValidCoupon(String code) => step(
-    'Apply the valid coupon $code',
-    () async {
-      final double subtotalBefore = _cart.subtotal;
-      await _cart.enterCoupon(code);
-      await _cart.applyCoupon();
-      await $.pumpAndSettle();
+  /// are checked, against [discountPct] — handed in by the test, like every
+  /// datum in this layer: a step asserts what it is told to expect, and the
+  /// test says with which coupon and at what percentage.
+  Future<void> applyValidCoupon(String code, {required double discountPct}) =>
+      step('Apply the valid coupon $code', () async {
+        final double subtotalBefore = _cart.subtotal;
+        await _cart.enterCoupon(code);
+        await _cart.applyCoupon();
+        await $.pumpAndSettle();
 
-      // Accepting the coupon and applying it correctly are different
-      // claims that fail apart: the applied-coupon row can appear while the
-      // discount stays at zero.
-      should(
-        seeThat(
-          'the coupon $code is accepted and replaces the input',
-          () => _cart.removeCouponButton.isDisplayed,
-          isTrue,
-        ),
-        seeThat(
-          'the subtotal is untouched by the coupon',
-          () => _cart.subtotal,
-          Money.closeToAmount(subtotalBefore),
-        ),
-        seeThat(
-          'the discount is ${TestData.validCouponDiscountPct}% of the subtotal',
-          () => _cart.discount.abs(),
-          Money.closeToAmount(
-            subtotalBefore * TestData.validCouponDiscountPct / 100,
+        // Accepting the coupon and applying it correctly are different
+        // claims that fail apart: the applied-coupon row can appear while the
+        // discount stays at zero.
+        should(
+          seeThat(
+            'the coupon $code is accepted and replaces the input',
+            () => _cart.removeCouponButton.isDisplayed,
+            isTrue,
           ),
-        ),
-      );
-    },
-  );
+          seeThat(
+            'the subtotal is untouched by the coupon',
+            () => _cart.subtotal,
+            Money.closeToAmount(subtotalBefore),
+          ),
+          seeThat(
+            'the discount is $discountPct% of the subtotal',
+            () => _cart.discount.abs(),
+            Money.closeToAmount(subtotalBefore * discountPct / 100),
+          ),
+        );
+      });
 
   /// Applies a coupon expected to fail and asserts the differentiated inline
   /// error is shown with [expectedMessage].
@@ -174,7 +172,11 @@ class CartSteps extends BaseSteps {
   ///
   /// Amounts are compared with [Money.tolerance] because the display currency
   /// renders whole units, so what is on screen is already rounded.
-  Future<void> expectTotalsAddUp() =>
+  ///
+  /// [taxRate] comes from the test, not from a lookup here: the step recomputes
+  /// the arithmetic it is handed, and which rate the product is supposed to
+  /// charge is the scenario's claim to make.
+  Future<void> expectTotalsAddUp({required double taxRate}) =>
       step('Expect the totals to add up', () async {
         final double subtotal = _cart.subtotal;
         final double discount = _cart.discount.abs();
@@ -195,14 +197,14 @@ class CartSteps extends BaseSteps {
             lessThanOrEqualTo(subtotal),
           ),
           seeThat(
-            'VAT is ${(TestData.taxRate * 100).round()}% of the taxable base',
+            'VAT is ${(taxRate * 100).round()}% of the taxable base',
             () => _cart.tax,
-            Money.closeToAmount(taxable * TestData.taxRate),
+            Money.closeToAmount(taxable * taxRate),
           ),
           seeThat(
             'the total is the taxable base plus VAT',
             () => _cart.total,
-            Money.closeToAmount(taxable + taxable * TestData.taxRate),
+            Money.closeToAmount(taxable + taxable * taxRate),
           ),
         );
       });
@@ -218,8 +220,4 @@ class CartSteps extends BaseSteps {
       ),
     );
   });
-
-  /// Convenience for the seeded valid coupon.
-  Future<void> applySeededValidCoupon() =>
-      applyValidCoupon(TestData.validCoupon);
 }
