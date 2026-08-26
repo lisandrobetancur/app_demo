@@ -24,7 +24,8 @@
 # failure — and is switched off only around the run, where a non-zero code is
 # the result.
 #
-#   packages/e2e_framework/tool/e2e/run_android.sh [device-serial] [--wip]
+#   packages/e2e_framework/tool/e2e/run_android.sh [device-serial]
+#                                     [--tags=<expression>] [--wip]
 #
 set -euo pipefail
 
@@ -49,13 +50,31 @@ TAGS=()
 # time.
 WIP_DEFINE=()
 
-if [[ "${1:-}" == --wip || "${2:-}" == --wip ]]; then
-  TAGS=(--tags wip)
-  WIP_DEFINE=(--dart-define PATROL_RUN_WIP=true)
-fi
+# Anything that is not a flag is the device serial, so the two can be given in
+# either order and neither has to be given at all. Written as a loop rather
+# than by position because that is what stopped `--tags=smoke_test` being
+# taken for a serial — a wrong argument that fails much later, in adb's words
+# rather than this script's.
+DEVICE=""
+for arg in "$@"; do
+  case "$arg" in
+    --wip)
+      TAGS=(--tags wip)
+      WIP_DEFINE=(--dart-define PATROL_RUN_WIP=true)
+      ;;
+    # Patrol takes boolean expressions, not just names: "smoke_test &&
+    # negative" and "!smoke_test" both work. The vocabulary lives in `Tags`,
+    # in the kit.
+    --tags=*) TAGS=(--tags "${arg#--tags=}") ;;
+    -*)
+      echo "unrecognized argument: $arg" >&2
+      echo "usage: packages/e2e_framework/tool/e2e/run_android.sh [device-serial] [--tags=<expression>] [--wip]" >&2
+      exit 2
+      ;;
+    *) DEVICE="$arg" ;;
+  esac
+done
 
-DEVICE="${1:-}"
-[[ "$DEVICE" == --wip ]] && DEVICE=""
 if [[ -z "$DEVICE" ]]; then
   # `adb devices` prints a header line, then one line per device.
   DEVICE="$(adb devices | awk 'NR > 1 && $2 == "device" { print $1; exit }')"
