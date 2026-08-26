@@ -4,7 +4,7 @@
 library;
 
 import 'dashboard.dart' show escapeHtml, projectTitleFor;
-import 'site_assets.dart' show wordmarkMark;
+import 'site_assets.dart' show platformMark, wordmarkMark;
 
 /// The document head — same stylesheet, same icon, every page.
 ///
@@ -16,7 +16,7 @@ String pageHead(String platform) =>
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SQA Reporter · ${escapeHtml(projectTitleFor(platform))}</title>
+<title>E2E Framework · ${escapeHtml(projectTitleFor(platform))}</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="sqa-reporter.css"/>
 </head>
@@ -34,10 +34,10 @@ String banner(String platform) =>
   <div class="topbanner">
     <a class="wordmark" href="index.html">
       $wordmarkMark
-      <span class="wordmark-text"><span class="wordmark-sqa">SQA</span><span class="wordmark-name">Reporter</span></span>
+      <span class="wordmark-text"><span class="wordmark-lead">E2E</span><span class="wordmark-name">Framework</span></span>
     </a>
     <div class="projectname">
-      <span class="projecttitle">${escapeHtml(projectTitleFor(platform))}</span>
+      <span class="projecttitle">${platformMark(platform)}${escapeHtml(projectTitleFor(platform))}</span>
     </div>
   </div>
 </div>
@@ -72,7 +72,7 @@ String menuBar(
 /// The version line at the bottom of every page.
 String pageFooter() => '''
 <div class="footer">
-<span class="version">SQA Reporter version 0.1.0</span>
+<span class="version">E2E Framework version 0.1.0</span>
 </div>
 ''';
 
