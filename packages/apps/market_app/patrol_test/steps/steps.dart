@@ -14,9 +14,14 @@ export 'catalog_steps.dart';
 ///
 /// ```dart
 /// final Steps steps = Steps($);
-/// await steps.auth.loginAsDemoUser();
+/// await steps.auth.login(email: email, password: password);
+/// await steps.auth.expectLoggedInAs(fullName);
 /// await steps.catalog.openCatalog();
 /// ```
+///
+/// The data in those calls comes from the TEST, which read it from its data
+/// file inside the body: a step performs and asserts what it is handed, and
+/// never reaches into `TestData` on its own.
 class Steps {
   Steps(PatrolIntegrationTester $)
     : auth = AuthSteps($),

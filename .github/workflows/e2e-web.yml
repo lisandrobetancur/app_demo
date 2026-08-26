@@ -47,7 +47,7 @@ jobs:
       # `npx playwright install` inside the patrol package.
       - uses: actions/setup-node@v7
         with:
-          node-version-file: packages/sqa_l/tool/e2e/.nvmrc
+          node-version-file: packages/e2e_framework/tool/e2e/.nvmrc
 
       # Chromium is a ~130 MB download on every cold run. The pub cache holds
       # the activated CLIs and the web runner's node_modules, which live inside
@@ -102,11 +102,12 @@ jobs:
       - name: Test the kit
         run: melos run testKit
 
-      # And the wiring: that the data JSON is declared as assets, that the
-      # index points at files that exist, and that the fields are named the way
-      # the façade believes. Break this and the E2E suite fails for what looks
-      # like a product defect.
-      - name: Test the data files
+      # And the wiring the suite stands on: that the data JSON is declared as
+      # assets, that the index points at files that exist, that the fields are
+      # named the way the façade believes, and that no scenario reads them
+      # before the app has launched. Break any of it and the E2E suite fails
+      # for what looks like a product defect.
+      - name: Test the E2E guards
         run: melos run testApp
 
       # Cleans up after the previous run, runs, and builds the report — all
@@ -191,7 +192,7 @@ jobs:
       - name: Diagnose a suite failure
         if: failure()
         run: |
-          timeout 600 bash packages/sqa_l/tool/e2e/run_web.sh --verbose \
+          timeout 600 bash packages/e2e_framework/tool/e2e/run_web.sh --verbose \
             > /tmp/patrol.log 2>&1 || true
           echo "===== first lines the browser wrote (the message, not the stack) ====="
           grep -n "Playwright stderr" /tmp/patrol.log | head -40 | cut -c1-300 || true
