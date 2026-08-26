@@ -58,10 +58,9 @@ WIP_DEFINE=()
 # the web means DDC: over a thousand JS modules fetched one by one on every
 # `page.goto`, which is what makes a slow runner time out inside the `page`
 # fixture. `--profile` compiles with dart2js into a bundle a reload can
-# survive — but flutter_test's keyboard mock is not registered there, so
-# `enterText` silently writes to nobody. Which is why this is a flag for
-# experiments and not the default: see the tap probe in
-# patrol_test/scenarios/tap_probe_test.dart.
+# survive — measured on this suite: the whole run in under a minute, against
+# the hang's forty-three. Typing works there too, since the kit registers
+# the simulated keyboard itself (see patrol_kit's UiElement.type).
 BUILD_MODE=()
 
 # The browsers Playwright will accept as a `channel`. Checked here rather than

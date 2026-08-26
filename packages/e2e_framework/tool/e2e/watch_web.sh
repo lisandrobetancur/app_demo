@@ -11,7 +11,7 @@
 #
 # It takes exactly the flags run_web.sh takes and hands them straight over:
 #
-#   packages/e2e_framework/tool/e2e/watch_web.sh --tags=probe --profile
+#   packages/e2e_framework/tool/e2e/watch_web.sh --profile
 #
 # Reading the output:
 #
@@ -68,7 +68,8 @@ date +%s > "$LAST_FILE"
   done
 ) &
 WATCHDOG=$!
-trap 'kill "$WATCHDOG" 2>/dev/null; rm -f "$LAST_FILE"' EXIT
+# The `wait` swallows bash's "Terminated" job notice for the killed watchdog.
+trap 'kill "$WATCHDOG" 2>/dev/null; wait "$WATCHDOG" 2>/dev/null; rm -f "$LAST_FILE"' EXIT
 
 bash packages/e2e_framework/tool/e2e/run_web.sh "$@" 2>&1 | {
   while IFS= read -r line; do
