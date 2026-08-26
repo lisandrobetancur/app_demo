@@ -117,7 +117,9 @@ const String wordmarkMark = '''
 const String shotViewer = '''
 <div class="lightbox" role="dialog" aria-modal="true" aria-label="Screenshot" hidden>
   <button class="lightbox-close" title="Close (Esc)" aria-label="Close">×</button>
+  <button class="lightbox-prev" title="Previous (←)" aria-label="Previous screenshot">‹</button>
   <img class="lightbox-image" src="" alt=""/>
+  <button class="lightbox-next" title="Next (→)" aria-label="Next screenshot">›</button>
   <p class="lightbox-caption"></p>
 </div>
 ''';
@@ -1348,7 +1350,9 @@ table.step-table.nested td { border-bottom: 1px solid var(--rule-soft); }
   align-items: center;
   justify-content: center;
   gap: 1rem;
-  padding: 3.5rem 1.5rem 2rem 1.5rem;
+  /* The sides clear the arrows, so a wide capture stops beside them instead
+     of running underneath — see .lightbox-prev. */
+  padding: 3.5rem 4.75rem 2rem 4.75rem;
   background: rgba(11, 37, 69, 0.9);
 }
 
@@ -1370,10 +1374,10 @@ table.step-table.nested td { border-bottom: 1px solid var(--rule-soft); }
   max-width: 60rem;
 }
 
-.lightbox-close {
+.lightbox-close,
+.lightbox-prev,
+.lightbox-next {
   position: absolute;
-  top: 1rem;
-  right: 1.25rem;
   width: 2.4rem;
   height: 2.4rem;
   border: 1px solid rgba(255, 255, 255, 0.35);
@@ -1383,6 +1387,25 @@ table.step-table.nested td { border-bottom: 1px solid var(--rule-soft); }
   cursor: pointer;
   font-size: 1.5rem;
   line-height: 1;
+}
+
+.lightbox-close { top: 1rem; right: 1.25rem; }
+
+/* Beside the picture rather than over it: a capture of a form has content
+   at both edges, and an arrow sitting on top of it hides the thing somebody
+   opened the image to read. */
+.lightbox-prev { left: 1.25rem; top: 50%; transform: translateY(-50%); }
+.lightbox-next { right: 1.25rem; top: 50%; transform: translateY(-50%); }
+
+.lightbox-close:hover,
+.lightbox-prev:hover,
+.lightbox-next:hover { background: rgba(255, 255, 255, 0.24); }
+
+.lightbox-close:focus-visible,
+.lightbox-prev:focus-visible,
+.lightbox-next:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
 }
 
 .lightbox-close:hover { background: rgba(255, 255, 255, 0.24); }
@@ -1687,7 +1710,15 @@ var shotViewer = (function () {
   var full = box.querySelector(".lightbox-image");
   var caption = box.querySelector(".lightbox-caption");
   var close = box.querySelector(".lightbox-close");
+  var previous = box.querySelector(".lightbox-prev");
+  var next = box.querySelector(".lightbox-next");
   var opener = null;
+  // Every picture the page can open, in the order it reads. Collected once
+  // the page is built, so the viewer can walk a test's captures without
+  // anyone closing it to reach for the next thumbnail — the steps ran in an
+  // order, and the pictures are worth reading in that order too.
+  var reel = [];
+  var at = -1;
 
   function captionOf(image) {
     var slide = image.closest(".slide");
@@ -1700,15 +1731,39 @@ var shotViewer = (function () {
     return step ? step.textContent : image.getAttribute("alt") || "";
   }
 
-  function open(image) {
+  function show(index) {
+    var image = reel[index];
+    if (!image) { return; }
+    at = index;
     opener = image;
     full.src = image.getAttribute("src");
     full.alt = image.getAttribute("alt") || "";
-    caption.textContent = captionOf(image);
+    var where = reel.length > 1
+      ? " (" + (index + 1) + " of " + reel.length + ")"
+      : "";
+    caption.textContent = captionOf(image) + where;
+    // Hidden rather than disabled: the reel wraps, so the arrows are useless
+    // only when there is nothing to move between.
+    var many = reel.length > 1;
+    previous.hidden = !many;
+    next.hidden = !many;
+  }
+
+  function step(by) {
+    if (reel.length < 2) { return; }
+    show((at + by + reel.length) % reel.length);
+  }
+
+  function open(image) {
+    var index = reel.indexOf(image);
+    show(index < 0 ? 0 : index);
     box.hidden = false;
     document.body.classList.add("viewing-shot");
     close.focus();
   }
+
+  // The pictures the viewer can walk, in page order.
+  function load(images) { reel = images; }
 
   function closeShot() {
     box.hidden = true;
@@ -1719,16 +1774,26 @@ var shotViewer = (function () {
   }
 
   close.addEventListener("click", closeShot);
+  previous.addEventListener("click", function () { step(-1); });
+  next.addEventListener("click", function () { step(1); });
   // The darkness around the picture closes it; the picture itself does not,
   // or every attempt to look closely would shut the thing.
   box.addEventListener("click", function (event) {
     if (event.target === box || event.target === caption) { closeShot(); }
   });
   document.addEventListener("keydown", function (event) {
-    if (!box.hidden && event.key === "Escape") { closeShot(); }
+    if (box.hidden) { return; }
+    if (event.key === "Escape") { closeShot(); }
+    if (event.key === "ArrowLeft") { event.preventDefault(); step(-1); }
+    if (event.key === "ArrowRight") { event.preventDefault(); step(1); }
   });
 
-  return { open: open, close: closeShot, isOpen: function () { return !box.hidden; } };
+  return {
+    open: open,
+    load: load,
+    close: closeShot,
+    isOpen: function () { return !box.hidden; }
+  };
 })();
 
 // Every capture on the page opens it. The gallery's slides are images inside
@@ -1737,6 +1802,11 @@ var shotViewer = (function () {
 // page keeps working with no script at all, but a plain click reads the
 // picture where the reader already is.
 if (shotViewer) {
+  // One reel per page, in document order: on a test page that is every step's
+  // captures top to bottom, and on the gallery every slide.
+  shotViewer.load(Array.prototype.slice.call(
+    document.querySelectorAll(".slides img, a.shot-link img")
+  ));
   document.querySelectorAll(".slides img").forEach(function (image) {
     image.addEventListener("click", function () { shotViewer.open(image); });
   });

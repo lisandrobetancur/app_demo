@@ -446,6 +446,12 @@ void main() {
         '${out.path}/results/sqa-reporter.css',
       ).readAsStringSync();
       expect(css, contains('.lightbox[hidden] { display: none; }'));
+      // The arrows sit beside the picture, not on it: a capture of a form has
+      // content at both edges, and the padding is what keeps a wide image
+      // from running underneath them.
+      expect(css, contains('.lightbox-prev'));
+      expect(css, contains('.lightbox-next'));
+      expect(css, contains('padding: 3.5rem 4.75rem 2rem 4.75rem;'));
       expect(css, contains('.slides img { cursor: zoom-in; }'));
     });
 

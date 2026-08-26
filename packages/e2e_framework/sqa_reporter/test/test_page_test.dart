@@ -162,6 +162,18 @@ void main() {
       expect(passingPage, contains('?screenshot='));
     });
 
+    test('the viewer walks the test\'s captures without being closed', () {
+      // The steps ran in an order and their pictures read in that order, so
+      // the viewer that opens one opens the run — not a single frame somebody
+      // has to close before reaching for the next thumbnail.
+      expect(passingPage, contains('<button class="lightbox-prev"'));
+      expect(passingPage, contains('<button class="lightbox-next"'));
+      // The arrows say their keys, because nobody guesses a keyboard shortcut
+      // that is not written down.
+      expect(passingPage, contains('title="Previous (←)"'));
+      expect(passingPage, contains('title="Next (→)"'));
+    });
+
     test('the column is absent when a test captured nothing', () {
       expect(brokenPage, isNot(contains('Screenshots')));
       expect(
