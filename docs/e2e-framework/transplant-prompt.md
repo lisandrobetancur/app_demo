@@ -57,7 +57,7 @@ Reglas de capa, que no son estéticas —cada una nació de un problema real:
 **Se trae completo, tal cual** (son genéricos, no saben nada de la app):
 
 - `patrol_kit/` — el paquete del framework: `assert_d.dart`,
-  `assert_report.dart`, `base_page.dart`, `base_steps.dart`,
+  `assert_d_extensions.dart`, `assert_report.dart`, `base_page.dart`, `base_steps.dart`,
   `consequence.dart`, `element.dart`, `failure_report.dart`, `locator.dart`,
   `log.dart`, `money.dart`, `scenario.dart`, `screenshot.dart`, `tags.dart`,
   `taxonomy.dart`, `test_data.dart`, `widget_probes.dart` **y sus tests**.
