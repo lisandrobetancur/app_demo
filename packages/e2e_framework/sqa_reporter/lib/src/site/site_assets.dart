@@ -108,6 +108,63 @@ const String wordmarkMark = '''
 <rect x="13.5" y="27" width="13" height="2.2" rx="1.1" fill="#d7dde6"/>
 </svg>''';
 
+/// The mark beside the report's title, one per platform.
+///
+/// Drawn here rather than fetched, like everything else the report shows: the
+/// site asks the network for nothing, so a logo would have to be a file, and
+/// a file is one more thing to lose.
+///
+/// **None of these is a vendor's logo, and that is deliberate.** The robot
+/// and the fruit are trademarks, and this repository already decided it
+/// carries no marks it does not own. What a reader needs is to tell three
+/// reports apart at a glance, and the devices themselves do that: a browser
+/// window has a chrome bar, one handset has a punch-hole camera and a home
+/// bar, the other has a notch. Recognisable without borrowing anything.
+///
+/// Sized in `em` so the mark scales with the title it sits beside, and drawn
+/// in `currentColor` so it takes the title's ink — including wherever that
+/// colour changes. Decorative: the title spells the platform out, so a screen
+/// reader that announced the drawing too would only say it twice.
+String platformMark(String platform) => switch (platform) {
+  'web' => _mark(
+    '<rect x="2.5" y="4" width="19" height="16" rx="2.5"/>'
+    '<path d="M2.5 8.5h19"/>'
+    '<circle cx="5.6" cy="6.25" r="0.75" fill="currentColor" stroke="none"/>'
+    '<circle cx="8.1" cy="6.25" r="0.75" fill="currentColor" stroke="none"/>'
+    '<circle cx="10.6" cy="6.25" r="0.75" fill="currentColor" stroke="none"/>',
+  ),
+  // A square-shouldered handset with a screen drawn inside it and a nav bar
+  // across the bottom.
+  //
+  // The difference from [ios] is deliberately coarse. Both are phones, and at
+  // the size this is read — around twenty pixels beside a title — a punch-hole
+  // camera against a notch is a distinction nobody can see. What survives
+  // that size is silhouette and one big interior shape, so these two differ in
+  // corner radius, in what crosses the top edge, and in what sits at the
+  // bottom.
+  'android' => _mark(
+    '<rect x="5.5" y="2.5" width="13" height="19" rx="1.6"/>'
+    '<path d="M5.5 5.6h13"/>'
+    '<path d="M5.5 18h13"/>'
+    '<path d="M9.5 20h5"/>',
+  ),
+  // A soft-cornered handset with a wide notch biting into the top edge.
+  'ios' => _mark(
+    '<rect x="6" y="2.5" width="12" height="19" rx="4"/>'
+    '<path d="M9.4 2.5h5.2v1.1a1.4 1.4 0 0 1-1.4 1.4h-2.4a1.4 1.4 0 0 1-1.4-1.4z" '
+    'fill="currentColor" stroke="none"/>'
+    '<path d="M10 19.4h4"/>',
+  ),
+  // An unnamed platform gets no mark rather than a wrong one: the title
+  // already shows the raw value, which is how an unexpected one is spotted.
+  _ => '',
+};
+
+String _mark(String body) =>
+    '<svg class="platform-mark" viewBox="0 0 24 24" fill="none" '
+    'stroke="currentColor" stroke-width="1.6" stroke-linecap="round" '
+    'stroke-linejoin="round" aria-hidden="true" focusable="false">$body</svg>';
+
 /// The screenshot viewer's markup, on every page that shows a capture.
 ///
 /// One per page rather than one per picture: it shows whichever was clicked,
@@ -117,14 +174,16 @@ const String wordmarkMark = '''
 const String shotViewer = '''
 <div class="lightbox" role="dialog" aria-modal="true" aria-label="Screenshot" hidden>
   <button class="lightbox-close" title="Close (Esc)" aria-label="Close">×</button>
+  <button class="lightbox-prev" title="Previous (←)" aria-label="Previous screenshot">‹</button>
   <img class="lightbox-image" src="" alt=""/>
+  <button class="lightbox-next" title="Next (→)" aria-label="Next screenshot">›</button>
   <p class="lightbox-caption"></p>
 </div>
 ''';
 
 /// The stylesheet, written to `sqa-reporter.css` beside `index.html`.
 const String siteCss = '''
-/* SQA Reporter — all rules authored for this generator. */
+/* E2E Framework — all rules authored for this generator. */
 
 /* Every colour in the report comes from here. Two families and nothing else:
    the neutrals that build the page, and the five verdict tones (mirrored from
@@ -229,7 +288,7 @@ a:hover { text-decoration: underline; }
 .wordmark-mark { display: block; flex: none; }
 
 .wordmark-text { font-size: 1.55rem; letter-spacing: 0.02em; }
-.wordmark-sqa { font-weight: 700; color: var(--title); letter-spacing: 0.04em; }
+.wordmark-lead { font-weight: 700; color: var(--title); letter-spacing: 0.04em; }
 .wordmark-name {
   font-weight: 300;
   color: var(--title-soft);
@@ -243,13 +302,23 @@ a:hover { text-decoration: underline; }
    banner look deliberate rather than merely opposite. */
 .projectname { text-align: right; }
 .projecttitle {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
   font-size: 1.35rem;
   font-weight: 600;
   letter-spacing: 0.01em;
   color: var(--title);
   padding-bottom: 0.25em;
   border-bottom: 2px solid var(--pass);
+}
+
+/* Scales with the title rather than pinned to a pixel size, so the pair still
+   reads as one thing at the smaller title the narrow layout uses. */
+.platform-mark {
+  width: 1.05em;
+  height: 1.05em;
+  flex: none;
 }
 
 /* ── Content frame ──────────────────────────────────────────────────── */
@@ -262,7 +331,7 @@ a:hover { text-decoration: underline; }
 .breadcrumbs {
   color: var(--muted);
   font-size: 0.85rem;
-  padding: 0.85em 0 0 0;
+  padding: 1.5em 0 0.45em 0;
   display: block;
 }
 
@@ -273,7 +342,7 @@ h2 {
   font-weight: 600;
   font-size: 1.55rem;
   letter-spacing: -0.015em;
-  margin: 0.35em 0 0.15em 0;
+  margin: 1em 0 0.8em 0;
   color: var(--title);
 }
 h3 {
@@ -315,7 +384,7 @@ h4 {
   display: flex;
   gap: 0.9rem;
   flex-wrap: wrap;
-  margin: 0.25rem 0 1.25rem 0;
+  margin: 0.5rem 0 2rem 0;
 }
 
 .kpi {
@@ -361,7 +430,7 @@ h4 {
   display: flex;
   gap: 0.35em;
   border-bottom: 1px solid var(--rule);
-  margin-top: 0.5em;
+  margin-top: 1em;
 }
 
 .nav-tabs li a, .nav-tabs li span {
@@ -389,7 +458,9 @@ h4 {
   float: right;
   color: var(--muted);
   font-size: 0.85rem;
-  padding: 0.75em 0;
+  /* Follows .nav-tabs' margin-top: the two sit on one line, and a change to
+     one without the other leaves the date riding above the tabs. */
+  padding: 1.25em 0;
 }
 
 /* ── Card with tab panes ────────────────────────────────────────────── */
@@ -1346,7 +1417,9 @@ table.step-table.nested td { border-bottom: 1px solid var(--rule-soft); }
   align-items: center;
   justify-content: center;
   gap: 1rem;
-  padding: 3.5rem 1.5rem 2rem 1.5rem;
+  /* The sides clear the arrows, so a wide capture stops beside them instead
+     of running underneath — see .lightbox-prev. */
+  padding: 3.5rem 4.75rem 2rem 4.75rem;
   background: rgba(11, 37, 69, 0.9);
 }
 
@@ -1368,10 +1441,10 @@ table.step-table.nested td { border-bottom: 1px solid var(--rule-soft); }
   max-width: 60rem;
 }
 
-.lightbox-close {
+.lightbox-close,
+.lightbox-prev,
+.lightbox-next {
   position: absolute;
-  top: 1rem;
-  right: 1.25rem;
   width: 2.4rem;
   height: 2.4rem;
   border: 1px solid rgba(255, 255, 255, 0.35);
@@ -1381,6 +1454,25 @@ table.step-table.nested td { border-bottom: 1px solid var(--rule-soft); }
   cursor: pointer;
   font-size: 1.5rem;
   line-height: 1;
+}
+
+.lightbox-close { top: 1rem; right: 1.25rem; }
+
+/* Beside the picture rather than over it: a capture of a form has content
+   at both edges, and an arrow sitting on top of it hides the thing somebody
+   opened the image to read. */
+.lightbox-prev { left: 1.25rem; top: 50%; transform: translateY(-50%); }
+.lightbox-next { right: 1.25rem; top: 50%; transform: translateY(-50%); }
+
+.lightbox-close:hover,
+.lightbox-prev:hover,
+.lightbox-next:hover { background: rgba(255, 255, 255, 0.24); }
+
+.lightbox-close:focus-visible,
+.lightbox-prev:focus-visible,
+.lightbox-next:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
 }
 
 .lightbox-close:hover { background: rgba(255, 255, 255, 0.24); }
@@ -1685,7 +1777,15 @@ var shotViewer = (function () {
   var full = box.querySelector(".lightbox-image");
   var caption = box.querySelector(".lightbox-caption");
   var close = box.querySelector(".lightbox-close");
+  var previous = box.querySelector(".lightbox-prev");
+  var next = box.querySelector(".lightbox-next");
   var opener = null;
+  // Every picture the page can open, in the order it reads. Collected once
+  // the page is built, so the viewer can walk a test's captures without
+  // anyone closing it to reach for the next thumbnail — the steps ran in an
+  // order, and the pictures are worth reading in that order too.
+  var reel = [];
+  var at = -1;
 
   function captionOf(image) {
     var slide = image.closest(".slide");
@@ -1698,15 +1798,39 @@ var shotViewer = (function () {
     return step ? step.textContent : image.getAttribute("alt") || "";
   }
 
-  function open(image) {
+  function show(index) {
+    var image = reel[index];
+    if (!image) { return; }
+    at = index;
     opener = image;
     full.src = image.getAttribute("src");
     full.alt = image.getAttribute("alt") || "";
-    caption.textContent = captionOf(image);
+    var where = reel.length > 1
+      ? " (" + (index + 1) + " of " + reel.length + ")"
+      : "";
+    caption.textContent = captionOf(image) + where;
+    // Hidden rather than disabled: the reel wraps, so the arrows are useless
+    // only when there is nothing to move between.
+    var many = reel.length > 1;
+    previous.hidden = !many;
+    next.hidden = !many;
+  }
+
+  function step(by) {
+    if (reel.length < 2) { return; }
+    show((at + by + reel.length) % reel.length);
+  }
+
+  function open(image) {
+    var index = reel.indexOf(image);
+    show(index < 0 ? 0 : index);
     box.hidden = false;
     document.body.classList.add("viewing-shot");
     close.focus();
   }
+
+  // The pictures the viewer can walk, in page order.
+  function load(images) { reel = images; }
 
   function closeShot() {
     box.hidden = true;
@@ -1717,16 +1841,26 @@ var shotViewer = (function () {
   }
 
   close.addEventListener("click", closeShot);
+  previous.addEventListener("click", function () { step(-1); });
+  next.addEventListener("click", function () { step(1); });
   // The darkness around the picture closes it; the picture itself does not,
   // or every attempt to look closely would shut the thing.
   box.addEventListener("click", function (event) {
     if (event.target === box || event.target === caption) { closeShot(); }
   });
   document.addEventListener("keydown", function (event) {
-    if (!box.hidden && event.key === "Escape") { closeShot(); }
+    if (box.hidden) { return; }
+    if (event.key === "Escape") { closeShot(); }
+    if (event.key === "ArrowLeft") { event.preventDefault(); step(-1); }
+    if (event.key === "ArrowRight") { event.preventDefault(); step(1); }
   });
 
-  return { open: open, close: closeShot, isOpen: function () { return !box.hidden; } };
+  return {
+    open: open,
+    load: load,
+    close: closeShot,
+    isOpen: function () { return !box.hidden; }
+  };
 })();
 
 // Every capture on the page opens it. The gallery's slides are images inside
@@ -1735,6 +1869,11 @@ var shotViewer = (function () {
 // page keeps working with no script at all, but a plain click reads the
 // picture where the reader already is.
 if (shotViewer) {
+  // One reel per page, in document order: on a test page that is every step's
+  // captures top to bottom, and on the gallery every slide.
+  shotViewer.load(Array.prototype.slice.call(
+    document.querySelectorAll(".slides img, a.shot-link img")
+  ));
   document.querySelectorAll(".slides img").forEach(function (image) {
     image.addEventListener("click", function () { shotViewer.open(image); });
   });
