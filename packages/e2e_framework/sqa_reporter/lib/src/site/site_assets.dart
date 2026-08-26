@@ -262,7 +262,7 @@ a:hover { text-decoration: underline; }
 .breadcrumbs {
   color: var(--muted);
   font-size: 0.85rem;
-  padding: 0.85em 0 0 0;
+  padding: 1.5em 0 0.45em 0;
   display: block;
 }
 
@@ -273,7 +273,7 @@ h2 {
   font-weight: 600;
   font-size: 1.55rem;
   letter-spacing: -0.015em;
-  margin: 0.35em 0 0.15em 0;
+  margin: 1em 0 0.8em 0;
   color: var(--title);
 }
 h3 {
@@ -315,7 +315,7 @@ h4 {
   display: flex;
   gap: 0.9rem;
   flex-wrap: wrap;
-  margin: 0.25rem 0 1.25rem 0;
+  margin: 0.5rem 0 2rem 0;
 }
 
 .kpi {
@@ -361,7 +361,7 @@ h4 {
   display: flex;
   gap: 0.35em;
   border-bottom: 1px solid var(--rule);
-  margin-top: 0.5em;
+  margin-top: 1em;
 }
 
 .nav-tabs li a, .nav-tabs li span {
@@ -389,7 +389,9 @@ h4 {
   float: right;
   color: var(--muted);
   font-size: 0.85rem;
-  padding: 0.75em 0;
+  /* Follows .nav-tabs' margin-top: the two sit on one line, and a change to
+     one without the other leaves the date riding above the tabs. */
+  padding: 1.25em 0;
 }
 
 /* ── Card with tab panes ────────────────────────────────────────────── */
