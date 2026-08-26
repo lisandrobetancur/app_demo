@@ -4,6 +4,7 @@
 #
 #   packages/e2e_framework/tool/e2e/run_web.sh [--headed] [--tags=<expression>]
 #                                      [--browser=<channel>] [--verbose] [--wip]
+#                                      [--profile]
 #
 # Three things in one command, in this order: clean up after the previous run,
 # run, and build the report. The report is part of running, not a step
@@ -53,6 +54,16 @@ VERBOSE=()
 # time.
 WIP_DEFINE=()
 
+# Build mode. Default is debug, which is also patrol_cli's default. Debug on
+# the web means DDC: over a thousand JS modules fetched one by one on every
+# `page.goto`, which is what makes a slow runner time out inside the `page`
+# fixture. `--profile` compiles with dart2js into a bundle a reload can
+# survive — but flutter_test's keyboard mock is not registered there, so
+# `enterText` silently writes to nobody. Which is why this is a flag for
+# experiments and not the default: see the tap probe in
+# patrol_test/scenarios/tap_probe_test.dart.
+BUILD_MODE=()
+
 # The browsers Playwright will accept as a `channel`. Checked here rather than
 # left to Playwright because the failure is expensive and late: the app is built
 # and served first, so a typo surfaces a minute in, from inside the runner,
@@ -64,6 +75,7 @@ for arg in "$@"; do
     --headed) HEADLESS_FLAG=--no-web-headless ;;
     --verbose) VERBOSE=(--verbose) ;;
     --wip) TAGS=(--tags wip); WIP_DEFINE=(--dart-define PATROL_RUN_WIP=true) ;;
+    --profile) BUILD_MODE=(--profile) ;;
     --tags=*) TAGS=(--tags "${arg#--tags=}") ;;
     --browser=*)
       BROWSER="${arg#--browser=}"
@@ -76,7 +88,7 @@ for arg in "$@"; do
       ;;
     *)
       echo "unrecognized argument: $arg" >&2
-      echo "usage: packages/e2e_framework/tool/e2e/run_web.sh [--headed] [--tags=<expression>] [--browser=<channel>] [--verbose] [--wip]" >&2
+      echo "usage: packages/e2e_framework/tool/e2e/run_web.sh [--headed] [--tags=<expression>] [--browser=<channel>] [--verbose] [--wip] [--profile]" >&2
       exit 2
       ;;
   esac
@@ -160,6 +172,7 @@ set +e
     "${TAGS[@]+"${TAGS[@]}"}" \
     "${VERBOSE[@]+"${VERBOSE[@]}"}" \
     "${WIP_DEFINE[@]+"${WIP_DEFINE[@]}"}" \
+    "${BUILD_MODE[@]+"${BUILD_MODE[@]}"}" \
     --web-report-dir="$OUT/playwright" \
     --web-results-dir="$OUT/test-results" \
     "$HEADLESS_FLAG" \
