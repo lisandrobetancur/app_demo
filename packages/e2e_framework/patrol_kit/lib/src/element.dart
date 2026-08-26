@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -65,12 +66,39 @@ class UiElement {
     // an open run of scrolls has to be photographed before the text lands on
     // top of it.
     await _endScrollRun(coveredByCaller: false);
+    _registerKeyboardMock();
     await finder.enterText(text);
   }
 
   /// Empties the field.
-  Future<void> clear() =>
-      _acting('clear ${loc.description}', () => finder.enterText(''));
+  Future<void> clear() => _acting('clear ${loc.description}', () {
+    _registerKeyboardMock();
+    return finder.enterText('');
+  });
+
+  /// Makes `enterText` deliver its text in a build with asserts off.
+  ///
+  /// `integration_test` never registers the simulated keyboard
+  /// (`registerTestTextInput` is false), so `enterText` posts its new value
+  /// to client **-1** — flutter_test's placeholder for "whoever is focused".
+  /// The framework accepts -1 *inside an `assert` only*: in a debug build the
+  /// text lands, and in profile or release the assert is compiled out and the
+  /// message is dropped without a word — `enterText` reports success while
+  /// the field stays empty.
+  ///
+  /// Registering the mock closes the gap: it intercepts `TextInput.setClient`
+  /// when the field takes focus, so the post carries the REAL client id and
+  /// every build mode accepts it. patrol_finders does exactly this — for
+  /// release on iOS — but skips it on the web (`!kIsWeb`), which is the hole
+  /// this fills. Registered on the web only, right before each write, to stay
+  /// out of the platforms Patrol already handles; calling it twice is
+  /// harmless, and in debug it changes nothing (the id now matches instead of
+  /// being forgiven).
+  void _registerKeyboardMock() {
+    if (kIsWeb) {
+      $.tester.testTextInput.register();
+    }
+  }
 
   /// Runs an interaction, capturing either side of it when the step asked
   /// for that — see [Capture.aroundActions].
