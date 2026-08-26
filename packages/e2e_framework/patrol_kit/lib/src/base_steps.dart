@@ -40,6 +40,38 @@ abstract class BaseSteps {
   /// stated and somewhere to be tested — see `test/capture_test.dart`.
   static const Capture defaultCapture = Capture.onFailure;
 
+  /// The step being run right now, or null outside any step.
+  ///
+  /// Kept so an unnamed [shot] can caption itself with the step it belongs
+  /// to. A single field is enough for the same reason [ActionCapture] gets
+  /// away with one: a Patrol test owns its isolate and runs its steps one
+  /// after another.
+  static String? _currentStep;
+
+  /// The caption an unnamed screenshot gets: the step it was taken in, and
+  /// the time on the clock.
+  ///
+  /// `Ingresa el email · 14:32:07.481`, or just the time when there is no
+  /// step around it. The step name is what makes it useful — a reader
+  /// scanning the gallery sees which part of the run they are looking at —
+  /// and the clock is what tells two frames of the same step apart.
+  ///
+  /// [tag] goes between the two, and the failure frame is what it is for:
+  /// `Los totales cuadran · failed · 14:32:07.481`. The word is the step's
+  /// real outcome rather than a flat "fail", because **failed** and
+  /// **broken** are the difference between the product being wrong and the
+  /// test being unable to tell — a distinction this report draws everywhere
+  /// else, and one a reader wants before opening the image.
+  static String captionNow({String? tag}) {
+    final String when = timeStamp();
+    final String? step = _currentStep;
+    return <String>[
+      if (step != null) step,
+      if (tag != null) tag,
+      when,
+    ].join(' · ');
+  }
+
   /// Runs [body] as a named business step.
   ///
   /// **No screenshot is taken unless the step asks for one.** Every frame in
@@ -86,6 +118,11 @@ abstract class BaseSteps {
     final int id = _sequence++;
     debugPrintSynchronously('$_marker|begin|$id|$name');
     Log.debug('Step ▸ $name');
+    // Saved and restored rather than assigned, because steps nest: when an
+    // inner step ends, an unnamed shot taken by the outer one has to go back
+    // to reading the outer name, not keep the inner step's.
+    final String? outer = _currentStep;
+    _currentStep = name;
     try {
       final T result = await ActionCapture.runWith(
         capture.bracketsActions,
@@ -109,27 +146,33 @@ abstract class BaseSteps {
       // product is wrong" and "the test could not tell".
       Log.error('Step ✗ $name ($outcome)', data: '$error'.split('\n').first);
       if (capture.capturesOnFailure) {
-        await $.takeScreenshot('$name ($outcome)');
+        await $.takeScreenshot(captionNow(tag: outcome));
       }
       debugPrintSynchronously('$_marker|end|$id|$outcome');
       rethrow;
+    } finally {
+      _currentStep = outer;
     }
   }
 
   /// Captures the screen right now, under [name].
   ///
-  /// The automatic frame a step takes shows where it *ended*; this one shows
-  /// a moment chosen by whoever wrote the step — the dialog before it is
-  /// dismissed, the list before the filter is applied, the form with the
-  /// error message still on it. Called inside a step, the picture hangs off
-  /// that step in the report, in the order the calls ran.
+  /// This is the frame somebody chose — the dialog before it is dismissed,
+  /// the list before the filter is applied, the form with the error message
+  /// still on it. Called inside a step, the picture hangs off that step in
+  /// the report, in the order the calls ran.
   ///
-  /// A step can take as many as it likes, with or without its automatic one:
-  /// see [Capture].
+  /// [name] is optional. Left out, the caption under the image becomes the
+  /// step it was taken in plus the time — see [captionNow] — which is enough
+  /// to place a frame in the run without anybody having to think of a name.
+  ///
+  /// Worth naming anyway wherever the step takes more than one: the two
+  /// frames of a form being submitted both belong to the same step, and only
+  /// a name says which is the form and which is the answer.
   ///
   /// It never fails a test. A missing screenshot is a worse report, not a
   /// wrong result.
-  Future<void> shot(String name) => $.takeScreenshot(name);
+  Future<void> shot([String? name]) => $.takeScreenshot(name ?? timeStamp());
 
   /// Runs [action] between two screenshots.
   ///
@@ -148,17 +191,24 @@ abstract class BaseSteps {
   /// });
   /// ```
   ///
-  /// Both names are yours because both are captions in the report, and a
-  /// caption that says "before" tells a reader nothing they could not see.
+  /// Both names are optional and both are captions in the report. This is
+  /// the case where writing them earns the most: left out, the pair gets two
+  /// captions from [captionNow] that differ only by milliseconds, and a
+  /// reader has to open both to tell the form from what became of it.
   ///
   /// The [after] frame is taken even if [action] throws — that is the case
   /// the pair exists for. When the action is the last thing a step does, that
   /// frame is the last word on what the step produced.
   Future<T> capturing<T>(
     Future<T> Function() action, {
-    required String before,
-    required String after,
-  }) => captureAround(shot, action, before: before, after: after);
+    String? before,
+    String? after,
+  }) => captureAround(
+    shot,
+    action,
+    before: before ?? captionNow(),
+    after: after ?? captionNow(),
+  );
 
   /// Checks one or more expectations together.
   ///

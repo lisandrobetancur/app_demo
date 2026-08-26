@@ -54,6 +54,42 @@ void main() {
     });
   });
 
+  group('the caption a screenshot gets when nobody names it', () {
+    test('is the clock, to the millisecond', () {
+      expect(timeStamp(DateTime(2026, 8, 26, 14, 32, 7, 481)), '14:32:07.481');
+    });
+
+    test('pads every field, so captions sort and line up', () {
+      expect(timeStamp(DateTime(2026, 1, 2, 3, 4, 5, 6)), '03:04:05.006');
+    });
+
+    test('carries no date, because a report describes one run', () {
+      final String stamp = timeStamp(DateTime(2026, 8, 26, 14, 32, 7, 481));
+      expect(stamp, isNot(contains('2026')));
+      expect(stamp, isNot(contains('26')));
+    });
+
+    test('a failure caption carries the outcome between the two', () {
+      // `failed` and `broken`, never a flat "fail": the report draws that
+      // distinction everywhere else, and it is what a reader wants to know
+      // before deciding whether to open the image.
+      expect(
+        BaseSteps.captionNow(tag: 'failed'),
+        matches(RegExp(r'^failed · \d{2}:\d{2}:\d{2}\.\d{3}$')),
+      );
+      expect(BaseSteps.captionNow(tag: 'broken'), contains('broken'));
+    });
+
+    test('outside any step, it is the time and nothing else', () {
+      // The suite never captures outside a step, but a caption is a string
+      // and a null step name must not reach the report as the word "null".
+      expect(
+        BaseSteps.captionNow(),
+        matches(RegExp(r'^\d{2}:\d{2}:\d{2}\.\d{3}$')),
+      );
+    });
+  });
+
   group('the default', () {
     // Pinned, because it is a decision rather than an accident: the author
     // places every frame of a passing run by hand, and the one nobody can

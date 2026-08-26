@@ -47,6 +47,24 @@ const bool screenshotsEnabled = bool.fromEnvironment(
   defaultValue: true,
 );
 
+/// A caption for a screenshot nobody named: the wall-clock time it was taken,
+/// to the millisecond — `14:32:07.481`.
+///
+/// The date is deliberately absent. A report describes ONE run, and it prints
+/// that run's date in its header, so repeating it under every image would add
+/// nine characters and no information. Milliseconds stay because they are the
+/// part that distinguishes two frames of the same second, which is exactly
+/// what a `capturing` pair produces.
+///
+/// It is a fallback and reads like one. A caption saying only *when* leaves a
+/// reader opening images to find out *what* — see [BaseSteps.shot].
+String timeStamp([DateTime? at]) {
+  final DateTime t = at ?? DateTime.now();
+  String two(int n) => n.toString().padLeft(2, '0');
+  return '${two(t.hour)}:${two(t.minute)}:${two(t.second)}'
+      '.${t.millisecond.toString().padLeft(3, '0')}';
+}
+
 /// When a business step captures the screen **on its own**.
 ///
 /// [onFailure] is the default, and it draws the line in one place: while a
