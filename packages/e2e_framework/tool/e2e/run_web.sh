@@ -4,7 +4,7 @@
 #
 #   packages/e2e_framework/tool/e2e/run_web.sh [--headed] [--tags=<expression>]
 #                                      [--browser=<channel>] [--verbose] [--wip]
-#                                      [--profile]
+#                                      [--debug | --profile]
 #
 # Three things in one command, in this order: clean up after the previous run,
 # run, and build the report. The report is part of running, not a step
@@ -54,14 +54,20 @@ VERBOSE=()
 # time.
 WIP_DEFINE=()
 
-# Build mode. Default is debug, which is also patrol_cli's default. Debug on
-# the web means DDC: over a thousand JS modules fetched one by one on every
-# `page.goto`, which is what makes a slow runner time out inside the `page`
-# fixture. `--profile` compiles with dart2js into a bundle a reload can
-# survive — measured on this suite: the whole run in under a minute, against
-# the hang's forty-three. Typing works there too, since the kit registers
-# the simulated keyboard itself (see patrol_kit's UiElement.type).
-BUILD_MODE=()
+# Build mode. The default is PROFILE, against patrol_cli's own default, and
+# that choice is the fix for the hang this suite lived with: debug on the web
+# means DDC, which serves over a thousand JS modules one by one, and every
+# test re-fetches them all through its own `page.goto` in a fresh browser
+# context. On a slow runner that eats the whole test timeout inside the
+# `page` fixture — the intermittent 43-minute run. Profile compiles with
+# dart2js into a bundle a reload survives; measured on this suite: nine of
+# nine in 56 seconds. Typing works there because the kit registers the
+# simulated keyboard itself (see patrol_kit's UiElement.type — the framework
+# only forgives unregistered typing in debug builds).
+#
+# `--debug` brings DDC back for a one-off — stack traces with more to say,
+# asserts on inside the app — at the price of the slow, hang-prone load.
+BUILD_MODE=(--profile)
 
 # The browsers Playwright will accept as a `channel`. Checked here rather than
 # left to Playwright because the failure is expensive and late: the app is built
@@ -75,6 +81,7 @@ for arg in "$@"; do
     --verbose) VERBOSE=(--verbose) ;;
     --wip) TAGS=(--tags wip); WIP_DEFINE=(--dart-define PATROL_RUN_WIP=true) ;;
     --profile) BUILD_MODE=(--profile) ;;
+    --debug) BUILD_MODE=(--debug) ;;
     --tags=*) TAGS=(--tags "${arg#--tags=}") ;;
     --browser=*)
       BROWSER="${arg#--browser=}"
@@ -87,7 +94,7 @@ for arg in "$@"; do
       ;;
     *)
       echo "unrecognized argument: $arg" >&2
-      echo "usage: packages/e2e_framework/tool/e2e/run_web.sh [--headed] [--tags=<expression>] [--browser=<channel>] [--verbose] [--wip] [--profile]" >&2
+      echo "usage: packages/e2e_framework/tool/e2e/run_web.sh [--headed] [--tags=<expression>] [--browser=<channel>] [--verbose] [--wip] [--debug | --profile]" >&2
       exit 2
       ;;
   esac
