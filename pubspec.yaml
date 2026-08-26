@@ -8,8 +8,8 @@ environment:
 workspace:
   - packages/apps/market_app
   - packages/development/lint
-  - packages/sqa_l/patrol_kit
-  - packages/sqa_l/sqa_reporter
+  - packages/e2e_framework/patrol_kit
+  - packages/e2e_framework/sqa_reporter
   - packages/features/core/cart/constants
   - packages/features/core/cart/module
   - packages/features/core/cart/typing
@@ -67,10 +67,15 @@ melos:
     # failed/broken classification.
     testKit: melos exec --scope=patrol_kit -- flutter test
 
-    # The app's unit tests. Today they are the ones checking that the data
-    # files exist, are declared as assets and hold the fields the façade reads
-    # — the wiring that, when broken, fails an E2E for what looks like a
-    # product reason.
+    # The app's own `flutter test` suite. Everything in it today lives under
+    # `test/patrol_guards/` and guards the E2E suite rather than the product:
+    # that the data files exist, are declared as assets and hold the fields the
+    # façade reads, and that no scenario reads them before the app has launched.
+    #
+    # They sit under `test/` and not beside the scenarios because `flutter
+    # test` only looks here, while `patrol test` would carry anything under
+    # `patrol_test/` onto a device. Moving them would leave them silently
+    # unrun, which is the exact failure they exist to catch.
     testApp: melos exec --scope=market_app -- flutter test
 
     # Everything that runs without a browser or a device, in one command.
@@ -109,32 +114,39 @@ melos:
     #
     # At the start and not at the end: cleaning up afterwards leaves the
     # machine tidy but takes the evidence of what just failed with it.
-    e2eWeb: bash packages/sqa_l/tool/e2e/run_web.sh
-    e2eAndroid: bash packages/sqa_l/tool/e2e/run_android.sh
+    e2eWeb: bash packages/e2e_framework/tool/e2e/run_web.sh
+    e2eAndroid: bash packages/e2e_framework/tool/e2e/run_android.sh
 
     # With a visible browser, to watch it drive the app.
-    e2eWebHeaded: bash packages/sqa_l/tool/e2e/run_web.sh --headed
+    e2eWebHeaded: bash packages/e2e_framework/tool/e2e/run_web.sh --headed
 
     # Filtering by tag. Patrol takes boolean expressions, not just names, and
     # the filter is applied while GENERATING the bundle: an excluded test is
     # never compiled into the binary — not compiled and then skipped. The
     # vocabulary lives in `Tags`, in the kit.
-    e2eWebSmoke: bash packages/sqa_l/tool/e2e/run_web.sh --tags=smoke_test
-    e2eWebNegative: bash packages/sqa_l/tool/e2e/run_web.sh --tags=negative
+    e2eWebSmoke: bash packages/e2e_framework/tool/e2e/run_web.sh --tags=smoke_test
+    e2eWebNegative: bash packages/e2e_framework/tool/e2e/run_web.sh --tags=negative
+
+    # A test tagged `wip` is registered as skipped by `e2eTest` itself, so it
+    # reaches the report — counted under Skipped, with a pale row — without
+    # its body ever running. This is the way back in: the tests being worked
+    # on, and only those, compiled without the skip.
+    e2eWebWip: bash packages/e2e_framework/tool/e2e/run_web.sh --wip
+    e2eAndroidWip: bash packages/e2e_framework/tool/e2e/run_android.sh --wip
 
     # On a browser installed here rather than the Chromium Playwright ships.
     # Useful for the differences a bundled build hides — codecs, fonts, the
     # printing path — but both are Chromium: Patrol exposes no other engine, so
     # this is not cross-engine coverage and should not be mistaken for it.
     # Needs the browser present, which is why CI stays on the default.
-    e2eWebChrome: bash packages/sqa_l/tool/e2e/run_web.sh --browser=chrome
-    e2eWebEdge: bash packages/sqa_l/tool/e2e/run_web.sh --browser=msedge
+    e2eWebChrome: bash packages/e2e_framework/tool/e2e/run_web.sh --browser=chrome
+    e2eWebEdge: bash packages/e2e_framework/tool/e2e/run_web.sh --browser=msedge
 
     # Cleanup only, for when you want to zero a platform without running
     # anything.
-    e2eClean: bash packages/sqa_l/tool/e2e/clean.sh web && bash packages/sqa_l/tool/e2e/clean.sh android
-    e2eCleanWeb: bash packages/sqa_l/tool/e2e/clean.sh web
-    e2eCleanAndroid: bash packages/sqa_l/tool/e2e/clean.sh android
+    e2eClean: bash packages/e2e_framework/tool/e2e/clean.sh web && bash packages/e2e_framework/tool/e2e/clean.sh android
+    e2eCleanWeb: bash packages/e2e_framework/tool/e2e/clean.sh web
+    e2eCleanAndroid: bash packages/e2e_framework/tool/e2e/clean.sh android
 
     # Run and also OPEN the report. `e2eWeb` already builds it; this only adds
     # the opening on top.
@@ -143,7 +155,7 @@ melos:
 
     # ── SQA Reporter ────────────────────────────────────────────────────
     #
-    # The report, written in Dart and living in packages/sqa_l/sqa_reporter.
+    # The report, written in Dart and living in packages/e2e_framework/sqa_reporter.
     # `e2eWeb` and `e2eAndroid` already build it as part of running, and these
     # are for rebuilding it from the results ALREADY on disk — when you change
     # the generator and want to see the effect without paying for another
@@ -164,5 +176,5 @@ melos:
     # thing to remember to stop.
     sqaWeb: dart run sqa_reporter --input build/e2e/web/playwright/results.json --platform web
     sqaAndroid: dart run sqa_reporter --input build/e2e/android/android_run.log --format patrol-log --platform android
-    sqaOpenWeb: bash packages/sqa_l/tool/e2e/open_report.sh build/e2e/web/sqa_reporter/report/index.html
-    sqaOpenAndroid: bash packages/sqa_l/tool/e2e/open_report.sh build/e2e/android/sqa_reporter/report/index.html
+    sqaOpenWeb: bash packages/e2e_framework/tool/e2e/open_report.sh build/e2e/web/sqa_reporter/report/index.html
+    sqaOpenAndroid: bash packages/e2e_framework/tool/e2e/open_report.sh build/e2e/android/sqa_reporter/report/index.html

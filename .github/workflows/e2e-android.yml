@@ -43,7 +43,7 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          node-version-file: packages/sqa_l/tool/e2e/.nvmrc
+          node-version-file: packages/e2e_framework/tool/e2e/.nvmrc
 
       - name: Cache pub
         uses: actions/cache@v6
@@ -80,7 +80,7 @@ jobs:
           # 1080x2340, near the Samsung SM-A315G the suite was verified on.
           profile: pixel_5
           disable-animations: true
-          script: bash packages/sqa_l/tool/e2e/run_android.sh
+          script: bash packages/e2e_framework/tool/e2e/run_android.sh
 
       # Same guard as the web job: a green run whose assertions never reached
       # the report verifies nothing, and says so nowhere. On mobile the

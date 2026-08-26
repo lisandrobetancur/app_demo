@@ -65,8 +65,9 @@ Flutter SDK package, not a third party) to enable real paths on the web — see
 packages/
 ├── apps/market_app/                 shell: wiring only (router, DI, i18n, bootstrap)
 ├── development/lint/                shared analysis_options
-├── sqa_l/                           everything the automation framework owns
+├── e2e_framework/                   everything the automation framework owns
 │   ├── patrol_kit/                  reusable E2E scaffolding — Flutter + Patrol only
+│   ├── sqa_reporter/                the report generator, pure Dart
 │   └── tool/e2e/                    the run scripts
 ├── shared/                          pure logic, ZERO widgets
 │   ├── typing/                      base ViewModel, Clock, IdGenerator, ViewStatus
@@ -319,8 +320,8 @@ melos run testFast                # both
 ```
 
 End-to-end suite. Each of these **cleans that platform's previous artifacts,
-runs, and builds the report** — three things in one command, the way Serenity's
-`aggregate` is part of the build rather than a step someone has to remember:
+runs, and builds the report** — three things in one command, so the report is
+part of running rather than a step someone has to remember:
 
 ```bash
 melos run e2eWeb                  # headless, Playwright's bundled Chromium
@@ -330,9 +331,31 @@ melos run e2eAndroid              # connected Android device
 melos run e2eWebSmoke             # only --tags "smoke_test"
 melos run e2eWebNegative          # only --tags "negative"
 
+melos run e2eWebWip               # only the tests being worked on
+melos run e2eAndroidWip           # the same, on a device
+
 melos run e2eWebChrome            # installed Google Chrome
 melos run e2eWebEdge              # installed Microsoft Edge
 ```
+
+A test tagged `Tags.wip` is **registered and reported as skipped**: `e2eTest`
+decides that while the test is being registered, so its body never runs and it
+cannot fail. It still reaches the report, counted under **Skipped** and wearing
+the pale row of a test nobody ran.
+
+That visibility is the point. A test being refactored should not be failing in
+anybody's run — a red suite people learn to ignore is worse than a smaller
+green one — but an *excluded* test is invisible and rots, while a skipped one
+is a debt somebody can see. For the same reason a tag beats commenting the test
+out: the commented one stops compiling against the app and rots the same way.
+
+What does not reach the report is anything the body declares — feature, epic,
+severity, description, steps — because `scenario()` lives inside the body that
+never runs. The row shows the scenario's name and that it was skipped.
+
+The two `*Wip` commands are the way back in: they narrow the run to those tests
+and compile them without the skip, through a `--dart-define` the kit reads at
+registration time.
 
 The last two swap Playwright's bundled Chromium for a browser installed on the
 machine, through `run_web.sh --browser=<channel>`; `chrome-beta`, `msedge-dev`
@@ -495,7 +518,7 @@ cd packages/apps/market_app && patrol test --device chrome
 ```
 
 ```bash
-cd packages/apps/market_app && patrol test --device chrome --target patrol_test/login_test.dart --web-headless=true
+cd packages/apps/market_app && patrol test --device chrome --target patrol_test/scenarios/login_test.dart --web-headless=true
 ```
 
 ### What the suite covers
@@ -515,11 +538,17 @@ Last verified run: **6 passed, 0 failed, 0 flaky in 55 s** on Chromium.
 
 ```
 patrol_test/
-├── support/     app launcher, fixed data mirroring the seed, takeScreenshot
+├── data/        the JSON the scenarios read, mirroring the seed
+├── support/     app launcher, the data façade, epics and features
 ├── pages/       Page Objects: locators and atomic interactions
 ├── steps/       business language composing pages, with its assertions
-└── *_test.dart  specs that read as sentences
+└── scenarios/   the tests themselves, reading as sentences
 ```
+
+`scenarios/` is named after the word the code already uses: `scenario()` opens
+every test, and "Scenario" is the column the report puts them under. The other
+four folders are what a scenario is built from, which is why only this one
+holds `*_test.dart`.
 
 The rule that keeps the layers honest: **a page knows where things are, a step
 knows what a person does, a test knows what the product promises.** A locator
@@ -565,7 +594,7 @@ melos run sqaWeb        # rebuilds the report from that JSON
 melos run sqaOpenWeb    # opens the report in a browser
 ```
 
-The generator is a Dart package, `packages/sqa_l/sqa_reporter`, and it owns the
+The generator is a Dart package, `packages/e2e_framework/sqa_reporter`, and it owns the
 whole output: the JSON results, the screenshots and the static pages that read
 them, all under one directory per platform which it writes from scratch every
 time.
@@ -734,7 +763,7 @@ Three things are worth knowing before running this on another machine.
 
 **The markers come from the device log, not from the CLI.** `patrol_cli` parses
 `PATROL_LOG` to pretty-print it and silently drops every other line, so its
-stdout carries none of the step or screenshot markers. `packages/sqa_l/tool/e2e/run_android.sh`
+stdout carries none of the step or screenshot markers. `packages/e2e_framework/tool/e2e/run_android.sh`
 therefore reads logcat in parallel with the run. Logcat is also a ring buffer
 that drops lines under load, so the script raises it to 16 MB before starting;
 the converter skips a screenshot whose chunks are incomplete rather than failing

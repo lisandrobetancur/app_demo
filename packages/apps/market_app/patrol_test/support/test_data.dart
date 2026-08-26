@@ -22,9 +22,17 @@ class TestData {
   static DataSet get coupons => TestDataStore.dataset('coupons');
   static DataSet get seed => TestDataStore.dataset('seed');
 
-  /// One row per invalid-credentials case, for the data-driven login test.
-  static List<DataRecord> get invalidLogins =>
-      TestDataStore.dataset('invalid_logins').rows;
+  /// The invalid-credentials cases, keyed by name — one test per key.
+  ///
+  /// Keyed rather than a list on purpose: each rejection is its own test, and
+  /// a test that asks for `invalidLogin('wrongPassword')` still reads its case
+  /// when somebody inserts a fourth one above it. A list would hand out rows
+  /// by position, which is exactly how an inserted row silently re-points
+  /// every test below it.
+  static DataSet get invalidLogins => TestDataStore.dataset('invalid_logins');
+
+  /// The invalid-credentials case filed under [key].
+  static DataRecord invalidLogin(String key) => invalidLogins.record(key);
 
   // --- Demo accounts ---
   static DataRecord get demoUser => users.record('demo');
