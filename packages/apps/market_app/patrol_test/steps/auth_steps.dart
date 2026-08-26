@@ -24,10 +24,19 @@ class AuthSteps extends BaseSteps {
   // suite points at a staging login, the wording of this line is the
   // difference between a report and a leak. The obscured field keeps it out
   // of the screenshots; this keeps it out of the text.
-  Future<void> login({required String email, required String password}) =>
-      step('Ingresa el email: $email y la contraseña', () async {
-        await _login.login(email: email, password: password);
-      });
+  //
+  // `aroundActions` and not the default, because this step SUBMITS: its last
+  // action navigates away, so the frame a step takes when it ends would show
+  // the dashboard — the same screen the next step photographs, and nothing of
+  // what this step did. Bracketing the click gives the frame that matters:
+  // the form as it was filled, taken as the *before* of the tap that sends it.
+  Future<void> login({required String email, required String password}) => step(
+    'Ingresa el email: $email y la contraseña',
+    capture: Capture.aroundActions,
+    () async {
+      await _login.login(email: email, password: password);
+    },
+  );
 
   /// Asserts the session actually opened: the dashboard is on screen and
   /// greets [fullName].

@@ -62,6 +62,14 @@ const bool screenshotsEnabled = bool.fromEnvironment(
 /// dialog before it is dismissed, the list before the filter is applied.
 enum Capture {
   /// A frame when the step ends, and another if it breaks. The default.
+  ///
+  /// **A step that ends by navigating should not use this.** The frame is
+  /// taken when the step ends, so a step whose last action submits a form or
+  /// opens another screen photographs the DESTINATION — not what the step
+  /// did, and the same screen the next step is about to photograph. Two
+  /// identical pictures in the report, and the one that was wanted — the
+  /// filled form, the menu before it closed — never taken. Those steps want
+  /// [aroundActions].
   auto,
 
   /// The default, plus a frame either side of every **click** and every
@@ -165,6 +173,12 @@ abstract final class ActionCapture {
   ///
   /// Any run of scrolls left open ends with the body: the step's own frame is
   /// the last word on where it finished.
+  ///
+  /// Note what this means for nested steps: the value is **set**, not
+  /// inherited. A step nested inside one that asked for [Capture.aroundActions]
+  /// gets its OWN policy, and the default turns the bracketing back off. So a
+  /// step containing sub-steps cannot bracket on their behalf — each one that
+  /// submits something has to say so itself.
   static Future<T> runWith<T>(bool value, Future<T> Function() body) async {
     final bool previous = _enabled;
     final bool wasScrolling = _scrolling;
