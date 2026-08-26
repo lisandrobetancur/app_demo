@@ -25,6 +25,14 @@
 #
 # The exit code is the suite's, untouched, so this wraps `melos run e2eWeb`
 # without changing what CI or a script chained after it would see.
+#
+# HOW it watches matters, because of where it runs: macOS ships bash 3.2
+# (Apple froze it there over the GPLv3), and in 3.2 a `read -t` that times
+# out is indistinguishable from end-of-file. The first version of this script
+# leaned on that and killed a healthy run with SIGPIPE eighteen seconds in.
+# So no `read -t`: the reader below blocks like any pipe reader, and a
+# separate watchdog process measures the silence by the age of a timestamp
+# the reader refreshes on every line.
 set -uo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
@@ -36,28 +44,41 @@ elapsed() {
   printf '%02d:%02d' $((s / 60)) $((s % 60))
 }
 
-echo "[00:00] watching: run_web.sh $*"
+# The reader touches this on every line; the watchdog reads its age.
+LAST_FILE="$(mktemp)"
+date +%s > "$LAST_FILE"
+
+(
+  warned=0
+  while :; do
+    sleep 5
+    last="$(cat "$LAST_FILE" 2>/dev/null)" || exit 0
+    [ -n "$last" ] || continue
+    quiet=$(( $(date +%s) - last ))
+    if [ "$quiet" -lt "$STALL" ]; then
+      warned=0
+      continue
+    fi
+    # One warning as STALL is crossed, then another every further STALL.
+    if [ "$quiet" -ge $((warned + STALL)) ]; then
+      warned=$quiet
+      printf '[%s] ⏳ quiet for %ss — the per-test timeout is %ss; silence past that is the hang\n' \
+        "$(elapsed)" "$quiet" "$(( ${PATROL_WEB_TIMEOUT:-120000} / 1000 ))"
+    fi
+  done
+) &
+WATCHDOG=$!
+trap 'kill "$WATCHDOG" 2>/dev/null; rm -f "$LAST_FILE"' EXIT
 
 bash packages/e2e_framework/tool/e2e/run_web.sh "$@" 2>&1 | {
-  quiet=0
-  while :; do
-    if IFS= read -r -t 5 line; then
-      if (( quiet >= STALL )); then
-        printf '[%s] ▶ output resumed after %ss of silence\n' \
-          "$(elapsed)" "$quiet"
-      fi
-      quiet=0
-      printf '[%s] %s\n' "$(elapsed)" "$line"
-    else
-      code=$?
-      # `read` answers >128 on timeout; anything lower is EOF — the run ended.
-      (( code <= 128 )) && break
-      quiet=$((quiet + 5))
-      if (( quiet % STALL == 0 )); then
-        printf '[%s] ⏳ quiet for %ss — the per-test timeout is %ss; silence past that is the hang\n' \
-          "$(elapsed)" "$quiet" "$(( ${PATROL_WEB_TIMEOUT:-120000} / 1000 ))"
-      fi
+  while IFS= read -r line; do
+    now=$(date +%s)
+    quiet=$(( now - $(cat "$LAST_FILE") ))
+    if [ "$quiet" -ge "$STALL" ]; then
+      printf '[%s] ▶ output resumed after %ss of silence\n' "$(elapsed)" "$quiet"
     fi
+    echo "$now" > "$LAST_FILE"
+    printf '[%s] %s\n' "$(elapsed)" "$line"
   done
 }
 
