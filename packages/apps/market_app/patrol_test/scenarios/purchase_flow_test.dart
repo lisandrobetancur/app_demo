@@ -10,16 +10,16 @@ import '../support/support.dart';
 /// cart and writes the notification.
 void main() {
   e2eTest(
-    'buys a product from the catalog and confirms the order',
+    'Compra de un producto del catálogo con confirmación de la orden',
     tags: <String>[Tags.smoke, Tags.success],
     (PatrolIntegrationTester $) async {
       scenario(
         feature: Features.checkout,
         severity: Severity.blocker,
         description:
-            'The critical path of the application. It also checks that the '
-            'totals add up before and after the coupon: subtotal - discount, '
-            'tax on the taxable base, and total = base + tax.',
+            'La ruta crítica de la aplicación. Comprueba además que los '
+            'totales cuadren antes y después del cupón: subtotal - descuento, '
+            'IVA sobre la base gravable y total = base + IVA.',
       );
       await launchMarketApp($);
       final Steps steps = Steps($);
@@ -28,11 +28,11 @@ void main() {
       // `TestData`, and the data lives in the asset bundle, which does not
       // exist until the app has launched. It also records what the test
       // actually used, rather than what it meant to use.
-      testParam('User', TestData.demoEmail);
-      testParam('Product', TestData.buyableProductName);
-      testParam('Coupon', TestData.validCoupon);
-      testParam('Address', 'addr_demo_home');
-      testParam('Payment method', 'Card');
+      testParam('Usuario', TestData.demoEmail);
+      testParam('Producto', TestData.buyableProductName);
+      testParam('Cupón', TestData.validCoupon);
+      testParam('Dirección', 'addr_demo_home');
+      testParam('Medio de pago', 'Tarjeta');
 
       await steps.auth.login(
         email: TestData.demoEmail,
@@ -60,15 +60,15 @@ void main() {
   );
 
   e2eTest(
-    'shows seller actions on an own publication',
+    'Acciones de vendedor en una publicación propia',
     tags: <String>[Tags.regression, Tags.success],
     (PatrolIntegrationTester $) async {
       scenario(
         feature: Features.catalog,
         severity: Severity.normal,
         description:
-            'Your own publication is not something you buy: the detail screen '
-            'must offer editing instead of the purchase CTA.',
+            'Una publicación propia no es algo que se compre: el detalle '
+            'debe ofrecer la edición en vez del botón de compra.',
       );
       await launchMarketApp($);
       final Steps steps = Steps($);
@@ -77,8 +77,8 @@ void main() {
       // `TestData`, and the data lives in the asset bundle, which does not
       // exist until the app has launched. It also records what the test
       // actually used, rather than what it meant to use.
-      testParam('User', TestData.demoEmail);
-      testParam('Own product', TestData.ownProductName);
+      testParam('Usuario', TestData.demoEmail);
+      testParam('Producto propio', TestData.ownProductName);
 
       await steps.auth.login(
         email: TestData.demoEmail,
@@ -93,15 +93,15 @@ void main() {
   );
 
   e2eTest(
-    'rejects an expired coupon with its own message',
+    'Rechazo de un cupón vencido con su mensaje propio',
     tags: <String>[Tags.regression, Tags.negative],
     (PatrolIntegrationTester $) async {
       scenario(
         feature: Features.coupons,
         severity: Severity.minor,
         description:
-            'The error must tell expired apart from non-existent, and the '
-            'discount must end up at zero.',
+            'El error debe distinguir un cupón vencido de uno inexistente, '
+            'y el descuento debe quedar en cero.',
       );
       await launchMarketApp($);
       final Steps steps = Steps($);
@@ -110,8 +110,8 @@ void main() {
       // `TestData`, and the data lives in the asset bundle, which does not
       // exist until the app has launched. It also records what the test
       // actually used, rather than what it meant to use.
-      testParam('User', TestData.demoEmail);
-      testParam('Coupon', TestData.expiredCoupon);
+      testParam('Usuario', TestData.demoEmail);
+      testParam('Cupón', TestData.expiredCoupon);
 
       await steps.auth.login(
         email: TestData.demoEmail,

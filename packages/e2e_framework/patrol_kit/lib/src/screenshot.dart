@@ -47,24 +47,60 @@ const bool screenshotsEnabled = bool.fromEnvironment(
   defaultValue: true,
 );
 
-/// When a business step captures the screen.
+/// A caption for a screenshot nobody named: the wall-clock time it was taken,
+/// to the millisecond — `14:32:07.481`.
 ///
-/// Every step takes a frame when it ends, and that default is the right one:
-/// the picture nobody thought to ask for is the one wanted at three in the
-/// morning when a step failed on CI. But a suite of forty steps produces forty
-/// images, and some of them show nothing worth keeping — a step that only
-/// reads a value, one whose screen is identical to the step before it, one
-/// that spends its time on a network call behind a spinner.
+/// The date is deliberately absent. A report describes ONE run, and it prints
+/// that run's date in its header, so repeating it under every image would add
+/// nine characters and no information. Milliseconds stay because they are the
+/// part that distinguishes two frames of the same second, which is exactly
+/// what a `capturing` pair produces.
 ///
-/// So the default stays and the exceptions get a name. Whatever the policy, a
-/// step can always take extra frames by hand with [BaseSteps.shot], which is
-/// how you capture a moment *inside* a step rather than at its end — the
-/// dialog before it is dismissed, the list before the filter is applied.
+/// It is a fallback and reads like one. A caption saying only *when* leaves a
+/// reader opening images to find out *what* — see [BaseSteps.shot].
+String timeStamp([DateTime? at]) {
+  final DateTime t = at ?? DateTime.now();
+  String two(int n) => n.toString().padLeft(2, '0');
+  return '${two(t.hour)}:${two(t.minute)}:${two(t.second)}'
+      '.${t.millisecond.toString().padLeft(3, '0')}';
+}
+
+/// When a business step captures the screen **on its own**.
+///
+/// [onFailure] is the default, and it draws the line in one place: while a
+/// step behaves, it photographs nothing its author did not ask for, with
+/// [BaseSteps.shot] or [BaseSteps.capturing]. Every image in a green report
+/// is then a moment somebody chose — the form as it was filled, the dialog
+/// before it was dismissed — rather than whatever happened to be on screen
+/// when a step returned.
+///
+/// The failure frame is the one exception, and it is not a policy so much as
+/// arithmetic: nobody writes a screenshot for an expectation they thought
+/// would hold. `should` throws where it fails, so that frame is the screen as
+/// the assertion found it.
+///
+/// The automatic frame reads well in a framework's README and badly in a real
+/// report. It is taken when a step ENDS, a moment nobody picked: a step that
+/// finishes by navigating photographs the screen it arrived at instead of the
+/// work it did, and the next step photographs it again. Forty steps produce
+/// forty images, of which the handful worth looking at are the ones a person
+/// would have asked for anyway.
+///
+/// The rest of this enum is how a step buys that behaviour back where it
+/// genuinely helps.
 enum Capture {
-  /// A frame when the step ends, and another if it breaks. The default.
+  /// A frame when the step ends, and another if it breaks.
+  ///
+  /// **A step that ends by navigating should not use this.** The frame is
+  /// taken when the step ends, so a step whose last action submits a form or
+  /// opens another screen photographs the DESTINATION — not what the step
+  /// did, and the same screen the next step is about to photograph. Two
+  /// identical pictures in the report, and the one that was wanted — the
+  /// filled form, the menu before it closed — never taken. Those steps want
+  /// [aroundActions] or, better, a [BaseSteps.capturing] written by hand.
   auto,
 
-  /// The default, plus a frame either side of every **click** and every
+  /// [auto], plus a frame either side of every **click** and every
   /// **clear** the step performs.
   ///
   /// For the steps where what vanishes is the point: the form as it was
@@ -77,16 +113,20 @@ enum Capture {
   /// ones.
   aroundActions,
 
-  /// Nothing while the step behaves; a frame if it breaks.
+  /// Nothing while the step behaves; a frame if it breaks. **The default.**
   ///
-  /// For steps whose end state says nothing — but whose failure still needs
-  /// to be looked at, which is every step.
+  /// The author owns every frame of a passing run, and the failure keeps the
+  /// one nobody could have placed in advance. Because `should` throws on the
+  /// spot, that frame shows the screen exactly as the failed expectation
+  /// found it — not where the step happened to end.
   onFailure,
 
   /// No frame, ever, not even on failure.
   ///
-  /// For a step that captures what it needs by hand, and for the rare one
-  /// where an automatic frame would be actively misleading.
+  /// Absolute control, and the cost is real: a step that breaks unexpectedly
+  /// leaves no picture at all. For the rare step where even a failure frame
+  /// would mislead — one that ends on a screen that says nothing about what
+  /// went wrong.
   none;
 
   /// Whether a step that behaved should be captured.
@@ -165,6 +205,12 @@ abstract final class ActionCapture {
   ///
   /// Any run of scrolls left open ends with the body: the step's own frame is
   /// the last word on where it finished.
+  ///
+  /// Note what this means for nested steps: the value is **set**, not
+  /// inherited. A step nested inside one that asked for [Capture.aroundActions]
+  /// gets its OWN policy, and the default turns the bracketing back off. So a
+  /// step containing sub-steps cannot bracket on their behalf — each one that
+  /// submits something has to say so itself.
   static Future<T> runWith<T>(bool value, Future<T> Function() body) async {
     final bool previous = _enabled;
     final bool wasScrolling = _scrolling;

@@ -32,7 +32,7 @@ void main() {
       await launchMarketApp($);
       final Steps steps = Steps($);
 
-      testParam('User', TestData.demoEmail);
+      testParam('Usuario', TestData.demoEmail);
 
       await steps.auth.login(
         email: TestData.demoEmail,
@@ -58,7 +58,7 @@ void main() {
       final Steps steps = Steps($);
 
       final DataRecord data = TestData.invalidLogin('wrongPassword');
-      testParam('User', data.string('email'));
+      testParam('Usuario', data.string('email'));
 
       await steps.auth.login(
         email: data.string('email'),
@@ -86,7 +86,7 @@ void main() {
       final Steps steps = Steps($);
 
       final DataRecord data = TestData.invalidLogin('unknownEmail');
-      testParam('User', data.string('email'));
+      testParam('Usuario', data.string('email'));
 
       await steps.auth.login(
         email: data.string('email'),
@@ -113,7 +113,7 @@ void main() {
       final Steps steps = Steps($);
 
       final DataRecord data = TestData.invalidLogin('foreignPassword');
-      testParam('User', data.string('email'));
+      testParam('Usuario', data.string('email'));
 
       await steps.auth.login(
         email: data.string('email'),
@@ -136,7 +136,7 @@ void main() {
             'correo mal formado bloquea el envío y unas credenciales bien '
             'formadas lo desbloquean.',
       );
-      testParam('Invalid email', 'not-an-email');
+      testParam('Correo inválido', 'not-an-email');
 
       await launchMarketApp($);
       final Steps steps = Steps($);

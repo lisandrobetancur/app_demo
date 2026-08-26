@@ -15,7 +15,7 @@ class CartSteps extends BaseSteps {
   final AppShellPage _shell;
 
   /// Switches to the cart tab and waits for its data state.
-  Future<void> openCart() => step('Open the cart', () async {
+  Future<void> openCart() => step('Abre el carrito', () async {
     await _shell.openCart();
     await _waitForCart();
   });
@@ -34,10 +34,14 @@ class CartSteps extends BaseSteps {
   /// datum in this layer: a step asserts what it is told to expect, and the
   /// test says with which coupon and at what percentage.
   Future<void> applyValidCoupon(String code, {required double discountPct}) =>
-      step('Apply the valid coupon $code', () async {
+      step('Aplica el cupón válido $code', () async {
         final double subtotalBefore = _cart.subtotal;
         await _cart.enterCoupon(code);
-        await _cart.applyCoupon();
+        await capturing(
+          _cart.applyCoupon,
+          before: 'El cupón $code escrito, antes de aplicarlo',
+          after: 'El carrito con el cupón aplicado',
+        );
         await $.pumpAndSettle();
 
         // Accepting the coupon and applying it correctly are different
@@ -45,17 +49,17 @@ class CartSteps extends BaseSteps {
         // discount stays at zero.
         should(
           seeThat(
-            'the coupon $code is accepted and replaces the input',
+            'El cupón $code es aceptado y reemplaza el campo de ingreso',
             () => _cart.removeCouponButton.isDisplayed,
             isTrue,
           ),
           seeThat(
-            'the subtotal is untouched by the coupon',
+            'El cupón no altera el subtotal',
             () => _cart.subtotal,
             Money.closeToAmount(subtotalBefore),
           ),
           seeThat(
-            'the discount is $discountPct% of the subtotal',
+            'El descuento es el $discountPct% del subtotal',
             () => _cart.discount.abs(),
             Money.closeToAmount(subtotalBefore * discountPct / 100),
           ),
@@ -67,7 +71,7 @@ class CartSteps extends BaseSteps {
   Future<void> applyRejectedCoupon(
     String code, {
     required String expectedMessage,
-  }) => step('Apply the rejected coupon $code', () async {
+  }) => step('Aplica el cupón rechazado $code', () async {
     await _cart.enterCoupon(code);
     await _cart.applyCoupon();
     await $.pumpAndSettle();
@@ -76,17 +80,17 @@ class CartSteps extends BaseSteps {
     // would otherwise look like no error at all.
     should(
       seeThat(
-        'the coupon $code is rejected with an inline error',
+        'El cupón $code es rechazado con un error en línea',
         () => _cart.couponErrorText.isDisplayed,
         isTrue,
       ),
       seeThat(
-        'the error for $code is the specific one, not a generic',
+        'El error de $code es el específico, no uno genérico',
         () => $(expectedMessage).exists,
         isTrue,
       ),
       seeThat(
-        'a rejected coupon discounts nothing',
+        'Un cupón rechazado no descuenta nada',
         () => _cart.discount.abs(),
         Money.closeToAmount(0),
       ),
@@ -98,12 +102,12 @@ class CartSteps extends BaseSteps {
   /// Card data is typed but never persisted — the app only stores the chosen
   /// method, so this also exercises that rule.
   Future<void> checkoutWithCard({required String addressId}) =>
-      step('Check out paying by card', () async {
+      step('Paga con tarjeta', () async {
         // On its own: a cart that cannot check out makes everything below
         // meaningless, so this one is a precondition, not part of a claim.
         should(
           seeThat(
-            'checkout is reachable with a valid cart',
+            'Se puede ir a pagar con un carrito válido',
             () => _cart.isCheckoutEnabled,
             isTrue,
           ),
@@ -111,12 +115,12 @@ class CartSteps extends BaseSteps {
         await _cart.goToCheckout();
         await _checkout.waitUntilVisible();
 
-        await step('Choose the delivery address', () async {
+        await step('Elige la dirección de entrega', () async {
           await _checkout.selectAddress(addressId);
           await _checkout.goNext();
         });
 
-        await step('Fill in the card details', () async {
+        await step('Diligencia los datos de la tarjeta', () async {
           await _checkout.selectPaymentMethod('CARD');
           await _checkout.fillCard(
             number: '4111111111111111',
@@ -126,16 +130,24 @@ class CartSteps extends BaseSteps {
           );
           should(
             seeThat(
-              'a well-formed card unlocks the summary step',
+              'Una tarjeta bien diligenciada habilita el paso de resumen',
               () => _checkout.isNextEnabled,
               isTrue,
             ),
           );
-          await _checkout.goNext();
+          await capturing(
+            _checkout.goNext,
+            before: 'La tarjeta diligenciada, antes de continuar',
+            after: 'El resumen de la compra',
+          );
         });
 
-        await step('Confirm the purchase', () async {
-          await _checkout.confirm();
+        await step('Confirma la compra', () async {
+          await capturing(
+            _checkout.confirm,
+            before: 'El resumen, justo antes de confirmar',
+            after: 'La confirmación de la compra',
+          );
           await _checkout.successView.waitUntilVisible();
         });
       });
@@ -146,16 +158,15 @@ class CartSteps extends BaseSteps {
   /// number from a route path parameter that falls back to an empty string,
   /// so a lost parameter still renders the label — `"Orden "` — and a
   /// presence check passes on an order that cannot be found again.
-  Future<void> expectOrderCreated() =>
-      step('Expect the order to be created', () async {
-        should(
-          seeThat(
-            'the success screen shows an order identifier',
-            () => _checkout.orderNumber,
-            matches(RegExp(r'^[0-9A-F]{8}$')),
-          ),
-        );
-      });
+  Future<void> expectOrderCreated() => step('Se crea la orden', () async {
+    should(
+      seeThat(
+        'La pantalla de éxito muestra un identificador de orden',
+        () => _checkout.orderNumber,
+        matches(RegExp(r'^[0-9A-F]{8}$')),
+      ),
+    );
+  });
 
   /// Asserts the totals block is arithmetically consistent.
   ///
@@ -177,7 +188,7 @@ class CartSteps extends BaseSteps {
   /// the arithmetic it is handed, and which rate the product is supposed to
   /// charge is the scenario's claim to make.
   Future<void> expectTotalsAddUp({required double taxRate}) =>
-      step('Expect the totals to add up', () async {
+      step('Los totales cuadran', () async {
         final double subtotal = _cart.subtotal;
         final double discount = _cart.discount.abs();
         final double taxable = subtotal - discount;
@@ -187,22 +198,22 @@ class CartSteps extends BaseSteps {
         // the others, and the report shows which of the four gave way.
         should(
           seeThat(
-            'the subtotal is a real amount, not an empty cart',
+            'El subtotal es un monto real, no un carrito vacío',
             () => subtotal,
             greaterThan(0),
           ),
           seeThat(
-            'the discount never exceeds the subtotal',
+            'El descuento nunca supera al subtotal',
             () => discount,
             lessThanOrEqualTo(subtotal),
           ),
           seeThat(
-            'VAT is ${(taxRate * 100).round()}% of the taxable base',
+            'El IVA es el ${(taxRate * 100).round()}% de la base gravable',
             () => _cart.tax,
             Money.closeToAmount(taxable * taxRate),
           ),
           seeThat(
-            'the total is the taxable base plus VAT',
+            'El total es la base gravable más el IVA',
             () => _cart.total,
             Money.closeToAmount(taxable + taxable * taxRate),
           ),
@@ -210,11 +221,11 @@ class CartSteps extends BaseSteps {
       });
 
   /// Asserts the cart is showing its empty state.
-  Future<void> expectEmptyCart() => step('Expect an empty cart', () async {
+  Future<void> expectEmptyCart() => step('El carrito queda vacío', () async {
     await _cart.waitUntilVisible();
     should(
       seeThat(
-        'the cart shows its empty state',
+        'El carrito muestra su estado vacío',
         () => _cart.state('empty').isDisplayed,
         isTrue,
       ),
