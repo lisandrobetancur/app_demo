@@ -86,7 +86,7 @@ void main(List<String> argv) {
 
   stdout
     ..writeln(
-      'Wrote $written SQA Reporter result(s) to ${args.output} '
+      'Wrote $written E2E Framework result(s) to ${args.output} '
       '(${args.platform})',
     )
     ..writeln(

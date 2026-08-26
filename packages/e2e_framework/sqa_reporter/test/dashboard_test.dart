@@ -47,13 +47,30 @@ void main() {
   });
 
   group('the banner', () {
-    test('names the report SQA Reporter, not the design source', () {
-      expect(
-        html,
-        contains('<title>SQA Reporter · Web E2E Test Report</title>'),
-      );
-      expect(html, contains('<span class="wordmark-sqa">SQA</span>'));
-      expect(html, contains('<span class="wordmark-name">Reporter</span>'));
+    test('marks the report with its platform, and borrows no logo', () {
+      // Drawn here, like everything else: the report asks the network for
+      // nothing, so the mark is inline SVG rather than a file to lose.
+      expect(html, contains('<svg class="platform-mark"'));
+      // It takes the title's ink and the title's size, so the pair stays one
+      // thing wherever the layout puts it.
+      expect(html, contains('stroke="currentColor"'));
+      // Decorative: the words beside it already name the platform, and a
+      // reader hearing both would hear it twice.
+      expect(html, contains('aria-hidden="true"'));
+
+      // The three differ, which is the whole point of having them.
+      expect(platformMark('web'), isNot(platformMark('android')));
+      expect(platformMark('android'), isNot(platformMark('ios')));
+
+      // An unnamed platform gets no mark rather than a wrong one — the title
+      // already shows the raw value, which is how a typo is spotted.
+      expect(platformMark('macos'), isEmpty);
+    });
+
+    test('names the report E2E Framework, not the design source', () {
+      expect(html, contains('<title>E2E Framework · Web Test Report</title>'));
+      expect(html, contains('<span class="wordmark-lead">E2E</span>'));
+      expect(html, contains('<span class="wordmark-name">Framework</span>'));
     });
 
     test('the wordmark links home, mark and all', () {
@@ -71,10 +88,10 @@ void main() {
     });
 
     test('carries one title line, worded by platform', () {
-      expect(html, contains('Web E2E Test Report'));
-      expect(projectTitleFor('web'), 'Web E2E Test Report');
-      expect(projectTitleFor('android'), 'Android E2E Test Report');
-      expect(projectTitleFor('ios'), 'iOS E2E Test Report');
+      expect(html, contains('Web Test Report'));
+      expect(projectTitleFor('web'), 'Web Test Report');
+      expect(projectTitleFor('android'), 'Android Test Report');
+      expect(projectTitleFor('ios'), 'iOS Test Report');
       expect(
         html,
         isNot(contains('projectsubtitle')),
@@ -84,8 +101,8 @@ void main() {
 
     test('an unexpected platform is named after itself, not filed under one '
         'of the three', () {
-      expect(projectTitleFor('macos'), 'Macos E2E Test Report');
-      expect(projectTitleFor(''), 'E2E Test Report');
+      expect(projectTitleFor('macos'), 'Macos Test Report');
+      expect(projectTitleFor(''), 'Test Report');
     });
   });
 
@@ -446,6 +463,12 @@ void main() {
         '${out.path}/results/sqa-reporter.css',
       ).readAsStringSync();
       expect(css, contains('.lightbox[hidden] { display: none; }'));
+      // The arrows sit beside the picture, not on it: a capture of a form has
+      // content at both edges, and the padding is what keeps a wide image
+      // from running underneath them.
+      expect(css, contains('.lightbox-prev'));
+      expect(css, contains('.lightbox-next'));
+      expect(css, contains('padding: 3.5rem 4.75rem 2rem 4.75rem;'));
       expect(css, contains('.slides img { cursor: zoom-in; }'));
     });
 
