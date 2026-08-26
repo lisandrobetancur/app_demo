@@ -15,5 +15,5 @@ abstract final class Epics {
   static const Epic access = Epic('Autenticación y Gestión de Usuarios');
 
   /// Finding something and paying for it — the path the business lives on.
-  static const Epic purchase = Epic('Purchase');
+  static const Epic purchase = Epic('Compra y Pago');
 }

@@ -49,29 +49,29 @@ class AuthSteps extends BaseSteps {
     );
   });
 
-  Future<void> expectLoginRejected() =>
-      step('Expect the login to be rejected', () async {
-        should(
-          seeThat(
-            'a failed login keeps the user on the login screen',
-            () => _login.isVisible,
-            isTrue,
-          ),
-          seeThat(
-            'a failed login does not reach the dashboard',
-            () => _dashboard.isVisible,
-            isFalse,
-          ),
-        );
-      });
+  Future<void>
+  expectLoginRejected() => step('Se rechaza el inicio de sesión', () async {
+    should(
+      seeThat(
+        'Un inicio de sesión fallido deja al usuario en la pantalla de ingreso',
+        () => _login.isVisible,
+        isTrue,
+      ),
+      seeThat(
+        'Un inicio de sesión fallido no llega al dashboard',
+        () => _dashboard.isVisible,
+        isFalse,
+      ),
+    );
+  });
 
   /// Asserts the visible error message — the app never reveals whether the
   /// email exists, so both wrong-email and wrong-password show this one.
   Future<void> expectGenericCredentialsError() =>
-      step('Expect the generic credentials error', () async {
+      step('Se muestra el error genérico de credenciales', () async {
         should(
           seeThat(
-            'invalid credentials show the generic inline error',
+            'Unas credenciales inválidas muestran el error genérico en línea',
             () => _login.hasErrorText('Correo o contraseña incorrectos'),
             isTrue,
           ),
@@ -79,16 +79,15 @@ class AuthSteps extends BaseSteps {
       });
 
   /// Walks the three onboarding slides and finishes on the last one.
-  Future<void> completeOnboarding() =>
-      step('Complete the onboarding', () async {
-        await _onboarding.waitUntilVisible();
-        await _onboarding.next();
-        await _onboarding.next();
-        await _onboarding.start();
-      });
+  Future<void> completeOnboarding() => step('Completa el onboarding', () async {
+    await _onboarding.waitUntilVisible();
+    await _onboarding.next();
+    await _onboarding.next();
+    await _onboarding.start();
+  });
 
   /// Skips the onboarding from the first slide.
-  Future<void> skipOnboarding() => step('Skip the onboarding', () async {
+  Future<void> skipOnboarding() => step('Omite el onboarding', () async {
     await _onboarding.waitUntilVisible();
     await _onboarding.skip();
   });
@@ -97,13 +96,13 @@ class AuthSteps extends BaseSteps {
   Future<void> expectSubmitDisabledFor({
     required String email,
     required String password,
-  }) => step('Expect submission blocked for "$email"', () async {
+  }) => step('Se bloquea el envío para "$email"', () async {
     await _login.waitUntilVisible();
     await _login.enterEmail(email);
     await _login.enterPassword(password);
     should(
       seeThat(
-        'live validation blocks submission for "$email"',
+        'La validación en vivo bloquea el envío para "$email"',
         () => _login.isSubmitEnabled,
         isFalse,
       ),
@@ -123,13 +122,13 @@ class AuthSteps extends BaseSteps {
   Future<void> expectSubmitEnabledFor({
     required String email,
     required String password,
-  }) => step('Expect submission unlocked for "$email"', () async {
+  }) => step('Se habilita el envío para "$email"', () async {
     await _login.waitUntilVisible();
     await _login.enterEmail(email);
     await _login.enterPassword(password);
     should(
       seeThat(
-        'live validation unlocks submission for "$email"',
+        'La validación en vivo habilita el envío para "$email"',
         () => _login.isSubmitEnabled,
         isTrue,
       ),
