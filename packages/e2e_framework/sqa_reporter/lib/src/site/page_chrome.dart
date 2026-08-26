@@ -4,7 +4,7 @@
 library;
 
 import 'dashboard.dart' show escapeHtml, projectTitleFor;
-import 'site_assets.dart' show wordmarkMark;
+import 'site_assets.dart' show platformMark, wordmarkMark;
 
 /// The document head — same stylesheet, same icon, every page.
 ///
@@ -37,7 +37,7 @@ String banner(String platform) =>
       <span class="wordmark-text"><span class="wordmark-lead">E2E</span><span class="wordmark-name">Framework</span></span>
     </a>
     <div class="projectname">
-      <span class="projecttitle">${escapeHtml(projectTitleFor(platform))}</span>
+      <span class="projecttitle">${platformMark(platform)}${escapeHtml(projectTitleFor(platform))}</span>
     </div>
   </div>
 </div>

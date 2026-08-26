@@ -47,6 +47,26 @@ void main() {
   });
 
   group('the banner', () {
+    test('marks the report with its platform, and borrows no logo', () {
+      // Drawn here, like everything else: the report asks the network for
+      // nothing, so the mark is inline SVG rather than a file to lose.
+      expect(html, contains('<svg class="platform-mark"'));
+      // It takes the title's ink and the title's size, so the pair stays one
+      // thing wherever the layout puts it.
+      expect(html, contains('stroke="currentColor"'));
+      // Decorative: the words beside it already name the platform, and a
+      // reader hearing both would hear it twice.
+      expect(html, contains('aria-hidden="true"'));
+
+      // The three differ, which is the whole point of having them.
+      expect(platformMark('web'), isNot(platformMark('android')));
+      expect(platformMark('android'), isNot(platformMark('ios')));
+
+      // An unnamed platform gets no mark rather than a wrong one — the title
+      // already shows the raw value, which is how a typo is spotted.
+      expect(platformMark('macos'), isEmpty);
+    });
+
     test('names the report E2E Framework, not the design source', () {
       expect(html, contains('<title>E2E Framework · Web Test Report</title>'));
       expect(html, contains('<span class="wordmark-lead">E2E</span>'));

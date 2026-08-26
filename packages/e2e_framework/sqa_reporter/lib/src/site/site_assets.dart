@@ -108,6 +108,63 @@ const String wordmarkMark = '''
 <rect x="13.5" y="27" width="13" height="2.2" rx="1.1" fill="#d7dde6"/>
 </svg>''';
 
+/// The mark beside the report's title, one per platform.
+///
+/// Drawn here rather than fetched, like everything else the report shows: the
+/// site asks the network for nothing, so a logo would have to be a file, and
+/// a file is one more thing to lose.
+///
+/// **None of these is a vendor's logo, and that is deliberate.** The robot
+/// and the fruit are trademarks, and this repository already decided it
+/// carries no marks it does not own. What a reader needs is to tell three
+/// reports apart at a glance, and the devices themselves do that: a browser
+/// window has a chrome bar, one handset has a punch-hole camera and a home
+/// bar, the other has a notch. Recognisable without borrowing anything.
+///
+/// Sized in `em` so the mark scales with the title it sits beside, and drawn
+/// in `currentColor` so it takes the title's ink — including wherever that
+/// colour changes. Decorative: the title spells the platform out, so a screen
+/// reader that announced the drawing too would only say it twice.
+String platformMark(String platform) => switch (platform) {
+  'web' => _mark(
+    '<rect x="2.5" y="4" width="19" height="16" rx="2.5"/>'
+    '<path d="M2.5 8.5h19"/>'
+    '<circle cx="5.6" cy="6.25" r="0.75" fill="currentColor" stroke="none"/>'
+    '<circle cx="8.1" cy="6.25" r="0.75" fill="currentColor" stroke="none"/>'
+    '<circle cx="10.6" cy="6.25" r="0.75" fill="currentColor" stroke="none"/>',
+  ),
+  // A square-shouldered handset with a screen drawn inside it and a nav bar
+  // across the bottom.
+  //
+  // The difference from [ios] is deliberately coarse. Both are phones, and at
+  // the size this is read — around twenty pixels beside a title — a punch-hole
+  // camera against a notch is a distinction nobody can see. What survives
+  // that size is silhouette and one big interior shape, so these two differ in
+  // corner radius, in what crosses the top edge, and in what sits at the
+  // bottom.
+  'android' => _mark(
+    '<rect x="5.5" y="2.5" width="13" height="19" rx="1.6"/>'
+    '<path d="M5.5 5.6h13"/>'
+    '<path d="M5.5 18h13"/>'
+    '<path d="M9.5 20h5"/>',
+  ),
+  // A soft-cornered handset with a wide notch biting into the top edge.
+  'ios' => _mark(
+    '<rect x="6" y="2.5" width="12" height="19" rx="4"/>'
+    '<path d="M9.4 2.5h5.2v1.1a1.4 1.4 0 0 1-1.4 1.4h-2.4a1.4 1.4 0 0 1-1.4-1.4z" '
+    'fill="currentColor" stroke="none"/>'
+    '<path d="M10 19.4h4"/>',
+  ),
+  // An unnamed platform gets no mark rather than a wrong one: the title
+  // already shows the raw value, which is how an unexpected one is spotted.
+  _ => '',
+};
+
+String _mark(String body) =>
+    '<svg class="platform-mark" viewBox="0 0 24 24" fill="none" '
+    'stroke="currentColor" stroke-width="1.6" stroke-linecap="round" '
+    'stroke-linejoin="round" aria-hidden="true" focusable="false">$body</svg>';
+
 /// The screenshot viewer's markup, on every page that shows a capture.
 ///
 /// One per page rather than one per picture: it shows whichever was clicked,
@@ -245,13 +302,23 @@ a:hover { text-decoration: underline; }
    banner look deliberate rather than merely opposite. */
 .projectname { text-align: right; }
 .projecttitle {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
   font-size: 1.35rem;
   font-weight: 600;
   letter-spacing: 0.01em;
   color: var(--title);
   padding-bottom: 0.25em;
   border-bottom: 2px solid var(--pass);
+}
+
+/* Scales with the title rather than pinned to a pixel size, so the pair still
+   reads as one thing at the smaller title the narrow layout uses. */
+.platform-mark {
+  width: 1.05em;
+  height: 1.05em;
+  flex: none;
 }
 
 /* ── Content frame ──────────────────────────────────────────────────── */
