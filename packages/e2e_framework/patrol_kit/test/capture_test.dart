@@ -47,20 +47,32 @@ void main() {
     });
   });
 
-  group('the default', () {
-    test('captures a step that behaved and one that broke', () {
+  group('a step that asks for the end-of-step frame', () {
+    test('captures one that behaved and one that broke', () {
       expect(Capture.auto.capturesOnSuccess, isTrue);
       expect(Capture.auto.capturesOnFailure, isTrue);
     });
   });
 
-  group('a step that says nothing while it behaves', () {
-    test('still gets its picture when it breaks', () {
-      expect(Capture.onFailure.capturesOnSuccess, isFalse);
+  group('the default', () {
+    // Pinned, because it is a decision rather than an accident: the author
+    // places every frame of a passing run by hand, and the one nobody can
+    // place — the screen as a failed expectation found it — is automatic.
+    test('says nothing while a step behaves', () {
+      expect(BaseSteps.defaultCapture, Capture.onFailure);
+      expect(BaseSteps.defaultCapture.capturesOnSuccess, isFalse);
       expect(
-        Capture.onFailure.capturesOnFailure,
+        BaseSteps.defaultCapture.bracketsActions,
+        isFalse,
+        reason: 'a frame either side of every click is opt-in, not the default',
+      );
+    });
+
+    test('still gets its picture when it breaks', () {
+      expect(
+        BaseSteps.defaultCapture.capturesOnFailure,
         isTrue,
-        reason: 'a failure with no picture is the case screenshots exist for',
+        reason: 'nobody writes a shot for an expectation they thought held',
       );
     });
   });

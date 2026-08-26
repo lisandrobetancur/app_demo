@@ -25,18 +25,20 @@ class AuthSteps extends BaseSteps {
   // difference between a report and a leak. The obscured field keeps it out
   // of the screenshots; this keeps it out of the text.
   //
-  // `aroundActions` and not the default, because this step SUBMITS: its last
-  // action navigates away, so the frame a step takes when it ends would show
-  // the dashboard — the same screen the next step photographs, and nothing of
-  // what this step did. Bracketing the click gives the frame that matters:
-  // the form as it was filled, taken as the *before* of the tap that sends it.
-  Future<void> login({required String email, required String password}) => step(
-    'Ingresa el email: $email y la contraseña',
-    capture: Capture.aroundActions,
-    () async {
-      await _login.login(email: email, password: password);
-    },
-  );
+  // The two frames are named here, and they are the two this step is worth:
+  // the credentials as they were typed — which the submit is about to replace
+  // — and whatever the submit produced, be it the dashboard or an error under
+  // the form. Written out rather than left to a policy, because the moment
+  // that matters in a step is not one a rule can find.
+  Future<void> login({required String email, required String password}) =>
+      step('Ingresa el email: $email y la contraseña', () async {
+        await _login.fillCredentials(email: email, password: password);
+        await capturing(
+          _login.submit,
+          before: 'Las credenciales digitadas, antes de enviar',
+          after: 'Lo que produjo el envío',
+        );
+      });
 
   /// Asserts the session actually opened: the dashboard is on screen and
   /// greets [fullName].

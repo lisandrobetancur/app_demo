@@ -63,6 +63,20 @@ class LoginPage extends BasePage {
 
   Future<void> submit() => submitButton.click();
 
+  /// Fills the form and stops there, with the credentials on screen.
+  ///
+  /// Split from [login] so a caller can get between the filling and the
+  /// sending — which is where the screenshot worth taking lives, since the
+  /// submit is what replaces that screen.
+  Future<void> fillCredentials({
+    required String email,
+    required String password,
+  }) async {
+    await waitUntilVisible();
+    await enterEmail(email);
+    await enterPassword(password);
+  }
+
   /// The screen's own flow: fill the form and send it.
   ///
   /// Lives here and not in the steps layer because everything it touches is
@@ -70,9 +84,7 @@ class LoginPage extends BasePage {
   /// submission *led to* is not this page's business: the caller asserts
   /// that, on whatever screen the app answers with.
   Future<void> login({required String email, required String password}) async {
-    await waitUntilVisible();
-    await enterEmail(email);
-    await enterPassword(password);
+    await fillCredentials(email: email, password: password);
     await submit();
   }
 

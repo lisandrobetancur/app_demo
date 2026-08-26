@@ -34,72 +34,68 @@ class CartSteps extends BaseSteps {
   /// datum in this layer: a step asserts what it is told to expect, and the
   /// test says with which coupon and at what percentage.
   Future<void> applyValidCoupon(String code, {required double discountPct}) =>
-      step(
-        'Aplica el cupón válido $code',
-        capture: Capture.aroundActions,
-        () async {
-          final double subtotalBefore = _cart.subtotal;
-          await _cart.enterCoupon(code);
-          await _cart.applyCoupon();
-          await $.pumpAndSettle();
+      step('Aplica el cupón válido $code', () async {
+        final double subtotalBefore = _cart.subtotal;
+        await _cart.enterCoupon(code);
+        await capturing(
+          _cart.applyCoupon,
+          before: 'El cupón $code escrito, antes de aplicarlo',
+          after: 'El carrito con el cupón aplicado',
+        );
+        await $.pumpAndSettle();
 
-          // Accepting the coupon and applying it correctly are different
-          // claims that fail apart: the applied-coupon row can appear while the
-          // discount stays at zero.
-          should(
-            seeThat(
-              'El cupón $code es aceptado y reemplaza el campo de ingreso',
-              () => _cart.removeCouponButton.isDisplayed,
-              isTrue,
-            ),
-            seeThat(
-              'El cupón no altera el subtotal',
-              () => _cart.subtotal,
-              Money.closeToAmount(subtotalBefore),
-            ),
-            seeThat(
-              'El descuento es el $discountPct% del subtotal',
-              () => _cart.discount.abs(),
-              Money.closeToAmount(subtotalBefore * discountPct / 100),
-            ),
-          );
-        },
-      );
+        // Accepting the coupon and applying it correctly are different
+        // claims that fail apart: the applied-coupon row can appear while the
+        // discount stays at zero.
+        should(
+          seeThat(
+            'El cupón $code es aceptado y reemplaza el campo de ingreso',
+            () => _cart.removeCouponButton.isDisplayed,
+            isTrue,
+          ),
+          seeThat(
+            'El cupón no altera el subtotal',
+            () => _cart.subtotal,
+            Money.closeToAmount(subtotalBefore),
+          ),
+          seeThat(
+            'El descuento es el $discountPct% del subtotal',
+            () => _cart.discount.abs(),
+            Money.closeToAmount(subtotalBefore * discountPct / 100),
+          ),
+        );
+      });
 
   /// Applies a coupon expected to fail and asserts the differentiated inline
   /// error is shown with [expectedMessage].
   Future<void> applyRejectedCoupon(
     String code, {
     required String expectedMessage,
-  }) => step(
-    'Aplica el cupón rechazado $code',
-    capture: Capture.aroundActions,
-    () async {
-      await _cart.enterCoupon(code);
-      await _cart.applyCoupon();
-      await $.pumpAndSettle();
-      // "An error appeared" and "it is the *right* error" fail for
-      // different reasons, so a generic message replacing a specific one
-      // would otherwise look like no error at all.
-      should(
-        seeThat(
-          'El cupón $code es rechazado con un error en línea',
-          () => _cart.couponErrorText.isDisplayed,
-          isTrue,
-        ),
-        seeThat(
-          'El error de $code es el específico, no uno genérico',
-          () => $(expectedMessage).exists,
-          isTrue,
-        ),
-        seeThat(
-          'Un cupón rechazado no descuenta nada',
-          () => _cart.discount.abs(),
-          Money.closeToAmount(0),
-        ),
-      );
-    },
-  );
+  }) => step('Aplica el cupón rechazado $code', () async {
+    await _cart.enterCoupon(code);
+    await _cart.applyCoupon();
+    await $.pumpAndSettle();
+    // "An error appeared" and "it is the *right* error" fail for
+    // different reasons, so a generic message replacing a specific one
+    // would otherwise look like no error at all.
+    should(
+      seeThat(
+        'El cupón $code es rechazado con un error en línea',
+        () => _cart.couponErrorText.isDisplayed,
+        isTrue,
+      ),
+      seeThat(
+        'El error de $code es el específico, no uno genérico',
+        () => $(expectedMessage).exists,
+        isTrue,
+      ),
+      seeThat(
+        'Un cupón rechazado no descuenta nada',
+        () => _cart.discount.abs(),
+        Money.closeToAmount(0),
+      ),
+    );
+  });
 
   /// Runs the three checkout steps and confirms the purchase.
   ///
@@ -119,45 +115,41 @@ class CartSteps extends BaseSteps {
         await _cart.goToCheckout();
         await _checkout.waitUntilVisible();
 
-        await step(
-          'Elige la dirección de entrega',
-          capture: Capture.aroundActions,
-          () async {
-            await _checkout.selectAddress(addressId);
-            await _checkout.goNext();
-          },
-        );
+        await step('Elige la dirección de entrega', () async {
+          await _checkout.selectAddress(addressId);
+          await _checkout.goNext();
+        });
 
-        await step(
-          'Diligencia los datos de la tarjeta',
-          capture: Capture.aroundActions,
-          () async {
-            await _checkout.selectPaymentMethod('CARD');
-            await _checkout.fillCard(
-              number: '4111111111111111',
-              holder: 'ANA MARIN',
-              expiry: '12/29',
-              cvv: '123',
-            );
-            should(
-              seeThat(
-                'Una tarjeta bien diligenciada habilita el paso de resumen',
-                () => _checkout.isNextEnabled,
-                isTrue,
-              ),
-            );
-            await _checkout.goNext();
-          },
-        );
+        await step('Diligencia los datos de la tarjeta', () async {
+          await _checkout.selectPaymentMethod('CARD');
+          await _checkout.fillCard(
+            number: '4111111111111111',
+            holder: 'ANA MARIN',
+            expiry: '12/29',
+            cvv: '123',
+          );
+          should(
+            seeThat(
+              'Una tarjeta bien diligenciada habilita el paso de resumen',
+              () => _checkout.isNextEnabled,
+              isTrue,
+            ),
+          );
+          await capturing(
+            _checkout.goNext,
+            before: 'La tarjeta diligenciada, antes de continuar',
+            after: 'El resumen de la compra',
+          );
+        });
 
-        await step(
-          'Confirma la compra',
-          capture: Capture.aroundActions,
-          () async {
-            await _checkout.confirm();
-            await _checkout.successView.waitUntilVisible();
-          },
-        );
+        await step('Confirma la compra', () async {
+          await capturing(
+            _checkout.confirm,
+            before: 'El resumen, justo antes de confirmar',
+            after: 'La confirmación de la compra',
+          );
+          await _checkout.successView.waitUntilVisible();
+        });
       });
 
   /// Asserts the success screen shows a real order identifier.

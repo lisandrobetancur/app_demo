@@ -34,33 +34,54 @@ abstract class BaseSteps {
 
   static int _sequence = 0;
 
+  /// What [step] does about screenshots when it is not told otherwise.
+  ///
+  /// Named rather than written inline so the decision has somewhere to be
+  /// stated and somewhere to be tested — see `test/capture_test.dart`.
+  static const Capture defaultCapture = Capture.onFailure;
+
   /// Runs [body] as a named business step.
   ///
-  /// The screenshot is taken after [body] settles, so the image shows the
-  /// state the step produced. A failing step still emits its `end` marker
-  /// (and its screenshot) before the error propagates, so the report shows
-  /// what the screen looked like when it broke.
-  ///
-  /// [capture] decides whether that automatic frame is taken at all. The
-  /// default keeps it; [Capture.onFailure] drops it while the step behaves,
-  /// and [Capture.none] drops it entirely — for a step that takes its own
-  /// with [shot]:
+  /// **No screenshot is taken unless the step asks for one.** Every frame in
+  /// the report is one somebody chose, with [shot] or [capturing], at the
+  /// moment they wanted it:
   ///
   /// ```dart
-  /// await step('Apply the coupon', capture: Capture.none, () async {
-  ///   await cart.openCouponField();
-  ///   await shot('coupon field, before typing');
-  ///   await cart.applyCoupon(TestData.validCoupon);
-  ///   await shot('coupon applied');
+  /// await step('Aplica el cupón', () async {
+  ///   await cart.enterCoupon(code);
+  ///   await capturing(
+  ///     () => cart.applyCoupon(),
+  ///     before: 'El cupón escrito, antes de aplicar',
+  ///     after: 'El descuento aplicado',
+  ///   );
   /// });
   /// ```
+  ///
+  /// This is a deliberate default, and it is the opposite of what most
+  /// frameworks do. An automatic frame is taken when the step *ends*, which
+  /// is a moment nobody chose: a step that finishes by navigating
+  /// photographs the screen it arrived at rather than the work it did, and a
+  /// report full of such frames costs a reader more time than it saves. The
+  /// author knows which moment is worth a picture; the framework does not.
+  ///
+  /// **A failed expectation is the exception, and it needs no help from the
+  /// author.** [should] evaluates and throws on the spot, so the error
+  /// travels straight from the failed expectation to the catch below with
+  /// nothing running in between: the frame taken there is the screen exactly
+  /// as the assertion found it. Nobody can place that shot by hand — the
+  /// whole point is that it was not expected — so [Capture.onFailure] is the
+  /// default and that one frame stays.
+  ///
+  /// [capture] is how a step changes the rest: [Capture.auto] brings back the
+  /// end-of-step frame, [Capture.aroundActions] brackets every click, and
+  /// [Capture.none] gives up even the failure frame.
   ///
   /// A step that ends badly is reported as **failed** or **broken**, never
   /// just "red" — see [stepOutcomeOf].
   Future<T> step<T>(
     String name,
     Future<T> Function() body, {
-    Capture capture = Capture.auto,
+    Capture capture = defaultCapture,
   }) async {
     final int id = _sequence++;
     debugPrintSynchronously('$_marker|begin|$id|$name');
@@ -132,8 +153,7 @@ abstract class BaseSteps {
   ///
   /// The [after] frame is taken even if [action] throws — that is the case
   /// the pair exists for. When the action is the last thing a step does, that
-  /// frame and the step's own automatic one show the same screen; pass
-  /// `capture: Capture.none` to [step] to keep just this one.
+  /// frame is the last word on what the step produced.
   Future<T> capturing<T>(
     Future<T> Function() action, {
     required String before,
