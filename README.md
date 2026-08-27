@@ -327,12 +327,14 @@ part of running rather than a step someone has to remember:
 melos run e2eWeb                  # headless, Playwright's bundled Chromium
 melos run e2eWebHeaded            # visible browser
 melos run e2eAndroid              # connected Android device
+melos run e2eIos                  # iOS simulator (macOS only)
 
 melos run e2eWebSmoke             # only --tags "smoke_test"
 melos run e2eWebNegative          # only --tags "negative"
 
 melos run e2eWebWip               # only the tests being worked on
 melos run e2eAndroidWip           # the same, on a device
+melos run e2eIosWip               # the same, on a simulator
 
 melos run e2eWebChrome            # installed Google Chrome
 melos run e2eWebEdge              # installed Microsoft Edge
@@ -372,6 +374,7 @@ different decisions and CI only ever wants the first:
 ```bash
 melos run openReportWeb              # open build/e2e/web/e2e_test_reporter/report
 melos run openReportAndroid
+melos run openReportIos
 
 melos run e2eWebReport            # run, then open
 melos run e2eWebHeadedReport
@@ -383,6 +386,7 @@ suite — for when you changed the generator and want to see the effect:
 ```bash
 melos run reportWeb
 melos run reportAndroid
+melos run reportIos
 ```
 
 Cleaning on its own. Per platform, because a web report and a device report
@@ -768,6 +772,15 @@ therefore reads logcat in parallel with the run. Logcat is also a ring buffer
 that drops lines under load, so the script raises it to 16 MB before starting;
 the converter skips a screenshot whose chunks are incomplete rather than failing
 the report.
+
+`run_ios.sh` does the same job through a different pipe, and the two
+differences are worth stating. `log stream` is a live tap with no history
+behind it — anything printed before it attaches is simply gone — so it starts
+*before* the run rather than clearing a buffer first. And os_log throttles a
+process that floods it, dropping lines with no gap marker, which is exactly
+the shape a chunked screenshot has; there is no `logcat -G 16M` to buy
+headroom, so the script narrows the predicate to the app's own bundle id and
+CI's `assertion_summary` step is what turns a silent loss into a red build.
 
 **The AndroidX test orchestrator is required**, and not for the usual reason. It
 is normally described as the way to get `clearPackageData` between tests, which

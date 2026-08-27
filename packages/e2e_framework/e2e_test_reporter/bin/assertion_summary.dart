@@ -83,7 +83,36 @@ void main(List<String> argv) {
     ..writeln();
 
   if (rows.isEmpty) {
-    stdout.writeln('No scenarios in ${args.input}. Nothing to summarize.');
+    // A run that EXISTS and holds no scenarios is the opposite of the absent
+    // file handled above, and for a while this treated them alike — printed
+    // "nothing to summarize" and exited green. That is the whole failure this
+    // step was written to prevent, committed by the step itself: the transport
+    // dropped every marker, the report came out empty, and the build went
+    // green because the guard called it a non-event.
+    //
+    // It happened on iOS, with the log stream's predicate matching nothing:
+    // eight scenarios passed on the simulator and the report described none of
+    // them. The suite's own exit code cannot catch this — the tests really did
+    // pass — so this is the only place that can.
+    out
+      ..writeln('> [!CAUTION]')
+      ..writeln('> **The run at `${args.input}` contains no scenarios.**')
+      ..writeln('>')
+      ..writeln(
+        '> The file is there, so something ran — but nothing survived the '
+        'trip into',
+      )
+      ..writeln(
+        '> the report, which therefore describes nothing. This is transport, '
+        'not tests:',
+      )
+      ..writeln(
+        '> check that the log capture matched the app (the predicate on iOS, '
+        'the',
+      )
+      ..writeln('> logcat filter on Android) and that the file is not empty.');
+    stdout.write(out);
+    exitCode = 1;
     return;
   }
 
@@ -171,9 +200,17 @@ class _Args {
       }
     }
     platform ??= 'web';
-    input ??= platform == 'web'
-        ? '${_repoRoot()}/build/e2e/web/playwright/results.json'
-        : '${_repoRoot()}/build/e2e/$platform/android_run.log';
+    // One log name per platform, and not a shared one: this defaulted to
+    // `android_run.log` for every device platform, so `--platform ios` looked
+    // inside the iOS directory for Android's file and reported "no run" on a
+    // suite that had run perfectly. This step exists to catch markers that
+    // never arrived — it looking in the wrong place was the same silence it
+    // is meant to break.
+    input ??= switch (platform) {
+      'web' => '${_repoRoot()}/build/e2e/web/playwright/results.json',
+      'ios' => '${_repoRoot()}/build/e2e/ios/ios_run.log',
+      _ => '${_repoRoot()}/build/e2e/$platform/android_run.log',
+    };
     format ??= input.endsWith('.json') ? 'playwright' : 'patrol-log';
     return _Args(input: input, format: format, platform: platform);
   }

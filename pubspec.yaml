@@ -116,6 +116,9 @@ melos:
     # machine tidy but takes the evidence of what just failed with it.
     e2eWeb: bash packages/e2e_framework/tool/e2e/run_web.sh
     e2eAndroid: bash packages/e2e_framework/tool/e2e/run_android.sh
+    # macOS only: it needs Xcode and a simulator. On any other machine the
+    # script says so and stops, rather than failing later in Xcode's words.
+    e2eIos: bash packages/e2e_framework/tool/e2e/run_ios.sh
 
     # With a visible browser, to watch it drive the app.
     e2eWebHeaded: bash packages/e2e_framework/tool/e2e/run_web.sh --headed
@@ -140,12 +143,17 @@ melos:
     e2eAndroidRegression: bash packages/e2e_framework/tool/e2e/run_android.sh --tags=regression
     e2eAndroidNegative: bash packages/e2e_framework/tool/e2e/run_android.sh --tags=negative
 
+    e2eIosSmoke: bash packages/e2e_framework/tool/e2e/run_ios.sh --tags=smoke_test
+    e2eIosRegression: bash packages/e2e_framework/tool/e2e/run_ios.sh --tags=regression
+    e2eIosNegative: bash packages/e2e_framework/tool/e2e/run_ios.sh --tags=negative
+
     # A test tagged `wip` is registered as skipped by `e2eTest` itself, so it
     # reaches the report — counted under Skipped, with a pale row — without
     # its body ever running. This is the way back in: the tests being worked
     # on, and only those, compiled without the skip.
     e2eWebWip: bash packages/e2e_framework/tool/e2e/run_web.sh --wip
     e2eAndroidWip: bash packages/e2e_framework/tool/e2e/run_android.sh --wip
+    e2eIosWip: bash packages/e2e_framework/tool/e2e/run_ios.sh --wip
 
     # On a browser installed here rather than the Chromium Playwright ships.
     # Useful for the differences a bundled build hides — codecs, fonts, the
@@ -157,9 +165,10 @@ melos:
 
     # Cleanup only, for when you want to zero a platform without running
     # anything.
-    e2eClean: bash packages/e2e_framework/tool/e2e/clean.sh web && bash packages/e2e_framework/tool/e2e/clean.sh android
+    e2eClean: bash packages/e2e_framework/tool/e2e/clean.sh web && bash packages/e2e_framework/tool/e2e/clean.sh android && bash packages/e2e_framework/tool/e2e/clean.sh ios
     e2eCleanWeb: bash packages/e2e_framework/tool/e2e/clean.sh web
     e2eCleanAndroid: bash packages/e2e_framework/tool/e2e/clean.sh android
+    e2eCleanIos: bash packages/e2e_framework/tool/e2e/clean.sh ios
 
     # Run and also OPEN the report. `e2eWeb` already builds it; this only adds
     # the opening on top.
@@ -189,5 +198,7 @@ melos:
     # thing to remember to stop.
     reportWeb: dart run e2e_test_reporter --input build/e2e/web/playwright/results.json --platform web
     reportAndroid: dart run e2e_test_reporter --input build/e2e/android/android_run.log --format patrol-log --platform android
+    reportIos: dart run e2e_test_reporter --input build/e2e/ios/ios_run.log --format patrol-log --platform ios
     openReportWeb: bash packages/e2e_framework/tool/e2e/open_report.sh build/e2e/web/e2e_test_reporter/report/index.html
     openReportAndroid: bash packages/e2e_framework/tool/e2e/open_report.sh build/e2e/android/e2e_test_reporter/report/index.html
+    openReportIos: bash packages/e2e_framework/tool/e2e/open_report.sh build/e2e/ios/e2e_test_reporter/report/index.html
