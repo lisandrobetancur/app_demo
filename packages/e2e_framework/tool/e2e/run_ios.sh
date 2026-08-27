@@ -223,11 +223,30 @@ echo "Running on $DEVICE_NAME ($DEVICE)"
 # simulator says is noise, and noise is what gets the app's own lines
 # throttled away.
 #
+# IT NARROWS BY PROCESS, NOT BY BUNDLE ID, and that correction cost a run.
+# The first version asked for `subsystem == <bundle id> OR processImagePath
+# CONTAINS <bundle id>`, which reads plausibly and matches nothing:
+#
+#   * the executable's path is …/Runner.app/Runner — the bundle id appears
+#     nowhere in it, so CONTAINS never fires;
+#   * Dart's `print` reaches the unified log through the Flutter engine, which
+#     logs under its own subsystem, not the app's identifier.
+#
+# So the suite passed eight scenarios on the simulator and the log came back
+# with one line. The process name is what actually identifies it — every
+# Flutter iOS app builds an executable called Runner, an assumption Patrol
+# already makes everywhere (`-scheme Runner`, `RunnerUITests/RunnerUITests`).
+# The bundle id stays as a second branch: it costs nothing and covers anything
+# the app logs under its own subsystem directly.
+#
 # `--style compact` keeps one line per message: the parser reads markers line
-# by line, and the default style wraps.
+# by line, and the default style wraps. It is also the style whose lines look
+# like `… Runner[pid] (Flutter) PATROL_LOG {…}` — the shape patrol_cli itself
+# parses on this platform, which is the evidence that this is the right pipe.
+APP_PROCESS=Runner
 xcrun simctl spawn "$DEVICE" log stream \
   --style compact \
-  --predicate "subsystem == \"$BUNDLE_ID\" OR processImagePath CONTAINS \"$BUNDLE_ID\"" \
+  --predicate "process == \"$APP_PROCESS\" OR subsystem == \"$BUNDLE_ID\"" \
   > "$LOG" 2>/dev/null &
 LOG_PID=$!
 trap 'kill "$LOG_PID" 2>/dev/null || true' EXIT
