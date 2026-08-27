@@ -4,6 +4,7 @@
 #
 #   packages/e2e_framework/tool/e2e/clean.sh web
 #   packages/e2e_framework/tool/e2e/clean.sh android
+#   packages/e2e_framework/tool/e2e/clean.sh ios
 #
 # Everything generated lives under a single root, one subfolder per platform:
 #
@@ -12,8 +13,11 @@
 #   │   ├── playwright/     results.json, results.xml, Playwright's HTML
 #   │   ├── test-results/   per-test traces and attachments
 #   │   └── e2e_test_reporter/report  the report and the results it reads
-#   └── android/
-#       ├── android_run.log the captured logcat
+#   ├── android/
+#   │   ├── android_run.log the captured logcat
+#   │   └── e2e_test_reporter/report
+#   └── ios/
+#       ├── ios_run.log     the captured simulator log
 #       └── e2e_test_reporter/report
 #
 # Two things fall outside that root because the tools that write them accept
@@ -51,13 +55,13 @@ cd "$(git rev-parse --show-toplevel)"
 APP_DIR="packages/apps/market_app"
 
 usage() {
-  echo "usage: packages/e2e_framework/tool/e2e/clean.sh <web|android>" >&2
+  echo "usage: packages/e2e_framework/tool/e2e/clean.sh <web|android|ios>" >&2
   exit 2
 }
 
 PLATFORM="${1:-}"
 case "$PLATFORM" in
-  web | android) ;;
+  web | android | ios) ;;
   *) usage ;;
 esac
 
@@ -80,8 +84,8 @@ targets=(
 # them; someone running `patrol test` by hand does, and then they sit in the
 # app package until somebody notices. Gitignored, so nobody ever does.
 #
-# Web only: they are Playwright's, and an Android run neither writes them nor
-# has any business deleting them.
+# Web only: they are Playwright's, and a device run — Android or iOS —
+# neither writes them nor has any business deleting them.
 if [[ "$PLATFORM" == "web" ]]; then
   targets+=(
     "$APP_DIR/test-results"

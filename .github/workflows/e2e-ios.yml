@@ -1,0 +1,147 @@
+name: E2E iOS
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  # Same twice-daily schedule as the other two suites — see the note in the
+  # web workflow. 9:00 and 18:00 in America/Bogota, written in UTC.
+  schedule:
+    - cron: '0 14 * * *'
+    - cron: '0 23 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  ios:
+    name: iOS suite
+    # macOS is the only image with Xcode, and Xcode is the only way to a
+    # simulator. `macos-latest` points at macOS 26 on Apple Silicon, which
+    # ships the iOS simulator runtimes preinstalled — so unlike the Android
+    # job there is no image to download and no KVM to enable.
+    #
+    # Worth knowing before this is copied into a private repository: macOS
+    # minutes bill at ten times the Linux rate. Here the repository is public
+    # and they are free.
+    runs-on: macos-latest
+    # The same backstop the other two carry. This job is the slowest of the
+    # three — CocoaPods, an Xcode build and a simulator boot before the first
+    # test — so the ceiling is worth more here, not less.
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.41.9
+          channel: stable
+          cache: true
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: packages/e2e_framework/tool/e2e/.nvmrc
+
+      - name: Cache pub
+        uses: actions/cache@v6
+        with:
+          path: ~/.pub-cache
+          key: pub-${{ runner.os }}-${{ hashFiles('**/pubspec.yaml') }}
+          restore-keys: pub-${{ runner.os }}-
+
+      # CocoaPods resolves on every cold run and it is the slowest part of the
+      # setup. The lockfile is the key: a Podfile.lock that has not moved
+      # means the same pods.
+      - name: Cache CocoaPods
+        uses: actions/cache@v6
+        with:
+          path: packages/apps/market_app/ios/Pods
+          key: pods-${{ hashFiles('packages/apps/market_app/ios/Podfile.lock') }}
+          restore-keys: pods-
+
+      - name: Install tooling
+        run: |
+          dart pub global activate melos 7.3.0
+          dart pub global activate patrol_cli 4.7.0
+          echo "$HOME/.pub-cache/bin" >> "$GITHUB_PATH"
+
+      - run: melos bs
+
+      # Named rather than left to `run_ios.sh`'s own pick, and the difference
+      # matters in CI: the script takes the newest available iPhone, and the
+      # newest one on the image changes when the image does. A run that
+      # silently moves to a different device is a run whose failures cannot be
+      # compared to yesterday's.
+      #
+      # `bootstatus -b` boots it and waits; without the wait the first
+      # `patrol test` meets a simulator that is still coming up.
+      - name: Boot the simulator
+        run: |
+          UDID="$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin)["devices"]; m=[x for k,v in d.items() if "iOS" in k for x in v if x["name"]=="iPhone 16"]; print(m[0]["udid"] if m else "")')"
+          if [ -z "$UDID" ]; then
+            echo "No iPhone 16 simulator on this image. Available:" >&2
+            xcrun simctl list devices available >&2
+            exit 1
+          fi
+          echo "SIMULATOR_UDID=$UDID" >> "$GITHUB_ENV"
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+
+      - name: Analyze
+        run: melos run lint
+
+      # Before spending simulator time: if the framework itself is broken, the
+      # E2E suite would lie rather than fail.
+      - name: Test the kit
+        run: melos run testKit
+
+      # And the wiring the suite stands on — the data files, their asset
+      # declaration, and the rule that nothing reads them before the app
+      # launches. Break any of it and the E2E suite fails for what looks like
+      # a product defect.
+      - name: Test the E2E guards
+        run: melos run testApp
+
+      # Cleans up after the previous run, runs, and builds the report — all
+      # three, same as the other two platforms. The report is built even when
+      # the suite fails, and the step still exits red because the script
+      # propagates the suite's exit code.
+      - name: Run the suite on the simulator and build the report
+        run: bash packages/e2e_framework/tool/e2e/run_ios.sh "$SIMULATOR_UDID"
+
+      # The guard that matters most on this platform. A green suite whose
+      # assertions never reached the report verifies nothing and says so
+      # nowhere — and on iOS that is not a hypothetical: os_log throttles a
+      # process that floods it, dropping lines silently, and screenshots
+      # arrive as hundreds of chunked lines. This step is what turns that
+      # silence into a red build.
+      - name: Summarize the assertions
+        if: always()
+        # `shell: bash` and not the default: it is what sets `pipefail`, and
+        # without it `tee` would return its own success and swallow the
+        # script's exit code — quietly turning the check back into a notice.
+        shell: bash
+        run: dart run e2e_test_reporter:assertion_summary --platform ios | tee -a "$GITHUB_STEP_SUMMARY"
+
+      # The device log is the only place the step and screenshot markers exist
+      # on a simulator, so it is worth keeping when a run goes wrong.
+      - name: Upload the device log on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ios-device-log
+          path: build/e2e/ios/ios_run.log
+          retention-days: 7
+
+      # The script built the report in the step above; this only collects it.
+      # One directory holds the whole thing — the pages, the results they read
+      # and the screenshots — so the artifact opens from `index.html` with
+      # nothing else to fetch.
+      - name: Upload the report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: report-ios
+          path: build/e2e/ios/e2e_test_reporter/report
+          retention-days: 14

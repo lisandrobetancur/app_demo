@@ -63,8 +63,8 @@ Reglas de capa, que no son estéticas —cada una nació de un problema real:
   `taxonomy.dart`, `test_data.dart`, `widget_probes.dart` **y sus tests**.
 - `e2e_test_reporter/` — el generador del reporte, con `bin/`, `lib/src/site/` y
   **sus tests**.
-- `tool/e2e/` — `run_web.sh`, `run_android.sh`, `clean.sh`, `open_report.sh`,
-  `watch_web.sh`, `.nvmrc`.
+- `tool/e2e/` — `run_web.sh`, `run_android.sh`, `run_ios.sh`, `clean.sh`,
+  `open_report.sh`, `watch_web.sh`, `.nvmrc`.
 - Los workflows de CI y los scripts de melos.
 
 **No se trae. Se escribe de cero para esta app:**

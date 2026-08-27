@@ -1,6 +1,6 @@
 name: Publish reports
 
-# The two suites are independent workflows, but a Pages deployment replaces
+# The three suites are independent workflows, but a Pages deployment replaces
 # the whole site and there is only one site per repository — so neither can
 # publish on its own without erasing the other. This runs after either of them
 # finishes, collects the latest report of *both* platforms, and deploys once.
@@ -14,7 +14,7 @@ name: Publish reports
 # stays an artefact on its own run.
 on:
   workflow_run:
-    workflows: ["E2E web", "E2E android"]
+    workflows: ["E2E web", "E2E android", "E2E iOS"]
     types: [completed]
     branches: [main]
   workflow_dispatch:
@@ -69,9 +69,10 @@ jobs:
 
           collect "E2E web"     report-web     web
           collect "E2E android" report-android android
+          collect "E2E iOS"     report-ios     ios
 
-          if [ ! -d site/web ] && [ ! -d site/android ]; then
-            echo "Neither platform has a report to publish."
+          if [ ! -d site/web ] && [ ! -d site/android ] && [ ! -d site/ios ]; then
+            echo "No platform has a report to publish."
             exit 1
           fi
 
@@ -110,6 +111,7 @@ jobs:
             <h2>E2E Test Reporter</h2>
             $(have web '<a class="card" href="web/"><b>Web Test Report</b><span>Chromium, driven by Playwright</span></a>' 'Web Test Report')
             $(have android '<a class="card" href="android/"><b>Android Test Report</b><span>emulator, API 31, native instrumentation</span></a>' 'Android Test Report')
+            $(have ios '<a class="card" href="ios/"><b>iOS Test Report</b><span>simulator, iPhone 16, XCUITest</span></a>' 'iOS Test Report')
             <footer>
               Published by run
               <a href="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}">#${GITHUB_RUN_NUMBER}</a>
