@@ -1,4 +1,4 @@
-import 'package:sqa_reporter/sqa_reporter.dart';
+import 'package:e2e_test_reporter/e2e_test_reporter.dart';
 import 'package:test/test.dart';
 
 import 'fixtures.dart';

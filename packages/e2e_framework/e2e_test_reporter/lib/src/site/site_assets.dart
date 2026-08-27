@@ -181,9 +181,9 @@ const String shotViewer = '''
 </div>
 ''';
 
-/// The stylesheet, written to `sqa-reporter.css` beside `index.html`.
+/// The stylesheet, written to `e2e-test-reporter.css` beside `index.html`.
 const String siteCss = '''
-/* E2E Framework — all rules authored for this generator. */
+/* E2E Test Reporter — all rules authored for this generator. */
 
 /* Every colour in the report comes from here. Two families and nothing else:
    the neutrals that build the page, and the five verdict tones (mirrored from
@@ -272,9 +272,9 @@ a:hover { text-decoration: underline; }
 }
 
 /* Mark and name on one baseline: the tile carries the colour, the name
-   carries the weight. `SQA` is the part people say, so it is the part set
-   solid; `Reporter` follows it lighter and spaced, which is what keeps a
-   two-word wordmark from reading as two words. */
+   carries the weight. `E2E` is the part people say, so it is the part set
+   solid; `Test Reporter` follows it lighter and spaced, which is what keeps
+   a multi-word wordmark from reading as separate words. */
 .wordmark {
   display: inline-flex;
   align-items: center;

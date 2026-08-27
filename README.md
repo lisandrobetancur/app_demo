@@ -67,7 +67,7 @@ packages/
 ├── development/lint/                shared analysis_options
 ├── e2e_framework/                   everything the automation framework owns
 │   ├── patrol_kit/                  reusable E2E scaffolding — Flutter + Patrol only
-│   ├── sqa_reporter/                the report generator, pure Dart
+│   ├── e2e_test_reporter/                the report generator, pure Dart
 │   └── tool/e2e/                    the run scripts
 ├── shared/                          pure logic, ZERO widgets
 │   ├── typing/                      base ViewModel, Clock, IdGenerator, ViewStatus
@@ -370,8 +370,8 @@ as green. Opening it stays separate, because generating and opening are
 different decisions and CI only ever wants the first:
 
 ```bash
-melos run sqaOpenWeb              # open build/e2e/web/sqa_reporter/report
-melos run sqaOpenAndroid
+melos run openReportWeb              # open build/e2e/web/e2e_test_reporter/report
+melos run openReportAndroid
 
 melos run e2eWebReport            # run, then open
 melos run e2eWebHeadedReport
@@ -381,8 +381,8 @@ Rebuilding a report from results already on disk, without re-running the
 suite — for when you changed the generator and want to see the effect:
 
 ```bash
-melos run sqaWeb
-melos run sqaAndroid
+melos run reportWeb
+melos run reportAndroid
 ```
 
 Cleaning on its own. Per platform, because a web report and a device report
@@ -405,10 +405,10 @@ build/e2e/
 ├── web/
 │   ├── playwright/            results.json, results.xml, Playwright's HTML
 │   ├── test-results/          per-test traces and attachments
-│   └── sqa_reporter/report    the report, its JSON results and screenshots
+│   └── e2e_test_reporter/report    the report, its JSON results and screenshots
 └── android/
     ├── android_run.log        the captured logcat
-    └── sqa_reporter/report
+    └── e2e_test_reporter/report
 ```
 
 `build/` is already gitignored, so nothing generated needs a rule of its own.
@@ -473,10 +473,10 @@ Building and opening the report is a separate step on purpose, so a run does
 not force a browser window on you:
 
 ```bash
-melos run sqaWeb && melos run sqaOpenWeb
+melos run reportWeb && melos run openReportWeb
 ```
 
-`sqaOpenWeb` opens the report in the default browser straight off the
+`openReportWeb` opens the report in the default browser straight off the
 filesystem — the site is static and self-contained, so there is no server to
 start and none to remember to stop. When you do want the whole thing in one
 command, these chain the three steps:
@@ -580,29 +580,29 @@ while; the pairing above is the one CI runs. Check the
 [compatibility table](https://patrol.leancode.co/documentation/compatibility-table)
 before moving either.
 
-### The report — SQA Reporter
+### The report — E2E Test Reporter
 
 ```bash
 melos run e2eWeb        # runs the suite, emitting Playwright JSON
 ```
 
 ```bash
-melos run sqaWeb        # rebuilds the report from that JSON
+melos run reportWeb        # rebuilds the report from that JSON
 ```
 
 ```bash
-melos run sqaOpenWeb    # opens the report in a browser
+melos run openReportWeb    # opens the report in a browser
 ```
 
-The generator is a Dart package, `packages/e2e_framework/sqa_reporter`, and it owns the
+The generator is a Dart package, `packages/e2e_framework/e2e_test_reporter`, and it owns the
 whole output: the JSON results, the screenshots and the static pages that read
 them, all under one directory per platform which it writes from scratch every
 time.
 
 ```
 build/e2e/
-├── web/sqa_reporter/report
-└── android/sqa_reporter/report
+├── web/e2e_test_reporter/report
+└── android/e2e_test_reporter/report
 ```
 
 The site is **self-contained** — no libraries, no fonts, no network requests at
@@ -691,7 +691,7 @@ browser console — or from logcat, on a device — through the per-test capture
 and into the report, and a break anywhere along that chain is silent: the
 tests still pass, the report just holds nothing behind them.
 
-So both CI jobs run `dart run sqa_reporter:assertion_summary` after building the
+So both CI jobs run `dart run e2e_test_reporter:assertion_summary` after building the
 report and write the count into the job summary, where it is readable from the
 pull request without downloading an artifact:
 
@@ -716,7 +716,7 @@ into a notice.
 A report describes the run that produced it, and nothing else. Three things
 enforce that, because deleting the report alone is not enough:
 
-- `sqaWeb` / `sqaAndroid` write `build/e2e/<platform>/sqa_reporter/report` from
+- `reportWeb` / `reportAndroid` write `build/e2e/<platform>/e2e_test_reporter/report` from
   scratch, results and pages alike.
 - Every run deletes `build/e2e/<platform>/` before starting. Patrol overwrites
   its results on success anyway, but a run that dies early would leave the
@@ -738,7 +738,7 @@ melos run e2eAndroid
 ```
 
 ```bash
-melos run sqaAndroid
+melos run reportAndroid
 ```
 
 Everything above the transport is shared — the tests, the steps, the pages and
@@ -750,7 +750,7 @@ how the results get out, and that is where the work was:
 | Runner | Playwright + Chromium | native instrumentation (`PatrolJUnitRunner`) |
 | Marker transport | Playwright's per-test stdout capture | `adb logcat` |
 | Generator input | `build/e2e/web/playwright/results.json` | `build/e2e/android/android_run.log` |
-| Report | `build/e2e/web/sqa_reporter/report` | `build/e2e/android/sqa_reporter/report` |
+| Report | `build/e2e/web/e2e_test_reporter/report` | `build/e2e/android/e2e_test_reporter/report` |
 
 The generator has one adapter per transport (`parsePlaywright`,
 `parsePatrolLog`) feeding a single model, because the payload is identical:

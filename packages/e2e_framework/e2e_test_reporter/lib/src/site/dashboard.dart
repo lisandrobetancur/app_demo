@@ -39,7 +39,7 @@ String projectTitleFor(String platform) => switch (platform) {
               '${platform.substring(1)} '}Test Report',
 };
 
-/// Writes `index.html` and `sqa-reporter.css` into [outputDir], beside the
+/// Writes `index.html` and `e2e-test-reporter.css` into [outputDir], beside the
 /// JSON results. Returns the `index.html` file.
 File writeDashboard(
   ParsedRun run,
@@ -50,7 +50,7 @@ File writeDashboard(
 }) {
   outputDir.createSync(recursive: true);
   File(
-    '${outputDir.path}${Platform.pathSeparator}sqa-reporter.css',
+    '${outputDir.path}${Platform.pathSeparator}e2e-test-reporter.css',
   ).writeAsStringSync(siteCss);
   File(
     '${outputDir.path}${Platform.pathSeparator}favicon.svg',
@@ -118,7 +118,7 @@ String dashboardHtml(
 /// When the run and the report are not the same age, the page says so.
 ///
 /// A report can be rebuilt from results already on disk — that is what the
-/// `sqa*` scripts are for — and then the generation stamp says today while
+/// `report*` scripts are for — and then the generation stamp says today while
 /// the run it describes is from last week. Rather than warn on the command
 /// line, where it would fire on every deliberate rebuild, the page carries
 /// the difference to the person reading it.

@@ -4,7 +4,7 @@
 #
 #   packages/e2e_framework/tool/e2e/open_report.sh <path/to/index.html>
 #
-# The SQA report is a static, self-contained site, so opening it is opening a
+# The report is a static, self-contained site, so opening it is opening a
 # file — no server, nothing left running afterwards. This exists only because
 # the command for that differs per platform, and because a missing report
 # should say which command builds it rather than opening a blank tab.
@@ -24,8 +24,8 @@ if [[ ! -f "$REPORT" ]]; then
   echo >&2
   echo "Run the suite, which builds it:" >&2
   case "$REPORT" in
-    *android*) echo "  melos run e2eAndroid    # or, from results already on disk: melos run sqaAndroid" >&2 ;;
-    *)         echo "  melos run e2eWeb        # or, from results already on disk: melos run sqaWeb" >&2 ;;
+    *android*) echo "  melos run e2eAndroid    # or, from results already on disk: melos run reportAndroid" >&2 ;;
+    *)         echo "  melos run e2eWeb        # or, from results already on disk: melos run reportWeb" >&2 ;;
   esac
   exit 1
 fi

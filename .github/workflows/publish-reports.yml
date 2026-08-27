@@ -107,9 +107,9 @@ jobs:
           <main>
             <h1>Market · end-to-end reports</h1>
             <p class="sub">Patrol suite, one report per platform, rebuilt from scratch on every run.</p>
-            <h2>SQA Reporter</h2>
-            $(have web '<a class="card" href="web/"><b>Web E2E Test Report</b><span>Chromium, driven by Playwright</span></a>' 'Web E2E Test Report')
-            $(have android '<a class="card" href="android/"><b>Android E2E Test Report</b><span>emulator, API 31, native instrumentation</span></a>' 'Android E2E Test Report')
+            <h2>E2E Test Reporter</h2>
+            $(have web '<a class="card" href="web/"><b>Web Test Report</b><span>Chromium, driven by Playwright</span></a>' 'Web Test Report')
+            $(have android '<a class="card" href="android/"><b>Android Test Report</b><span>emulator, API 31, native instrumentation</span></a>' 'Android Test Report')
             <footer>
               Published by run
               <a href="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}">#${GITHUB_RUN_NUMBER}</a>

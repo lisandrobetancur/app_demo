@@ -9,7 +9,7 @@
 # Three things in one command, in this order: clean up after the previous run,
 # run, and build the report. The report is part of running, not a step
 # somebody has to remember to launch afterwards.
-# Opening it stays separate (`melos run sqaOpenWeb`): building and opening
+# Opening it stays separate (`melos run openReportWeb`): building and opening
 # are different decisions, and in CI only the first one exists.
 #
 # THE DELICATE PART is the exit code. The report has to be built EVEN WHEN the
@@ -216,10 +216,10 @@ echo "── Building the reports ───────────────�
 # Deliberately not chained with `&&` to the above: a red suite is exactly when
 # the report is needed.
 #
-dart run sqa_reporter --input "$OUT/playwright/results.json" --platform web \
+dart run e2e_test_reporter --input "$OUT/playwright/results.json" --platform web \
   || echo "The report could not be built (the suite exited with $status)." >&2
 
 echo
 echo "Report:"
-echo "  build/e2e/web/sqa_reporter/report   ·  melos run sqaOpenWeb"
+echo "  build/e2e/web/e2e_test_reporter/report   ·  melos run openReportWeb"
 exit "$status"

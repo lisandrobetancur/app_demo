@@ -15,7 +15,7 @@
 ///    They hold neither locators nor assertions.
 ///
 /// The report is built from markers printed to stdout while the suite runs;
-/// `packages/e2e_framework/sqa_reporter` turns them into a report. Nothing
+/// `packages/e2e_framework/e2e_test_reporter` turns them into a report. Nothing
 /// here writes files or talks to the network.
 library;
 

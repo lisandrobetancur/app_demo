@@ -97,7 +97,7 @@ jobs:
         # without it `tee` would return its own success and swallow the
         # script's exit code — quietly turning the check back into a notice.
         shell: bash
-        run: dart run sqa_reporter:assertion_summary --platform android | tee -a "$GITHUB_STEP_SUMMARY"
+        run: dart run e2e_test_reporter:assertion_summary --platform android | tee -a "$GITHUB_STEP_SUMMARY"
 
       # The device log is the only place the step and screenshot markers exist
       # on mobile, so it is worth keeping when a run goes wrong.
@@ -118,5 +118,5 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: report-android
-          path: build/e2e/android/sqa_reporter/report
+          path: build/e2e/android/e2e_test_reporter/report
           retention-days: 14

@@ -13,7 +13,7 @@
 # Like the web run, it does three things in one command: clean up after the
 # previous run, run, and build the report, so the report is part of running
 # rather than a separate step somebody has to remember. Opening it stays a
-# different thing (`melos run sqaOpenAndroid`).
+# different thing (`melos run openReportAndroid`).
 #
 # The report is built EVEN WHEN the suite fails, which is when somebody is
 # going to open it, but the script still exits red so CI does not accept a run
@@ -118,10 +118,10 @@ echo "Device log captured at $LOG ($(wc -l < "$LOG" | tr -d ' ') lines)"
 
 echo
 echo "── Building the report ───────────────────────────────────────────────"
-dart run sqa_reporter --input "$LOG" --format patrol-log --platform android \
+dart run e2e_test_reporter --input "$LOG" --format patrol-log --platform android \
   || echo "The report could not be built (the suite exited with $status)." >&2
 
 echo
 echo "Report:"
-echo "  build/e2e/android/sqa_reporter/report  ·  melos run sqaOpenAndroid"
+echo "  build/e2e/android/e2e_test_reporter/report  ·  melos run openReportAndroid"
 exit "$status"
