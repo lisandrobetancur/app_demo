@@ -1,4 +1,4 @@
-/// SQA Reporter: turns a Patrol run into report results.
+/// E2E Test Reporter: turns a Patrol run into report results.
 ///
 /// Three layers, kept apart on purpose:
 ///

@@ -168,7 +168,7 @@ that was compiled in, with nothing added to the asset manifest.
 
 ## The report
 
-The kit prints markers to stdout as the suite runs; SQA Reporter turns them
+The kit prints markers to stdout as the suite runs; E2E Test Reporter turns them
 into a report. Nothing here writes files or touches the network.
 
 | Marker | From | Becomes |

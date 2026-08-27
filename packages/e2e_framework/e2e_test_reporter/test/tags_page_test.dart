@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:sqa_reporter/sqa_reporter.dart';
+import 'package:e2e_test_reporter/e2e_test_reporter.dart';
 import 'package:test/test.dart';
 
 import 'fixtures.dart';
@@ -14,7 +14,7 @@ void main() {
   late ParsedRun run;
 
   setUpAll(() {
-    out = Directory.systemTemp.createTempSync('sqa_tags_test');
+    out = Directory.systemTemp.createTempSync('reporter_tags_test');
     results = Directory('${out.path}/results');
     final File input = File('${out.path}/results.json')
       ..writeAsStringSync(playwrightReport());

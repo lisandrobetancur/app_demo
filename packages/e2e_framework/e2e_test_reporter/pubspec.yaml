@@ -1,5 +1,5 @@
-name: sqa_reporter
-description: "Turns a Patrol run into SQA Reporter results: a run model that owes nothing to any output format, and a serialiser that writes the JSON results from it. Pure Dart; carries nothing app-specific."
+name: e2e_test_reporter
+description: "Turns a Patrol run into E2E Test Reporter results: a run model that owes nothing to any output format, and a serialiser that writes the JSON results from it. Pure Dart; carries nothing app-specific."
 version: 0.1.0
 publish_to: none
 

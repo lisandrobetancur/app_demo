@@ -9,7 +9,7 @@ workspace:
   - packages/apps/market_app
   - packages/development/lint
   - packages/e2e_framework/patrol_kit
-  - packages/e2e_framework/sqa_reporter
+  - packages/e2e_framework/e2e_test_reporter
   - packages/features/core/cart/constants
   - packages/features/core/cart/module
   - packages/features/core/cart/typing
@@ -95,7 +95,7 @@ melos:
     #   3. builds the report — always, including when the suite failed.
     #
     # The report is part of running, not a step somebody has to remember to
-    # launch. Opening it stays separate (`sqaOpenWeb` / `sqaOpenAndroid`),
+    # launch. Opening it stays separate (`openReportWeb` / `openReportAndroid`),
     # because building and opening are different decisions and in CI only the
     # first one exists.
     #
@@ -104,8 +104,8 @@ melos:
     #
     # Everything generated goes to ONE root per platform:
     #
-    #   build/e2e/web/{playwright,sqa_reporter/report}
-    #   build/e2e/android/{android_run.log,sqa_reporter/report}
+    #   build/e2e/web/{playwright,e2e_test_reporter/report}
+    #   build/e2e/android/{android_run.log,e2e_test_reporter/report}
     #
     # That is what makes the cleanup trustworthy: deleting the whole root
     # cannot leave anything behind, while enumerating four paths scattered
@@ -163,12 +163,12 @@ melos:
 
     # Run and also OPEN the report. `e2eWeb` already builds it; this only adds
     # the opening on top.
-    e2eWebReport: melos run e2eWeb && melos run sqaOpenWeb
-    e2eWebHeadedReport: melos run e2eWebHeaded && melos run sqaOpenWeb
+    e2eWebReport: melos run e2eWeb && melos run openReportWeb
+    e2eWebHeadedReport: melos run e2eWebHeaded && melos run openReportWeb
 
-    # ── SQA Reporter ────────────────────────────────────────────────────
+    # ── E2E Test Reporter ────────────────────────────────────────────────────
     #
-    # The report, written in Dart and living in packages/e2e_framework/sqa_reporter.
+    # The report, written in Dart and living in packages/e2e_framework/e2e_test_reporter.
     # `e2eWeb` and `e2eAndroid` already build it as part of running, and these
     # are for rebuilding it from the results ALREADY on disk — when you change
     # the generator and want to see the effect without paying for another
@@ -187,7 +187,7 @@ melos:
     # self-contained — no libraries, no fonts, no requests — so a browser opens
     # it straight off the filesystem and a local server would only be one more
     # thing to remember to stop.
-    sqaWeb: dart run sqa_reporter --input build/e2e/web/playwright/results.json --platform web
-    sqaAndroid: dart run sqa_reporter --input build/e2e/android/android_run.log --format patrol-log --platform android
-    sqaOpenWeb: bash packages/e2e_framework/tool/e2e/open_report.sh build/e2e/web/sqa_reporter/report/index.html
-    sqaOpenAndroid: bash packages/e2e_framework/tool/e2e/open_report.sh build/e2e/android/sqa_reporter/report/index.html
+    reportWeb: dart run e2e_test_reporter --input build/e2e/web/playwright/results.json --platform web
+    reportAndroid: dart run e2e_test_reporter --input build/e2e/android/android_run.log --format patrol-log --platform android
+    openReportWeb: bash packages/e2e_framework/tool/e2e/open_report.sh build/e2e/web/e2e_test_reporter/report/index.html
+    openReportAndroid: bash packages/e2e_framework/tool/e2e/open_report.sh build/e2e/android/e2e_test_reporter/report/index.html

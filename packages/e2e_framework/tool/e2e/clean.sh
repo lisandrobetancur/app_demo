@@ -11,10 +11,10 @@
 #   ├── web/
 #   │   ├── playwright/     results.json, results.xml, Playwright's HTML
 #   │   ├── test-results/   per-test traces and attachments
-#   │   └── sqa_reporter/report  the report and the results it reads
+#   │   └── e2e_test_reporter/report  the report and the results it reads
 #   └── android/
 #       ├── android_run.log the captured logcat
-#       └── sqa_reporter/report
+#       └── e2e_test_reporter/report
 #
 # Two things fall outside that root because the tools that write them accept
 # no other path: patrol_cli's `test_bundle.dart`, and — when someone runs

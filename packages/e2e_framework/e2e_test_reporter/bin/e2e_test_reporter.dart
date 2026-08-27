@@ -1,6 +1,6 @@
 /// The command line:
 ///
-///   dart run sqa_reporter [--input <file>] [--output <dir>]
+///   dart run e2e_test_reporter [--input <file>] [--output <dir>]
 ///                         [--format playwright|patrol-log]
 ///                         [--platform web|android|ios]
 ///                         [--utc-offset -05:00]
@@ -8,7 +8,7 @@ library;
 
 import 'dart:io';
 
-import 'package:sqa_reporter/sqa_reporter.dart';
+import 'package:e2e_test_reporter/e2e_test_reporter.dart';
 
 void main(List<String> argv) {
   final _Args args = _Args.parse(argv);
@@ -37,7 +37,7 @@ void main(List<String> argv) {
   }
 
   // No staleness warning here on purpose. Rebuilding from results already on
-  // disk is what `melos run sqaWeb` is *for*, so a warning on that path cries
+  // disk is what `melos run reportWeb` is *for*, so a warning on that path cries
   // wolf on every deliberate use — and any stderr line reads as an error in
   // the melos output. The fact still matters, so the report carries it: the
   // page says when the run finished as well as when it was generated.
@@ -86,7 +86,7 @@ void main(List<String> argv) {
 
   stdout
     ..writeln(
-      'Wrote $written E2E Framework result(s) to ${args.output} '
+      'Wrote $written E2E Test Reporter result(s) to ${args.output} '
       '(${args.platform})',
     )
     ..writeln(
@@ -138,7 +138,7 @@ class _Args {
     // One directory holds the whole thing — the JSON results, the screenshots
     // and the pages that read them — so publishing the report is copying one
     // folder, and deleting it cannot leave half a report behind.
-    output ??= '$root/build/e2e/$platform/sqa_reporter/report';
+    output ??= '$root/build/e2e/$platform/e2e_test_reporter/report';
     return _Args(
       input: input,
       output: output,

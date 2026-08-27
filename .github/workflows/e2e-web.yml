@@ -129,7 +129,7 @@ jobs:
         # without it `tee` would return its own success and swallow the
         # script's exit code — quietly turning the check back into a notice.
         shell: bash
-        run: dart run sqa_reporter:assertion_summary --platform web | tee -a "$GITHUB_STEP_SUMMARY"
+        run: dart run e2e_test_reporter:assertion_summary --platform web | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Publish the JUnit results as a check
         if: always()
@@ -148,7 +148,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: report-web
-          path: build/e2e/web/sqa_reporter/report
+          path: build/e2e/web/e2e_test_reporter/report
           retention-days: 14
 
       # What the browser left behind when it went wrong: a Playwright trace and
