@@ -34,6 +34,16 @@ target 'Runner' do
   target 'RunnerTests' do
     inherit! :search_paths
   end
+
+  # The XCUITest bundle that runs the Patrol suite. `:complete` and not
+  # `:search_paths` like RunnerTests above, and the difference is the whole
+  # point: RunnerUITests.m does `@import patrol`, so it has to LINK the pod,
+  # not merely see its headers. With :search_paths it compiles and then fails
+  # to link, which reads as a missing symbol rather than a missing Podfile
+  # line.
+  target 'RunnerUITests' do
+    inherit! :complete
+  end
 end
 
 post_install do |installer|

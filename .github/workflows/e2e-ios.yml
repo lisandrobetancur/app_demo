@@ -51,13 +51,24 @@ jobs:
           restore-keys: pub-${{ runner.os }}-
 
       # CocoaPods resolves on every cold run and it is the slowest part of the
-      # setup. The lockfile is the key: a Podfile.lock that has not moved
-      # means the same pods.
+      # setup.
+      #
+      # BOTH files are the key, not just the lockfile, and the difference is
+      # not cosmetic. Flutter decides whether to run `pod install` by comparing
+      # Podfile.lock with the Pods/Manifest.lock left by the last install — so
+      # a cache that restores a Manifest.lock matching the committed lockfile
+      # convinces it there is nothing to do. Add a target to the Podfile
+      # without touching the lockfile and the build then links against pods
+      # installed for the targets that existed yesterday: a missing-symbol
+      # error nowhere near the line that caused it.
+      #
+      # `restore-keys` stays: an out-of-date Pods directory is a fine starting
+      # point for an install that is actually going to run.
       - name: Cache CocoaPods
         uses: actions/cache@v6
         with:
           path: packages/apps/market_app/ios/Pods
-          key: pods-${{ hashFiles('packages/apps/market_app/ios/Podfile.lock') }}
+          key: pods-${{ hashFiles('packages/apps/market_app/ios/Podfile', 'packages/apps/market_app/ios/Podfile.lock') }}
           restore-keys: pods-
 
       - name: Install tooling

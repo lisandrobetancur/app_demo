@@ -71,6 +71,28 @@ if [[ -z "$BUNDLE_ID" ]]; then
   exit 1
 fi
 
+# Patrol's run ends in
+#
+#   xcodebuild test-without-building -only-testing RunnerUITests/RunnerUITests
+#
+# so the Xcode project needs a target by exactly that name. Nothing creates it:
+# `flutter create` does not, and neither does patrol_cli — on iOS it is added by
+# hand, which means it is the piece that goes missing.
+#
+# Checked here because of how it fails otherwise. The app builds perfectly well
+# first — eight minutes of Xcode on a CI runner — and only then does xcodebuild
+# exit 70, a configuration error worded as if a test had gone wrong, with a
+# device log of one line and an empty report to match. This turns that into a
+# sentence, before anything is built.
+if ! grep -q 'product-type.bundle.ui-testing' \
+     "$APP_DIR/ios/Runner.xcodeproj/project.pbxproj"; then
+  echo "The Xcode project has no RunnerUITests target." >&2
+  echo "Patrol runs the suite as an XCUITest bundle by that exact name, and" >&2
+  echo "without it xcodebuild fails with code 70 after building the app." >&2
+  echo "See $APP_DIR/ios/RunnerUITests/RunnerUITests.m." >&2
+  exit 1
+fi
+
 TAGS=()
 
 # `wip` is decided in Dart, not here: `e2eTest` registers such a test as
