@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:crypto/crypto.dart';
-import 'package:sqa_reporter/sqa_reporter.dart';
+import 'package:e2e_test_reporter/e2e_test_reporter.dart';
 import 'package:test/test.dart';
 
 import 'fixtures.dart';
@@ -21,7 +21,7 @@ void main() {
   late List<File> jsonFiles;
 
   setUpAll(() {
-    out = Directory.systemTemp.createTempSync('sqa_reporter_test');
+    out = Directory.systemTemp.createTempSync('e2e_test_reporter_test');
     inputFile = File('${out.path}/results.json')
       ..writeAsStringSync(playwrightReport());
     final ParsedRun run = parsePlaywright(inputFile);

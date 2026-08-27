@@ -1,6 +1,6 @@
 /// Counts the assertions a run reported, per scenario, for the CI job summary:
 ///
-///   dart run sqa_reporter:assertion_summary [--input <file>]
+///   dart run e2e_test_reporter:assertion_summary [--input <file>]
 ///                                           [--format playwright|patrol-log]
 ///                                           [--platform web|android|ios]
 ///
@@ -18,7 +18,7 @@ library;
 
 import 'dart:io';
 
-import 'package:sqa_reporter/sqa_reporter.dart';
+import 'package:e2e_test_reporter/e2e_test_reporter.dart';
 
 void main(List<String> argv) {
   final _Args args = _Args.parse(argv);

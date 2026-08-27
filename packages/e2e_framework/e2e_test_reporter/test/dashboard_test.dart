@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:sqa_reporter/sqa_reporter.dart';
+import 'package:e2e_test_reporter/e2e_test_reporter.dart';
 import 'package:test/test.dart';
 
 import 'fixtures.dart';
@@ -14,7 +14,7 @@ void main() {
   late String html;
 
   setUpAll(() {
-    out = Directory.systemTemp.createTempSync('sqa_dashboard_test');
+    out = Directory.systemTemp.createTempSync('reporter_dashboard_test');
     inputFile = File('${out.path}/results.json')
       ..writeAsStringSync(playwrightReport());
     final ParsedRun run = parsePlaywright(inputFile);
@@ -33,7 +33,10 @@ void main() {
   group('the site files', () {
     test('land beside the JSON results, with the stylesheet and icon', () {
       expect(File('${out.path}/results/index.html').existsSync(), isTrue);
-      expect(File('${out.path}/results/sqa-reporter.css').existsSync(), isTrue);
+      expect(
+        File('${out.path}/results/e2e-test-reporter.css').existsSync(),
+        isTrue,
+      );
       expect(File('${out.path}/results/favicon.svg').existsSync(), isTrue);
       expect(html, contains('<link rel="icon" href="favicon.svg"'));
       expect(
@@ -67,10 +70,16 @@ void main() {
       expect(platformMark('macos'), isEmpty);
     });
 
-    test('names the report E2E Framework, not the design source', () {
-      expect(html, contains('<title>E2E Framework · Web Test Report</title>'));
+    test('names the report E2E Test Reporter, not the design source', () {
+      expect(
+        html,
+        contains('<title>E2E Test Reporter · Web Test Report</title>'),
+      );
       expect(html, contains('<span class="wordmark-lead">E2E</span>'));
-      expect(html, contains('<span class="wordmark-name">Framework</span>'));
+      expect(
+        html,
+        contains('<span class="wordmark-name">Test Reporter</span>'),
+      );
     });
 
     test('the wordmark links home, mark and all', () {
@@ -220,7 +229,7 @@ void main() {
       // click meant for the wedge underneath, which is how the doughnut
       // ended up looking clickable while doing nothing.
       final String css = File(
-        '${out.path}/results/sqa-reporter.css',
+        '${out.path}/results/e2e-test-reporter.css',
       ).readAsStringSync();
       final RegExp label = RegExp(
         r'\.donut \.donut-label \{[^}]*pointer-events: none;',
@@ -386,7 +395,7 @@ void main() {
     test('a row that needs attention wears its verdict, and a passing one '
         'does not', () {
       final String css = File(
-        '${out.path}/results/sqa-reporter.css',
+        '${out.path}/results/e2e-test-reporter.css',
       ).readAsStringSync().replaceAll(RegExp(r'\s+'), ' ');
       // The stripe and the wash are the verdict's own tone — the same one its
       // slice has on the doughnut — so the chart, the row and the page a
@@ -451,7 +460,7 @@ void main() {
   group('the layout', () {
     test('titles are set in the report\'s own blue, links keep theirs', () {
       final String css = File(
-        '${out.path}/results/sqa-reporter.css',
+        '${out.path}/results/e2e-test-reporter.css',
       ).readAsStringSync();
       expect(css, contains('--title: #0B2545'));
       expect(css, contains('color: var(--title)'));
@@ -460,7 +469,7 @@ void main() {
 
     test('the screenshot viewer is hidden until a screenshot is clicked', () {
       final String css = File(
-        '${out.path}/results/sqa-reporter.css',
+        '${out.path}/results/e2e-test-reporter.css',
       ).readAsStringSync();
       expect(css, contains('.lightbox[hidden] { display: none; }'));
       // The arrows sit beside the picture, not on it: a capture of a form has
@@ -474,7 +483,7 @@ void main() {
 
     test('nothing is pinned to a minimum width, and wide tables scroll', () {
       final String css = File(
-        '${out.path}/results/sqa-reporter.css',
+        '${out.path}/results/e2e-test-reporter.css',
       ).readAsStringSync();
       expect(css, isNot(contains('min-width: 1024px')));
       expect(css, contains('.table-scroll { overflow-x: auto; }'));
@@ -483,7 +492,7 @@ void main() {
 
     test('narrow screens get their own rules', () {
       final String css = File(
-        '${out.path}/results/sqa-reporter.css',
+        '${out.path}/results/e2e-test-reporter.css',
       ).readAsStringSync();
       expect(css, contains('@media (max-width: 900px)'));
       expect(css, contains('@media (max-width: 600px)'));

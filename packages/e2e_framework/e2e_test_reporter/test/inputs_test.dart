@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:sqa_reporter/sqa_reporter.dart';
+import 'package:e2e_test_reporter/e2e_test_reporter.dart';
 import 'package:test/test.dart';
 
 import 'fixtures.dart';
@@ -10,7 +10,7 @@ import 'fixtures.dart';
 void main() {
   late Directory tmp;
 
-  setUpAll(() => tmp = Directory.systemTemp.createTempSync('sqa_inputs'));
+  setUpAll(() => tmp = Directory.systemTemp.createTempSync('reporter_inputs'));
   tearDownAll(() => tmp.deleteSync(recursive: true));
 
   group('the Playwright adapter', () {
