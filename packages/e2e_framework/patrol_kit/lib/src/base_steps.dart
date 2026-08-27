@@ -172,7 +172,7 @@ abstract class BaseSteps {
   ///
   /// It never fails a test. A missing screenshot is a worse report, not a
   /// wrong result.
-  Future<void> shot([String? name]) => $.takeScreenshot(name ?? timeStamp());
+  Future<void> shot([String? name]) => $.takeScreenshot(name ?? captionNow());
 
   /// Runs [action] between two screenshots.
   ///
