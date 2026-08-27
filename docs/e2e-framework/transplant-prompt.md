@@ -38,7 +38,7 @@ patrol_test/pages/*.dart            El PAGE: sabe dónde está cada cosa en la p
         ↓
 patrol_kit (paquete)                El KIT: aserciones, capturas, marcadores, datos
         ↓
-sqa_reporter (paquete)              Lee los marcadores y escribe un sitio HTML
+e2e_test_reporter (paquete)              Lee los marcadores y escribe un sitio HTML
 ```
 
 Reglas de capa, que no son estéticas —cada una nació de un problema real:
@@ -61,7 +61,7 @@ Reglas de capa, que no son estéticas —cada una nació de un problema real:
   `consequence.dart`, `element.dart`, `failure_report.dart`, `locator.dart`,
   `log.dart`, `money.dart`, `scenario.dart`, `screenshot.dart`, `tags.dart`,
   `taxonomy.dart`, `test_data.dart`, `widget_probes.dart` **y sus tests**.
-- `sqa_reporter/` — el generador del reporte, con `bin/`, `lib/src/site/` y
+- `e2e_test_reporter/` — el generador del reporte, con `bin/`, `lib/src/site/` y
   **sus tests**.
 - `tool/e2e/` — `run_web.sh`, `run_android.sh`, `clean.sh`, `open_report.sh`,
   `watch_web.sh`, `.nvmrc`.
@@ -275,7 +275,7 @@ fase, dime qué quedó y qué comprobaste.
 
 1. **El kit.** Copia `patrol_kit` con sus tests. `flutter test` verde antes de
    tocar nada más.
-2. **El reporteador.** Copia `sqa_reporter` con sus tests. `dart test` verde.
+2. **El reporteador.** Copia `e2e_test_reporter` con sus tests. `dart test` verde.
    Genera un reporte de muestra desde los fixtures y ábrelo.
 3. **Los scripts y melos.** `run_web.sh`, `run_android.sh`, `clean.sh`,
    `open_report.sh`, `watch_web.sh` y los scripts de melos. Ajusta las rutas.
@@ -293,7 +293,7 @@ fase, dime qué quedó y qué comprobaste.
 melos run lint          # o flutter analyze
 melos run testFast      # tests del kit y guardas, sin navegador
 melos run e2eWeb        # la suite y el reporte
-melos run sqaOpenWeb    # abrir el reporte
+melos run openReportWeb    # abrir el reporte
 ```
 
 El reporte debe mostrar: los escenarios con su veredicto, los steps
