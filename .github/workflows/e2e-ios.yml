@@ -68,26 +68,6 @@ jobs:
 
       - run: melos bs
 
-      # Named rather than left to `run_ios.sh`'s own pick, and the difference
-      # matters in CI: the script takes the newest available iPhone, and the
-      # newest one on the image changes when the image does. A run that
-      # silently moves to a different device is a run whose failures cannot be
-      # compared to yesterday's.
-      #
-      # `bootstatus -b` boots it and waits; without the wait the first
-      # `patrol test` meets a simulator that is still coming up.
-      - name: Boot the simulator
-        run: |
-          UDID="$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin)["devices"]; m=[x for k,v in d.items() if "iOS" in k for x in v if x["name"]=="iPhone 16"]; print(m[0]["udid"] if m else "")')"
-          if [ -z "$UDID" ]; then
-            echo "No iPhone 16 simulator on this image. Available:" >&2
-            xcrun simctl list devices available >&2
-            exit 1
-          fi
-          echo "SIMULATOR_UDID=$UDID" >> "$GITHUB_ENV"
-          xcrun simctl boot "$UDID"
-          xcrun simctl bootstatus "$UDID" -b
-
       - name: Analyze
         run: melos run lint
 
@@ -108,7 +88,7 @@ jobs:
       # the suite fails, and the step still exits red because the script
       # propagates the suite's exit code.
       - name: Run the suite on the simulator and build the report
-        run: bash packages/e2e_framework/tool/e2e/run_ios.sh "$SIMULATOR_UDID"
+        run: bash packages/e2e_framework/tool/e2e/run_ios.sh
 
       # The guard that matters most on this platform. A green suite whose
       # assertions never reached the report verifies nothing and says so

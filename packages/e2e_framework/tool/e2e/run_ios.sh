@@ -114,26 +114,66 @@ if ! command -v xcrun >/dev/null 2>&1; then
   exit 1
 fi
 
-# Prefer a simulator that is already booted — somebody debugging has one open
-# and means to use it. Otherwise take the newest available iPhone and boot it.
+# Chosen by RULE, never by model name. A hardcoded "iPhone 16" is a script
+# that breaks on Apple's release schedule rather than on ours — and it did:
+# the first CI run of this file died because the macOS image had moved to the
+# 17 line and no iPhone 16 existed on it.
+#
+# The rule: newest iOS runtime, and among its iPhones the plainest model — no
+# Pro, no Max, no Air, no "e". That is the closest thing to a baseline device
+# and it survives the line moving from 16 to 17 to whatever comes next.
+#
+# It prints what it chose, which is the other half of the bargain: a rule that
+# picks silently trades one problem for another, because a run whose device
+# nobody can name is a run whose failures cannot be compared with yesterday's.
+#
+# A simulator already booted wins over the rule — somebody debugging has one
+# open and means to use it.
+_pick_simulator() {
+  python3 - "$1" <<'PY'
+import json, re, subprocess, sys
+
+state = sys.argv[1]
+out = subprocess.run(
+    ["xcrun", "simctl", "list", "devices", state, "-j"],
+    capture_output=True, text=True,
+)
+if out.returncode != 0:
+    sys.exit(1)
+devices = json.loads(out.stdout)["devices"]
+runtimes = sorted(
+    (k for k in devices if "iOS" in k),
+    key=lambda k: [int(n) for n in re.findall(r"\d+", k)],
+)
+if not runtimes:
+    sys.exit(1)
+if state == "booted":
+    # iOS only: a booted Apple Watch or Apple TV is still a booted device, and
+    # handing one to `patrol test` fails in Xcode's words rather than here.
+    booted = [x for k in runtimes for x in devices[k]]
+    if not booted:
+        sys.exit(1)
+    print(booted[0]["udid"], booted[0]["name"], "already booted", sep="|")
+    sys.exit(0)
+phones = [x for x in devices[runtimes[-1]] if x["name"].startswith("iPhone")]
+plain = [x for x in phones if re.fullmatch(r"iPhone \d+", x["name"])]
+best = plain or phones
+if not best:
+    sys.exit(1)
+print(best[-1]["udid"], best[-1]["name"], runtimes[-1], sep="|")
+PY
+}
+
 if [[ -z "$DEVICE" ]]; then
-  DEVICE="$(xcrun simctl list devices booted -j 2>/dev/null \
-    | python3 -c 'import json,sys
-d = json.load(sys.stdin)["devices"]
-print(next((x["udid"] for v in d.values() for x in v), ""))' 2>/dev/null || true)"
-fi
-if [[ -z "$DEVICE" ]]; then
-  DEVICE="$(xcrun simctl list devices available -j 2>/dev/null \
-    | python3 -c 'import json,sys
-d = json.load(sys.stdin)["devices"]
-best = [x for k, v in d.items() if "iOS" in k for x in v if "iPhone" in x["name"]]
-print(best[-1]["udid"] if best else "")' 2>/dev/null || true)"
-  if [[ -z "$DEVICE" ]]; then
+  CHOICE="$(_pick_simulator booted || _pick_simulator available || true)"
+  if [[ -z "$CHOICE" ]]; then
     echo "No iOS simulator available. Install one from Xcode:" >&2
     echo "  Xcode ▸ Settings ▸ Components ▸ iOS Simulator" >&2
     echo "and check with 'xcrun simctl list devices available'." >&2
     exit 1
   fi
+  DEVICE="${CHOICE%%|*}"
+  echo "Simulator: ${CHOICE#*|}"
 fi
 
 # Booting one already booted is not an error, so this needs no check of its

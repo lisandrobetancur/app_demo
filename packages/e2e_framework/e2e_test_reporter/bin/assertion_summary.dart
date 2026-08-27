@@ -171,9 +171,17 @@ class _Args {
       }
     }
     platform ??= 'web';
-    input ??= platform == 'web'
-        ? '${_repoRoot()}/build/e2e/web/playwright/results.json'
-        : '${_repoRoot()}/build/e2e/$platform/android_run.log';
+    // One log name per platform, and not a shared one: this defaulted to
+    // `android_run.log` for every device platform, so `--platform ios` looked
+    // inside the iOS directory for Android's file and reported "no run" on a
+    // suite that had run perfectly. This step exists to catch markers that
+    // never arrived — it looking in the wrong place was the same silence it
+    // is meant to break.
+    input ??= switch (platform) {
+      'web' => '${_repoRoot()}/build/e2e/web/playwright/results.json',
+      'ios' => '${_repoRoot()}/build/e2e/ios/ios_run.log',
+      _ => '${_repoRoot()}/build/e2e/$platform/android_run.log',
+    };
     format ??= input.endsWith('.json') ? 'playwright' : 'patrol-log';
     return _Args(input: input, format: format, platform: platform);
   }
