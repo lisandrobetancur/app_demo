@@ -127,15 +127,29 @@ void main() {
 
     test('what needs a person is counted, and coloured, on its own', () {
       // One test in the fixture is broken, which is a thing somebody has to
-      // look at — so the tile is marked, and the pass rate is not called
-      // good news.
+      // look at — so the attention tile is marked. The pass rate keeps its
+      // own tone: it answers "what share passed", and that reading does not
+      // change with the answer.
       expect(html, contains('<div class="kpi bad">'));
       expect(html, contains('1 failed or broken'));
+      expect(html, contains('<div class="kpi good">'));
       expect(
         html,
-        isNot(contains('<div class="kpi good">')),
-        reason: 'a run with something broken is not a clean run',
+        isNot(contains('<div class="kpi calm">')),
+        reason: 'the attention tile is calm only when there is nothing to see',
       );
+    });
+
+    test('each tile carries an icon drawn for it, never fetched', () {
+      expect(html, contains('<use href="#ic-list-checks"/>'));
+      expect(html, contains('<use href="#ic-timer"/>'));
+      expect(html, contains('<div class="kpi time">'));
+    });
+
+    test('a short run gets a one-line summary above the charts', () {
+      // Two scenarios, half passing: the band is there, and it is red.
+      expect(html, contains('<div class="summary-band bad">'));
+      expect(html, contains('2 escenarios ejecutados · 50% aprobado'));
     });
 
     test('a run with nothing to look at is called good', () {
@@ -165,25 +179,24 @@ void main() {
   group('the summary', () {
     test('counts the run: two tests, half of them passing', () {
       expect(html, contains('class="donut-label"'));
-      expect(html, contains('>50%</a>'));
+      expect(html, contains('class="donut-center"'));
+      expect(html, contains('>50%</text>'));
     });
 
-    test('writes each share on its own segment of the doughnut', () {
-      expect(
-        RegExp('donut-slice-label').allMatches(html).length,
-        2,
-        reason: 'one label per verdict that occurred',
-      );
-      expect(html, contains('>50%</span>'));
+    test('says the pass rate once, in the hole, and nowhere else', () {
+      // The ring carries the proportion and the legend carries the count; a
+      // share written on the segment was saying what the hole already said.
+      expect(html, isNot(contains('donut-slice-label')));
+      expect(html, contains('>pass rate</text>'));
     });
 
     test('the legend names every verdict, counting the ones that occurred', () {
-      expect(html, contains('Passing Test Cases (1)'));
-      expect(html, contains('Broken Test Cases (1)'));
+      expect(html, contains('Passing<span class="legend-count">1</span>'));
+      expect(html, contains('Broken<span class="legend-count">1</span>'));
       expect(
         html,
-        contains('Failed Test Cases</li>'),
-        reason: 'a verdict with no tests is listed without a count, not hidden',
+        contains('Failed<span class="legend-count">0</span></li>'),
+        reason: 'a verdict with no tests is listed at zero, not hidden',
       );
     });
 
@@ -195,9 +208,17 @@ void main() {
 
     test('the performance chart buckets tests by how long they took', () {
       expect(html, contains('Test Performance'));
-      expect(html, contains('Number of tests per duration'));
-      expect(html, contains('1 to 10 seconds'));
-      expect(html, contains('10 minutes or over'));
+      expect(html, contains('Escenarios por rango de duración'));
+      // Short enough to sit under their bars unrotated, and escaped: SVG
+      // text is markup, so `<1s` travels as `&lt;1s`.
+      expect(html, contains('>&lt;1s</text>'));
+      expect(html, contains('>1–10s</text>'));
+      expect(html, contains('>&gt;10m</text>'));
+    });
+
+    test('marks the band the slowest test fell in', () {
+      expect(html, contains('class="bar-fill slowest"'));
+      expect(html, contains('fill="var(--ch-slow)"'));
     });
 
     test('key statistics include the run clock and durations', () {
@@ -214,38 +235,40 @@ void main() {
 
   group('the charts lead into the table', () {
     test('each doughnut segment is a clickable ring sector', () {
-      expect(html, contains('class="donut-wedge"'));
-      expect(html, contains('data-result="SUCCESS"'));
+      // Each segment is its own SVG link, drawn as a dash of the ring: the
+      // click lands exactly where the colour is, and the segment says what
+      // it is on hover.
       expect(
         html,
-        contains('clip-path:polygon('),
-        reason: 'a gradient cannot be clicked segment by segment',
+        contains(
+          '<a class="donut-wedge" href="#tests" data-result="SUCCESS" '
+          'title="Passing: 1 of 2">',
+        ),
       );
+      expect(html, contains('<title>Passing: 1 of 2</title>'));
+      expect(html, contains('class="donut-segment"'));
     });
 
-    test('nothing painted over the doughnut can swallow its clicks', () {
-      // The centred percentage covers the whole box in order to centre
-      // itself; without this rule it sits over every segment and takes the
-      // click meant for the wedge underneath, which is how the doughnut
-      // ended up looking clickable while doing nothing.
+    test('the charts paint with tokens, so the theme switch reaches them', () {
+      expect(html, contains('stroke="var(--ch-pass)"'));
+      expect(html, contains('fill="var(--ch-broken)"'));
       final String css = File(
         '${out.path}/results/e2e-test-reporter.css',
       ).readAsStringSync();
-      final RegExp label = RegExp(
-        r'\.donut \.donut-label \{[^}]*pointer-events: none;',
-        dotAll: true,
-      );
-      final RegExp slice = RegExp(
-        r'\.donut-slice-label \{[^}]*pointer-events: none;',
-        dotAll: true,
-      );
-      expect(css, matches(label));
-      expect(css, matches(slice));
+      expect(css, contains('--ch-pass: #388B66'));
+      expect(css, contains(':root[data-theme="dark"]'));
     });
 
     test('bars and legend entries link to the same selection', () {
       expect(html, contains('<a class="bar-column" href="#tests"'));
-      expect(html, contains('<li><a href="#tests" data-result="ERROR">'));
+      expect(
+        html,
+        contains('<li><a href="#tests" data-result="ERROR" title="Broken: 1">'),
+      );
+    });
+
+    test('a bar nobody hit is a ghost, so the axis keeps every category', () {
+      expect(html, contains('class="bar-ghost"'));
     });
 
     test('a verdict nobody hit is shown but not clickable', () {
@@ -458,13 +481,36 @@ void main() {
   });
 
   group('the layout', () {
-    test('titles are set in the report\'s own blue, links keep theirs', () {
+    test('every colour is a token, and the brand is one navy', () {
       final String css = File(
         '${out.path}/results/e2e-test-reporter.css',
       ).readAsStringSync();
-      expect(css, contains('--title: #0B2545'));
-      expect(css, contains('color: var(--title)'));
-      expect(css, contains('--link: #1d63c4'));
+      expect(css, contains('--brand: #1E3A8A'));
+      expect(css, contains('--text-primary: #0F172A'));
+      expect(css, contains('color: var(--text-primary)'));
+      // The faces are named, never fetched: the report is read offline.
+      expect(css, contains('--font-sans: "Inter"'));
+      expect(css, contains('--font-mono: "JetBrains Mono"'));
+      expect(css, isNot(contains('@import')));
+    });
+
+    test(
+      'dark mode is a choice made with the switch, remembered per browser',
+      () {
+        expect(html, contains('class="theme-toggle"'));
+        final String css = File(
+          '${out.path}/results/e2e-test-reporter.css',
+        ).readAsStringSync();
+        expect(css, contains(':root[data-theme="dark"] {'));
+        expect(css, contains('--bg-page: #0F172A'));
+      },
+    );
+
+    test('prints without the chrome, three charts to a row', () {
+      final String css = File(
+        '${out.path}/results/e2e-test-reporter.css',
+      ).readAsStringSync();
+      expect(css, contains('@media print'));
     });
 
     test('the screenshot viewer is hidden until a screenshot is clicked', () {
@@ -494,8 +540,8 @@ void main() {
       final String css = File(
         '${out.path}/results/e2e-test-reporter.css',
       ).readAsStringSync();
-      expect(css, contains('@media (max-width: 900px)'));
-      expect(css, contains('@media (max-width: 600px)'));
+      expect(css, contains('@media (max-width: 1024px)'));
+      expect(css, contains('@media (max-width: 640px)'));
       expect(html, contains('width=device-width, initial-scale=1'));
     });
   });

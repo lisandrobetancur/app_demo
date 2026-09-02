@@ -83,13 +83,14 @@ String testPageHtml(
     ..writeln('<html lang="en">')
     ..write(pageHead(platform))
     ..writeln('<body>')
-    ..write(banner(platform))
+    ..write(banner(platform, generatedAt: generatedAt, offset: offset))
     ..writeln('<div class="middlecontent">')
     ..writeln(
-      '<span class="breadcrumbs"><a href="index.html">Home</a> &gt; '
-      '<a href="${featureReportNameOf(feature)}">'
-      '${escapeHtml(feature)}</a> &gt; '
-      '<span class="truncate">${escapeHtml(testCase.name)}</span></span>',
+      breadcrumbs(<Crumb>[
+        (label: 'Home', href: 'index.html'),
+        (label: feature, href: featureReportNameOf(feature)),
+        (label: testCase.name, href: null),
+      ]),
     )
     ..write(menuBar(generatedAt, homeActive: false, offset: offset))
     ..write(_titleBar(testCase, result, feature, platform))
