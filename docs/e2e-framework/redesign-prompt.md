@@ -20,8 +20,8 @@ es traerlo entero, no reinterpretarlo.
 ## Datos de este proyecto
 
 - Ruta del paquete del reporter aquí: `«packages/e2e_framework/e2e_test_reporter»`
-- Fuente de verdad del cambio: el PR **«#NN»** de
-  `lisandrobetancur/app_demo` — trae el diff con `gh pr diff «NN»` o desde la
+- Fuente de verdad del cambio: el PR ****#42** (https://github.com/lisandrobetancur/app_demo/pull/42)** de
+  `lisandrobetancur/app_demo` — trae el diff con `gh pr diff 42` o desde la
   pestaña *Files changed*. Es público.
 
 ## Qué es el cambio, en una frase
