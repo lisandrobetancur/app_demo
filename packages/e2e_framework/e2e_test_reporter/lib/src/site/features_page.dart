@@ -101,11 +101,13 @@ String featuresHtml(
     ..writeln('<html lang="en">')
     ..write(pageHead(platform))
     ..writeln('<body>')
-    ..write(banner(platform))
+    ..write(banner(platform, generatedAt: generatedAt, offset: offset))
     ..writeln('<div class="middlecontent">')
     ..writeln(
-      '<span class="breadcrumbs"><a href="index.html">Home</a> &gt; '
-      'Features</span>',
+      breadcrumbs(<Crumb>[
+        (label: 'Home', href: 'index.html'),
+        (label: 'Features', href: null),
+      ]),
     )
     ..write(
       menuBar(
@@ -202,12 +204,14 @@ String featurePageHtml(
     ..writeln('<html lang="en">')
     ..write(pageHead(platform))
     ..writeln('<body>')
-    ..write(banner(platform))
+    ..write(banner(platform, generatedAt: generatedAt, offset: offset))
     ..writeln('<div class="middlecontent">')
     ..writeln(
-      '<span class="breadcrumbs"><a href="index.html">Home</a> &gt; '
-      '<a href="features.html">Features</a> &gt; '
-      '${escapeHtml(feature.name)}</span>',
+      breadcrumbs(<Crumb>[
+        (label: 'Home', href: 'index.html'),
+        (label: 'Features', href: 'features.html'),
+        (label: feature.name, href: null),
+      ]),
     )
     ..write(
       menuBar(

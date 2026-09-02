@@ -1,10 +1,10 @@
-/// The chrome every page of the site shares: head, banner, main menu and
-/// footer. One place, so the dashboard and the detail pages can never drift
-/// apart.
+/// The chrome every page of the site shares: head, banner, breadcrumb, main
+/// menu and footer. One place, so the dashboard and the detail pages can
+/// never drift apart.
 library;
 
 import 'dashboard.dart' show escapeHtml, projectTitleFor;
-import 'site_assets.dart' show platformMark, wordmarkMark;
+import 'site_assets.dart' show icon, iconSprite, platformMark, wordmarkMark;
 
 /// The document head — same stylesheet, same icon, every page.
 ///
@@ -22,15 +22,22 @@ String pageHead(String platform) =>
 </head>
 ''';
 
-/// The banner: the report's mark and name on the left, linking home, and on
-/// the right the one line saying what this report is of.
+/// The banner: the report's mark and name on the left, linking home; on the
+/// right which report this is, when it was generated, and the theme switch.
 ///
 /// Both halves are derived, never given: the wording comes from the platform
 /// the suite ran on (see [projectTitleFor]) so two reports of the same suite
 /// are named the same way in every project that builds them.
-String banner(String platform) =>
+///
+/// The icon sprite rides in front of it, because the banner is the first
+/// thing on every page and every icon on the page is a `<use>` of the sprite.
+String banner(
+  String platform, {
+  required DateTime generatedAt,
+  Duration offset = reportOffset,
+}) =>
     '''
-<div class="topheader">
+$iconSprite<div class="topheader">
   <div class="topbanner">
     <a class="wordmark" href="index.html">
       $wordmarkMark
@@ -38,14 +45,46 @@ String banner(String platform) =>
     </a>
     <div class="projectname">
       <span class="projecttitle">${platformMark(platform)}${escapeHtml(projectTitleFor(platform))}</span>
+      <span class="date-and-time">${icon('ic-clock', small: true)}Generated ${timestampOf(generatedAt, offset: offset)}</span>
+      <button class="theme-toggle" type="button" title="Switch theme" aria-label="Switch theme"><svg class="i sun" aria-hidden="true" focusable="false"><use href="#ic-sun"/></svg><svg class="i moon" aria-hidden="true" focusable="false"><use href="#ic-moon"/></svg></button>
     </div>
   </div>
 </div>
 ''';
 
-/// The main menu with the generation stamp. [homeActive] is true on the
-/// dashboard itself and [featuresActive] on the features pages; a page that
-/// is neither renders both as links back.
+/// One step of a breadcrumb trail: a label and, unless it is the page the
+/// reader is on, where it leads.
+typedef Crumb = ({String label, String? href});
+
+/// The trail above the menu, a chevron between the steps. The last step has
+/// no link: it is where the reader is.
+String breadcrumbs(List<Crumb> trail) {
+  final StringBuffer nav = StringBuffer('<nav class="breadcrumbs">');
+  for (int i = 0; i < trail.length; i += 1) {
+    if (i > 0) {
+      nav.write(
+        '<svg class="i s crumb-sep" aria-hidden="true" focusable="false">'
+        '<use href="#ic-chevron-right"/></svg>',
+      );
+    }
+    final Crumb crumb = trail[i];
+    final String label = escapeHtml(crumb.label);
+    nav.write(
+      crumb.href == null
+          ? '<span class="crumb">$label</span>'
+          : '<a class="crumb" href="${crumb.href}">$label</a>',
+    );
+  }
+  nav.write('</nav>');
+  return nav.toString();
+}
+
+/// The main menu. [homeActive] is true on the dashboard itself and
+/// [featuresActive] on the features pages; a page that is neither renders
+/// both as links back.
+///
+/// [generatedAt] and [offset] are accepted so callers read the same on every
+/// page; the stamp itself is in the banner.
 String menuBar(
   DateTime generatedAt, {
   required bool homeActive,
@@ -59,13 +98,10 @@ String menuBar(
       ? '<li class="active"><a href="#">Features</a></li>'
       : '<li><a href="features.html">Features</a></li>';
   return '''
-<div>
-  <span class="date-and-time">Report generated ${timestampOf(generatedAt, offset: offset)}</span>
-  <ul class="nav nav-tabs">
-    $home
-    $features
-  </ul>
-</div>
+<ul class="nav nav-tabs">
+  $home
+  $features
+</ul>
 ''';
 }
 

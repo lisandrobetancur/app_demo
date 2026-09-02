@@ -1,64 +1,59 @@
 /// The site's static assets, written from scratch.
 ///
 /// Nothing in this file is copied from anywhere: the layout facts it encodes
-/// (an off-white page, a white banner, a blue project title on the right, a
-/// tabbed card, result colours per status) come from *reading* the design
-/// source's stylesheet and templates, and every rule here was authored for
-/// this generator. That is the clean-room line this project drew: structure
-/// and appearance are facts, files are not, and no file crosses.
+/// (an off-white page, a white banner, a tabbed dashboard, result colours per
+/// status) come from *reading* the design source's stylesheet and templates,
+/// and every rule here was authored for this generator. That is the clean-room
+/// line this project drew: structure and appearance are facts, files are not,
+/// and no file crosses.
 ///
-/// The charts are CSS-only — a conic-gradient donut and flex bars — so the
-/// generated site is fully self-contained: no script libraries, no fonts, no
-/// network requests at render time.
+/// The charts are inline SVG drawn by `charts.dart` and the icons are an
+/// inline sprite drawn below, so the generated site is fully self-contained:
+/// no script libraries, no fonts fetched, no network requests at render time.
+/// The font stacks *name* Inter and JetBrains Mono — they render wherever
+/// those faces are installed — and fall back to the platform's own interface
+/// face otherwise. A `<link>` to a font host would be the one external URL
+/// the site's own tests forbid.
 library;
 
 /// The result palette, one entry per verdict the writer emits.
 ///
-/// These are the report's own colours, not the reference's. The first cut
-/// reused the reference's values on the theory that a familiar palette reads
-/// faster; in practice that palette is a bright acid green against a pure
-/// red and an orange, which
-/// clash beside each other and — worse — fail contrast as text: the green
-/// spelling out SUCCESS on white sat near 1.9:1, well under the 4.5:1 a
-/// reader with low vision needs.
+/// Two tones per verdict, and the split is the point:
 ///
-/// So: the same five meanings, in tones chosen to sit together, to hold
-/// contrast as text on white, and to be recognisably this report's rather
-/// than an imitation of the one whose layout it learned from. Skipped moves
-/// from mustard to a neutral slate, because "not run" is an absence, not a
-/// warning.
+///  * `solid` is the tone used where the verdict is *read* — the word SUCCESS
+///    beside a title, the marker in a result cell, a coverage bar. It must
+///    hold 4.5:1 as text on white, which is why these sit darker than the
+///    chart tones.
+///  * `fill` (and `border`, its outline) is the tone the charts are painted
+///    with. Softer, because five saturated blocks side by side shout, and a
+///    dashboard is read for its numbers, not its colour. The chart tones were
+///    chosen against a colour-vision validator: Failed and Broken are
+///    separated by lightness as much as by hue, so a reader who cannot tell
+///    red from orange still sees two bars.
 ///
-/// `solid` is the tone used where colour carries meaning at full strength (a
-/// verdict icon, a coverage bar) and is the one that must hold contrast;
-/// `fill` and `border` are the softened pair the charts paint with.
+/// The chart tones are mirrored as CSS tokens in [siteCss] (`--ch-*`), with a
+/// dark-mode step of each; the charts paint with the token so the theme
+/// switch reaches them. This map is where the meaning lives — a rule that
+/// needs a verdict colour takes it from here or from the token that mirrors
+/// it, never invents one.
 const Map<String, ({String fill, String border, String solid})> resultColors =
     <String, ({String fill, String border, String solid})>{
-      'SUCCESS': (
-        fill: 'rgba(46,158,91,0.85)',
-        border: 'rgba(46,158,91,1)',
-        solid: '#2e9e5b',
-      ),
-      'FAILURE': (
-        fill: 'rgba(217,45,63,0.85)',
-        border: 'rgba(217,45,63,1)',
-        solid: '#d92d3f',
-      ),
-      'ERROR': (
-        fill: 'rgba(224,122,31,0.85)',
-        border: 'rgba(224,122,31,1)',
-        solid: '#e07a1f',
-      ),
-      'SKIPPED': (
-        fill: 'rgba(148,163,184,0.85)',
-        border: 'rgba(148,163,184,1)',
-        solid: '#94a3b8',
-      ),
-      'UNDEFINED': (
-        fill: 'rgba(124,92,214,0.85)',
-        border: 'rgba(124,92,214,1)',
-        solid: '#7c5cd6',
-      ),
+      'SUCCESS': (fill: '#388B66', border: '#388B66', solid: '#15803D'),
+      'FAILURE': (fill: '#C4524E', border: '#C4524E', solid: '#B91C1C'),
+      'ERROR': (fill: '#D4A13E', border: '#D4A13E', solid: '#B45309'),
+      'SKIPPED': (fill: '#94A3B8', border: '#94A3B8', solid: '#475569'),
+      'UNDEFINED': (fill: '#9B84D8', border: '#9B84D8', solid: '#6D28D9'),
     };
+
+/// The CSS token each verdict's chart tone lives under, so a chart painted
+/// with `var(--ch-pass)` follows the theme switch.
+const Map<String, String> resultTokens = <String, String>{
+  'SUCCESS': '--ch-pass',
+  'FAILURE': '--ch-fail',
+  'ERROR': '--ch-broken',
+  'SKIPPED': '--ch-skip',
+  'UNDEFINED': '--ch-undef',
+};
 
 /// The glyph shown in a result cell, per verdict. Plain text rather than an
 /// icon font: one fewer asset, and the `title` attribute carries the word.
@@ -72,41 +67,31 @@ const Map<String, String> resultGlyphs = <String, String>{
 
 /// The favicon, written to `favicon.svg` beside `index.html`.
 ///
-/// What the report is, in sixteen pixels: a checked-off result on a clipboard,
-/// in the report's own navy with the verdict green it uses everywhere else.
+/// The same figure as the wordmark's mark — a checked box — on the brand
+/// navy, so the tab icon and the banner read as one mark rather than two.
 /// Drawn here rather than fetched, so the site still asks the network for
 /// nothing, and as SVG so it stays sharp on any tab.
 const String siteFavicon = '''
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="7" fill="#0A1B3A"/>
-  <rect x="8" y="5" width="16" height="22" rx="2.5" fill="#ffffff"/>
-  <rect x="12" y="3" width="8" height="4" rx="1.5" fill="#0A1B3A"/>
-  <path d="M11.5 16.5l3 3 6-6.5" fill="none" stroke="#2e9e5b"
-        stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
-  <rect x="11.5" y="22" width="9" height="1.8" rx="0.9" fill="#d7dde6"/>
+  <rect width="32" height="32" rx="7" fill="#1E3A8A"/>
+  <rect x="7" y="7" width="18" height="18" rx="3.5" fill="none" stroke="#ffffff" stroke-width="2.4"/>
+  <path d="M12 16.2l2.8 2.8 5.4-6" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
 ''';
 
 /// The mark beside the wordmark in the banner, inline in every page.
 ///
-/// The same idea as the favicon, drawn for the size it is read at: a navy
-/// tile, a clipboard, a green tick and a line of what was checked. A report
-/// of a test run is a checklist someone signed off, so that is the figure —
-/// and repeating the favicon's shapes means the tab icon and the banner read
-/// as one mark rather than two.
+/// A checked box in the brand navy: a report of a test run is a checklist
+/// somebody signed off, so that is the figure. Drawn on the same 24px grid
+/// and 1.75 stroke as every other icon on the page, so it sits beside them as
+/// one family.
 ///
 /// Inline rather than a second file: the banner is on every page, and an
 /// `<img>` would be one more request the offline report cannot count on. It
 /// is decorative — the wordmark beside it already carries the name — so it is
 /// hidden from screen readers.
 const String wordmarkMark = '''
-<svg class="wordmark-mark" viewBox="0 0 40 40" width="34" height="34" aria-hidden="true" focusable="false">
-<rect width="40" height="40" rx="10" fill="#0A1B3A"/>
-<rect x="9" y="7" width="22" height="27" rx="3.5" fill="#ffffff"/>
-<rect x="15" y="3.5" width="10" height="5.5" rx="2.2" fill="#0A1B3A"/>
-<path d="M14 19.6l3.9 3.9L26.4 15" fill="none" stroke="#2e9e5b" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
-<rect x="13.5" y="27" width="13" height="2.2" rx="1.1" fill="#d7dde6"/>
-</svg>''';
+<svg class="wordmark-mark" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 11.5l2 2 4-4.5"/><rect x="3.5" y="3.5" width="17" height="17" rx="3"/></svg>''';
 
 /// The mark beside the report's title, one per platform.
 ///
@@ -165,6 +150,41 @@ String _mark(String body) =>
     'stroke="currentColor" stroke-width="1.6" stroke-linecap="round" '
     'stroke-linejoin="round" aria-hidden="true" focusable="false">$body</svg>';
 
+/// The icon sprite, inlined once per page just inside `<body>`.
+///
+/// Every icon the site uses, drawn for it on a 24px grid with a 1.75 stroke —
+/// the same grid and weight as the platform marks, so the whole set reads as
+/// one hand. Drawn rather than taken from an icon library: a library's paths
+/// come with a licence notice that would have to travel into every generated
+/// report, and a checked box or a clock is not worth that.
+///
+/// Used through `<use href="#ic-…">`, which is a same-document reference and
+/// costs no request. The sprite is hidden from layout and from screen
+/// readers; each `<use>` carries its own meaning or is decorative beside a
+/// word that already says it.
+const String iconSprite = '''
+<svg class="icon-sprite" width="0" height="0" aria-hidden="true" focusable="false">
+  <symbol id="ic-check-square" viewBox="0 0 24 24"><path d="M9 11.5l2 2 4-4.5"/><rect x="3.5" y="3.5" width="17" height="17" rx="3"/></symbol>
+  <symbol id="ic-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+  <symbol id="ic-chevron-right" viewBox="0 0 24 24"><path d="M9.5 6.5l5.5 5.5-5.5 5.5"/></symbol>
+  <symbol id="ic-list-checks" viewBox="0 0 24 24"><path d="M3.5 7l1.75 1.75L8.5 5.5M3.5 15l1.75 1.75L8.5 13.5M12 7h8.5M12 15h8.5"/></symbol>
+  <symbol id="ic-circle-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 12.2l2.4 2.4 4.6-5"/></symbol>
+  <symbol id="ic-alert-triangle" viewBox="0 0 24 24"><path d="M12 4.2L3.4 19h17.2L12 4.2z"/><path d="M12 10v4M12 16.8h.01"/></symbol>
+  <symbol id="ic-timer" viewBox="0 0 24 24"><circle cx="12" cy="13.5" r="7"/><path d="M12 10v3.5l2 1.5M9.5 3.5h5M12 3.5v3M18 7l1.2-1.2"/></symbol>
+  <symbol id="ic-pie-chart" viewBox="0 0 24 24"><path d="M12 3.5a8.5 8.5 0 1 0 8.5 8.5H12z"/><path d="M14.5 3.9A8.5 8.5 0 0 1 20.1 9.5H14.5z"/></symbol>
+  <symbol id="ic-bar-chart" viewBox="0 0 24 24"><path d="M4 20h16M7 16.5v-5M12 16.5v-9M17 16.5v-13"/></symbol>
+  <symbol id="ic-gauge" viewBox="0 0 24 24"><path d="M4.5 16a8 8 0 1 1 15 0"/><path d="M12 16l3.5-4.5"/><circle cx="12" cy="16" r="1.2"/></symbol>
+  <symbol id="ic-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 7.8h.01"/></symbol>
+  <symbol id="ic-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.5"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"/></symbol>
+  <symbol id="ic-moon" viewBox="0 0 24 24"><path d="M19 14.5A7.5 7.5 0 0 1 9.5 5a7.5 7.5 0 1 0 9.5 9.5z"/></symbol>
+</svg>
+''';
+
+/// One icon from [iconSprite], sized by the `i` class (18px) or `i s` (14px).
+String icon(String id, {bool small = false}) =>
+    '<svg class="i${small ? ' s' : ''}" aria-hidden="true" focusable="false">'
+    '<use href="#$id"/></svg>';
+
 /// The screenshot viewer's markup, on every page that shows a capture.
 ///
 /// One per page rather than one per picture: it shows whichever was clicked,
@@ -185,902 +205,769 @@ const String shotViewer = '''
 const String siteCss = '''
 /* E2E Test Reporter — all rules authored for this generator. */
 
-/* Every colour in the report comes from here. Two families and nothing else:
-   the neutrals that build the page, and the five verdict tones (mirrored from
-   `resultColors`, which is where the meaning lives). A rule that needs a
-   colour takes a token; a rule that invents one is a bug. */
+/* ============================================================
+   1. TOKENS
+   Every colour, face and radius on the site comes from here. Two families
+   and nothing else: the neutrals and brand that build the page, and the
+   semantic tones (good / danger / warning / neutral / info) the verdicts
+   wear. A rule that needs a colour takes a token; a rule that invents one
+   is a bug.
+   ============================================================ */
 :root {
-  /* The colour titles and subtitles are set in. Links keep their own blue:
-     the two must stay distinguishable, and this blue clears 4.5:1 on white
-     where the lighter one it replaced did not. */
-  --title: #0B2545;
-  --link: #1d63c4;
-  /* The navy read back at a lower weight, for the second half of the
-     wordmark and anything else that must sit beside the title without
-     competing with it. */
-  --title-soft: #5b6b85;
+  /* Named, not fetched: the report is read offline, off a CI artefact, and
+     its own tests forbid an external URL. Inter and JetBrains Mono render
+     where they are installed; the fallback is each platform's own interface
+     face, which is the same metric family. */
+  --font-sans: "Inter", -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
 
-  /* Neutrals: a cool page, white cards, two weights of rule, and one muted
-     ink for labels that are there to be scanned past. */
-  --page: #f4f6fa;
-  --card: #ffffff;
-  --ink: #1f2937;
-  --muted: #64748b;
-  --rule: #e4e8ef;
-  --rule-soft: #eef1f6;
-  --hover: #f7f9fc;
+  --bg-page: #F5F7FA;
+  --bg-card: #FFFFFF;
+  --border: #E4E8EE;
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-muted: #94A3B8;
+  --brand: #1E3A8A;
+  --brand-soft: #E8EEFB;
 
-  /* The verdicts, at full strength. */
-  --pass: #2e9e5b;
-  --fail: #d92d3f;
-  --broken: #e07a1f;
-  --skip: #94a3b8;
-  --undefined: #7c5cd6;
+  /* Semantic tones: cards, chips, badges and the verdict text. */
+  --success: #16A34A;  --success-soft: #DCFCE7;
+  --danger: #DC2626;   --danger-soft: #FEE2E2;
+  --warning: #D97706;  --warning-soft: #FEF3C7;
+  --neutral: #64748B;  --neutral-soft: #F1F5F9;
+  --info: #7C3AED;     --info-soft: #EDE9FE;
 
-  /* Not a verdict: the one blue the quantity charts are painted in, so a
-     bar about duration is never mistaken for a bar about outcomes. */
-  --data: #4f7fe0;
-  --data-soft: #dfe8fb;
+  /* The chart tones — mirrored from `resultColors`, where the meaning lives.
+     Softer than the semantic tones on purpose: five saturated blocks side by
+     side shout, and a dashboard is read for its numbers. `--ch-bar` paints
+     the one chart that is about a quantity, not a verdict (how long tests
+     took), so a bar about duration is never mistaken for one about outcomes;
+     `--ch-slow` marks the band the slowest test fell in. */
+  --ch-pass: #388B66;
+  --ch-skip: #94A3B8;
+  --ch-fail: #C4524E;
+  --ch-broken: #D4A13E;
+  --ch-undef: #9B84D8;
+  --ch-bar: #7B93CF;
+  --ch-slow: #D4A13E;
+
+  /* The verdicts at reading strength: the tone a verdict *word* is set in,
+     a result marker, a coverage bar. Darker than the chart tones because
+     these have to hold 4.5:1 as text. */
+  --pass: #15803D;
+  --fail: #B91C1C;
+  --broken: #B45309;
+  --skip: #475569;
+  --undefined: #6D28D9;
+
+  /* Tints behind a row or a title bar wearing its verdict. */
+  --pass-tint: #EEF8F2;
+  --fail-tint: var(--danger-soft);
+  --broken-tint: var(--warning-soft);
+  --skip-tint: var(--neutral-soft);
+  --undefined-tint: var(--info-soft);
+
+  /* Surfaces. */
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-hover: 0 4px 12px rgba(15, 23, 42, 0.08);
+  --grid-line: rgba(228, 232, 238, 0.3);
+  --tooltip-bg: #0F172A;
+  --tooltip-fg: #FFFFFF;
+
+  /* The names the older page rules were written against, kept as aliases so
+     every page reads from one set of tokens without rewriting its rules. */
+  --title: var(--text-primary);
+  --title-soft: var(--text-secondary);
+  --link: var(--brand);
+  --page: var(--bg-page);
+  --card: var(--bg-card);
+  --ink: var(--text-primary);
+  --muted: var(--text-secondary);
+  --rule: var(--border);
+  --rule-soft: var(--border);
+  --hover: var(--neutral-soft);
+  --data: var(--ch-bar);
+  --data-soft: var(--brand-soft);
+
+  color-scheme: light;
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
+/* Dark mode is a choice, made with the switch in the header and remembered
+   per browser. Each token is re-stepped for the dark card rather than
+   inverted: the semantic tones come up a step so they still read on navy,
+   and the chart tones are the dark column of the same validated set. */
+:root[data-theme="dark"] {
+  --bg-page: #0F172A;
+  --bg-card: #1E293B;
+  --border: #334155;
+  --text-primary: #F8FAFC;
+  --text-secondary: #CBD5E1;
+  --text-muted: #64748B;
+  --brand: #93A8E8;
+  --brand-soft: #1E2A4A;
 
-/* The system's own interface face, whichever system that is. A webfont would
-   be a network request the offline report cannot make, and the old stack
-   ("Helvetica Neue", Calibri) resolved to something different — and older —
-   on every one of the three platforms this report is read on. */
+  --success: #22C55E;  --success-soft: #14321F;
+  --danger: #EF4444;   --danger-soft: #3B1A1A;
+  --warning: #F59E0B;  --warning-soft: #3A2A0F;
+  --neutral: #94A3B8;  --neutral-soft: #26324A;
+  --info: #A78BFA;     --info-soft: #2A2350;
+
+  --ch-pass: #3E9E70;
+  --ch-skip: #A5B1C2;
+  --ch-fail: #D0605B;
+  --ch-broken: #D4A13E;
+  --ch-undef: #9A86DE;
+  --ch-bar: #7F98DA;
+  --ch-slow: #D4A13E;
+
+  --pass: #4ADE80;
+  --fail: #F87171;
+  --broken: #FBBF24;
+  --skip: #CBD5E1;
+  --undefined: #C4B5FD;
+  --pass-tint: #14321F;
+
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --grid-line: rgba(51, 65, 85, 0.6);
+  --tooltip-bg: #F8FAFC;
+  --tooltip-fg: #0F172A;
+
+  color-scheme: dark;
+}
+
+/* ============================================================
+   2. BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; }
+* { margin: 0; padding: 0; }
+
 body {
-  font-size: 16px;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
-    Arial, sans-serif;
-  background-color: var(--page);
-  color: var(--ink);
+  font: 400 14px/1.5 var(--font-sans);
+  background-color: var(--bg-page);
+  color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
+  /* Every figure in the report is a count, a duration or a clock time, and
+     all three are read down a column. Proportional digits make that column
+     ragged. */
+  font-variant-numeric: tabular-nums;
 }
 
-/* Every figure in the report is a count, a duration or a clock time, and all
-   three are read down a column. Proportional digits make that column ragged. */
-table, .kpi-value, .date-and-time { font-variant-numeric: tabular-nums; }
-
-a { text-decoration: none; color: var(--link); }
+a { text-decoration: none; color: var(--brand); }
 a:hover { text-decoration: underline; }
 
-/* ── Banner ─────────────────────────────────────────────────────────── */
+:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 4px; }
 
-/* White, closed off from the page by a hairline and nothing else. A band of
-   colour across the full width was tried and dropped: everything else on the
-   page is inset and quiet, so a full-bleed rule read as a stripe laid over
-   the report rather than part of it. The one accent left in the banner is
-   under the report's own name, where it marks something. */
+button { font: inherit; color: inherit; }
+
+h1, h2, h3, h4 { line-height: 1.2; text-wrap: balance; }
+
+/* Three levels and each does one job: h2 names the page, h3 names a block
+   inside it, h4 titles a card. */
+h2 { font-size: 24px; font-weight: 700; color: var(--text-primary); }
+h3 { font-size: 20px; font-weight: 600; color: var(--text-primary); margin: 8px 0; }
+h4 { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+
+.eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.mono { font-family: var(--font-mono); }
+
+svg.i {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex: none;
+}
+svg.i.s { width: 14px; height: 14px; }
+.icon-sprite { position: absolute; }
+
+/* ============================================================
+   3. HEADER · BREADCRUMB · TABS
+   ============================================================ */
 .topheader {
-  background-color: #fff;
-  border-bottom: 1px solid var(--rule);
+  height: 56px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
 }
 
-/* The page fills the window, with a margin rather than a column: a report of
-   fifty scenarios has long feature and scenario names, and capping the width
-   was wrapping them onto three lines while the screen sat empty on both
-   sides. Nothing is pinned to a minimum width — what is too wide for the
-   window scrolls inside its own box (see `.table-scroll`) instead of forcing
-   the whole page sideways. */
+/* Centred at 1440px and no wider: on a wider window the content centres
+   rather than stretches. Nothing is pinned to a minimum width — what is too
+   wide for the window scrolls inside its own box (see `.table-scroll`). */
 .topbanner {
+  max-width: 1440px;
   margin: 0 auto;
-  padding: 1em 1.5em;
+  height: 100%;
+  padding: 0 32px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 16px;
 }
 
-/* Mark and name on one baseline: the tile carries the colour, the name
-   carries the weight. `E2E` is the part people say, so it is the part set
-   solid; `Test Reporter` follows it lighter and spaced, which is what keeps
-   a multi-word wordmark from reading as separate words. */
 .wordmark {
   display: inline-flex;
   align-items: center;
-  gap: 0.55rem;
-  text-decoration: none;
+  gap: 10px;
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 600;
   line-height: 1;
 }
-
 .wordmark:hover { text-decoration: none; }
-.wordmark:hover .wordmark-name { color: var(--title); }
-.wordmark-mark { display: block; flex: none; }
+.wordmark-mark { display: block; flex: none; color: var(--brand); }
+.wordmark-lead { font-weight: 600; }
+.wordmark-name { color: var(--text-secondary); font-weight: 500; margin-left: 0.3em; }
 
-.wordmark-text { font-size: 1.55rem; letter-spacing: 0.02em; }
-.wordmark-lead { font-weight: 700; color: var(--title); letter-spacing: 0.04em; }
-.wordmark-name {
-  font-weight: 300;
-  color: var(--title-soft);
-  margin-left: 0.28em;
-  transition: color 0.15s ease;
-}
+.projectname { margin-left: auto; display: flex; align-items: center; gap: 16px; }
 
-/* The right half answers "which report is this?" — one line, set in the
-   title navy at a weight that holds its own against the wordmark without
-   shouting over it, and with a hairline under it so the two halves of the
-   banner look deliberate rather than merely opposite. */
-.projectname { text-align: right; }
+/* Which report this is, as a chip: the platform mark and the title in the
+   brand tone on its soft tint. */
 .projecttitle {
   display: inline-flex;
   align-items: center;
-  gap: 0.45em;
-  font-size: 1.35rem;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--brand-soft);
+  color: var(--brand);
+  font-size: 13px;
   font-weight: 600;
-  letter-spacing: 0.01em;
-  color: var(--title);
-  padding-bottom: 0.25em;
-  border-bottom: 2px solid var(--pass);
 }
 
-/* Scales with the title rather than pinned to a pixel size, so the pair still
-   reads as one thing at the smaller title the narrow layout uses. */
-.platform-mark {
-  width: 1.05em;
-  height: 1.05em;
-  flex: none;
+.platform-mark { width: 14px; height: 14px; flex: none; }
+
+.date-and-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 400 12px/1 var(--font-mono);
+  color: var(--text-muted);
 }
 
-/* ── Content frame ──────────────────────────────────────────────────── */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+}
+.theme-toggle:hover { background: var(--neutral-soft); color: var(--text-primary); }
+.theme-toggle .moon { display: none; }
+:root[data-theme="dark"] .theme-toggle .sun { display: none; }
+:root[data-theme="dark"] .theme-toggle .moon { display: block; }
 
 .middlecontent {
+  max-width: 1440px;
   margin: 0 auto;
-  padding: 0 2rem 3rem 2rem;
+  padding: 24px 32px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
 .breadcrumbs {
-  color: var(--muted);
-  font-size: 0.85rem;
-  padding: 1.5em 0 0.45em 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.breadcrumbs a { color: var(--text-secondary); }
+.breadcrumbs .crumb-sep { color: var(--text-muted); }
+
+/* The main menu: underline tabs, no boxes. */
+.nav-tabs {
+  list-style: none;
+  display: flex;
+  gap: 24px;
+  border-bottom: 1px solid var(--border);
+}
+.nav-tabs li a, .nav-tabs li span {
   display: block;
+  padding: 10px 0 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color 150ms ease, border-color 150ms ease;
 }
-
-/* Three levels and each does one job: h2 names the page, h3 names a block
-   inside it, h4 labels a panel. The labels are set as small caps rather than
-   as small headings, so a panel title never competes with the page's own. */
-h2 {
+.nav-tabs li a:hover { color: var(--text-primary); text-decoration: none; }
+.nav-tabs li.active a, .nav-tabs li.active span {
+  color: var(--text-primary);
   font-weight: 600;
-  font-size: 1.55rem;
-  letter-spacing: -0.015em;
-  margin: 1em 0 0.8em 0;
-  color: var(--title);
+  border-bottom-color: var(--brand);
+  cursor: default;
 }
-h3 {
-  font-weight: 600;
-  font-size: 1.05rem;
-  margin: 1.25em 0 0.6em 0;
-  color: var(--title);
-}
-h4 {
-  font-weight: 700;
-  font-size: 0.75rem;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  margin: 0 0 1em 0;
-  color: var(--muted);
-}
+.nav-tabs li.disabled span { color: var(--text-muted); cursor: default; }
 
-.test-count-title { font-size: 0.95rem; color: var(--muted); margin-bottom: 1em; }
+.topnav { display: flex; flex-direction: column; gap: 12px; margin-top: -8px; }
 
 /* Said plainly rather than in alarm colours: an older run is a fact about
    this report, not a fault in it. */
 .run-age {
-  background: #fdf8e8;
-  border: 1px solid #eee0b0;
-  border-radius: 8px;
-  color: #7a6420;
-  font-size: 0.85rem;
-  margin: 0.75em 0;
-  padding: 0.5em 0.9em;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--neutral-soft);
+  color: var(--text-secondary);
+  font-size: 13px;
 }
+.run-age .i { color: var(--text-muted); }
 
-/* ── Key figures ────────────────────────────────────────────────────── */
+.section-title { display: flex; flex-direction: column; gap: 6px; }
+.test-count-title { font-size: 13px; color: var(--text-secondary); }
 
-/* The four numbers someone opens the report to find, above everything that
-   explains them. Until this strip existed the pass rate had to be read off
-   the doughnut and the duration dug out of a statistics table halfway down
-   the page. */
-.kpi-row {
-  display: flex;
-  gap: 0.9rem;
-  flex-wrap: wrap;
-  margin: 0.5rem 0 2rem 0;
-}
+/* ============================================================
+   4. KEY FIGURES
+   The four numbers someone opens the report to find, above everything that
+   explains them.
+   ============================================================ */
+.kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
 
 .kpi {
-  flex: 1 1 0;
-  min-width: 160px;
-  background: var(--card);
-  border: 1px solid var(--rule);
-  border-radius: 12px;
-  padding: 0.9rem 1.1rem;
-  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: box-shadow 150ms ease;
 }
-
+.kpi:hover { box-shadow: var(--shadow-hover); }
+.kpi-head { display: flex; align-items: center; gap: 12px; }
+.kpi-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  display: grid;
+  place-items: center;
+  background: var(--brand-soft);
+  color: var(--brand);
+}
 .kpi-label {
-  display: block;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--muted);
-  margin-bottom: 0.35rem;
-}
-
-.kpi-value {
-  display: block;
-  font-size: 1.75rem;
-  font-weight: 650;
-  line-height: 1.1;
-  color: var(--title);
-}
-
-.kpi-note { font-size: 0.8rem; color: var(--muted); }
-
-/* Colour only where the number is a verdict on the run: a pass rate is good
-   news, anything needing attention is not, and a count of scenarios is
-   neither. */
-.kpi.good .kpi-value { color: var(--pass); }
-.kpi.bad .kpi-value { color: var(--fail); }
-
-/* ── Menu and tabs ──────────────────────────────────────────────────── */
-
-.nav-tabs {
-  list-style: none;
-  display: flex;
-  gap: 0.35em;
-  border-bottom: 1px solid var(--rule);
-  margin-top: 1em;
-}
-
-.nav-tabs li a, .nav-tabs li span {
-  display: inline-block;
-  padding: 0.55em 1.1em;
-  border: 1px solid transparent;
-  border-radius: 8px 8px 0 0;
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: var(--link);
-}
-
-.nav-tabs li.active a, .nav-tabs li.active span {
-  color: var(--title);
+  font-size: 11px;
   font-weight: 600;
-  background-color: var(--card);
-  border-color: var(--rule);
-  border-bottom-color: var(--card);
-  cursor: default;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.kpi-value { font-size: 36px; font-weight: 700; line-height: 1.2; color: var(--text-primary); }
+.kpi-note { font-size: 13px; color: var(--text-secondary); }
+
+/* Colour where the number is a verdict on the run. */
+.kpi.good .kpi-icon { background: var(--success-soft); color: var(--success); }
+.kpi.good .kpi-value { color: var(--success); }
+.kpi.bad .kpi-icon { background: var(--danger-soft); color: var(--danger); }
+.kpi.bad .kpi-value { color: var(--danger); }
+.kpi.calm .kpi-icon { background: var(--neutral-soft); color: var(--neutral); }
+.kpi.time .kpi-value { font-family: var(--font-mono); font-size: 32px; }
+
+/* ============================================================
+   5. SEGMENTED CONTROL · SUMMARY BAND · CARDS
+   ============================================================ */
+.segmented {
+  display: inline-flex;
+  align-self: flex-start;
+  padding: 3px;
+  gap: 2px;
+  border-radius: var(--radius-sm);
+  background: var(--neutral-soft);
+}
+.segmented .segment {
+  display: block;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease, box-shadow 150ms ease;
+}
+.segmented .segment:hover { color: var(--text-primary); text-decoration: none; }
+.segmented .segment.active {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-weight: 600;
+  box-shadow: var(--shadow);
 }
 
-.nav-tabs li.disabled span { color: #aaa; cursor: default; }
+.tab-pane { display: none; flex-direction: column; gap: 24px; }
+.tab-pane.active { display: flex; }
 
-.date-and-time {
-  float: right;
-  color: var(--muted);
-  font-size: 0.85rem;
-  /* Follows .nav-tabs' margin-top: the two sit on one line, and a change to
-     one without the other leaves the date riding above the tabs. */
-  padding: 1.25em 0;
-}
-
-/* ── Card with tab panes ────────────────────────────────────────────── */
-
-/* One surface, lifted off the page by a hairline and a shadow soft enough to
-   read as depth rather than as a drop shadow. The card under the tabs keeps
-   its square top corners, so the active tab still looks joined to it. */
-.card {
-  background: var(--card);
-  border: 1px solid var(--rule);
-  border-top: none;
-  border-radius: 0 0 12px 12px;
-  padding: 1.4rem 1.5rem;
-  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04),
-              0 8px 20px rgba(16, 24, 40, 0.04);
-}
-
-.card.standalone {
-  border-top: 1px solid var(--rule);
-  border-radius: 12px;
-}
-
-.tab-pane { display: none; }
-.tab-pane.active { display: block; }
-
-/* ── Dashboard charts ───────────────────────────────────────────────── */
-
-.dashboard-charts {
-  display: flex;
-  gap: 2.5em;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  margin-bottom: 2em;
-}
-
-.chart-block { flex: 1 1 300px; min-width: 300px; }
-.chart-block.wide { flex: 1 1 380px; min-width: 380px; }
-
-.chart-caption {
-  font-size: 0.78rem;
-  color: var(--muted);
-  text-align: center;
-  margin-bottom: 0.5em;
-}
-
-/* ── Doughnut ───────────────────────────────────────────────────────── */
-
-.donut-wrap { display: flex; justify-content: center; }
-
-.donut {
-  width: 220px;
-  height: 220px;
-  border-radius: 50%;
-  margin: 0.5em 0 1em;
-  position: relative;
-}
-
-.donut::before {
-  content: "";
-  position: absolute;
-  inset: 26%;
-  border-radius: 50%;
-  background: #fff;
-}
-
-/* The centred percentage covers the whole box in order to centre itself, so
-   only the hole itself takes the pointer — the rest of the box must let the
-   click through to the segment underneath, or the label swallows every one
-   of them. `inset: 26%` is the hole, matching `.donut::before`. */
-.donut .donut-label {
-  position: absolute;
-  inset: 0;
+/* With three scenarios or fewer the charts have little to say, so the run is
+   summed up in one line above them. The charts stay: a chart of one bar is
+   still the chart a reader learned to read. */
+.summary-band {
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 2em;
-  color: #444;
-  z-index: 2;
-  pointer-events: none;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  font-weight: 500;
+  background: var(--success-soft);
+  color: var(--success);
 }
+.summary-band.bad { background: var(--danger-soft); color: var(--danger); }
+.summary-band .mono { font-weight: 600; }
 
-.donut a.donut-label { text-decoration: none; }
-.donut a.donut-label::after {
-  content: "";
-  position: absolute;
-  inset: 26%;
-  border-radius: 50%;
-  pointer-events: auto;
-  cursor: pointer;
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: box-shadow 150ms ease;
 }
+.card:hover { box-shadow: var(--shadow-hover); }
+.card.standalone { display: block; }
+.card-head { display: flex; flex-direction: column; gap: 4px; }
+.card-head .eyebrow { display: flex; align-items: center; gap: 8px; }
+.card-head .eyebrow .i { width: 16px; height: 16px; color: var(--text-muted); }
+.card-sub { font-size: 13px; color: var(--text-secondary); }
 
-/* One transparent ring sector per segment, sitting over the gradient: this
-   is what a click on "the passing slice" actually hits. */
-.donut-wedge {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  cursor: pointer;
+/* ============================================================
+   6. CHARTS
+   Drawn as SVG to one scale by `charts.dart`: the marks, the ticks and the
+   labels all come off the same numbers.
+   ============================================================ */
+.dashboard-charts { display: grid; grid-template-columns: 1fr 1.4fr 1.4fr; gap: 16px; }
+
+.chart-block svg.chart {
+  width: 100%;
+  height: 220px;
+  display: block;
+  font-family: var(--font-sans);
+  overflow: visible;
 }
-
-.donut-wedge:hover { background: rgba(255, 255, 255, 0.25); }
-
-.donut-slice-label {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  font-size: 0.8em;
+.chart-block svg.chart text { fill: var(--text-muted); font-size: 12px; }
+.chart-block svg.chart text.bar-value { fill: var(--text-primary); font-weight: 600; }
+.chart-block svg.chart .gridline { stroke: var(--grid-line); stroke-width: 1; }
+.chart-block svg.chart text.axis-title {
+  fill: var(--text-secondary);
+  font-size: 11px;
   font-weight: 600;
-  color: #444;
-  z-index: 2;
-  pointer-events: none;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
+
+.bar-column { cursor: pointer; }
+.bar-column .bar-fill { transition: opacity 150ms ease; }
+.bar-column:hover .bar-fill { opacity: 0.85; }
+
+.donut-wrap { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.donut-wrap svg.chart { max-width: 200px; height: 200px; }
+.donut-track { fill: none; stroke: var(--neutral-soft); stroke-width: 22; }
+.donut-segment { fill: none; stroke-width: 22; }
+.donut-wedge { cursor: pointer; }
+.donut-wedge:hover .donut-segment { opacity: 0.85; }
+.chart-block svg.chart text.donut-center { fill: var(--text-primary); font-size: 28px; font-weight: 700; }
+.chart-block svg.chart text.donut-eyebrow {
+  fill: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.donut-label { cursor: pointer; }
+.donut-label:hover text.donut-center { fill: var(--brand); }
 
 .chart-legend {
   list-style: none;
-  font-size: 0.88rem;
-  color: var(--ink);
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.25em 1em;
-}
-
-.chart-legend li.empty { color: #a3aec0; }
-
-.chart-legend .swatch {
-  display: inline-block;
-  width: 0.85em;
-  height: 0.85em;
-  border: 1px solid;
-  border-radius: 4px;
-  margin-right: 0.45em;
-  vertical-align: -0.05em;
-}
-
-/* ── Bar charts with an axis ────────────────────────────────────────── */
-
-/* The padding is where a full-height bar's own value label sits: without it
-   the number would ride over whatever the chart is captioned with. */
-.plot { display: flex; height: 220px; margin: 0.5em 0 2em; padding-top: 1.2em; }
-.plot.slanted-axis { margin-bottom: 5em; }
-
-.y-axis {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: flex-end;
-  padding-right: 0.4em;
-  font-size: 0.75rem;
-  color: var(--muted);
-  /* Half a line up and down, so each number sits ON its gridline. */
-  margin: -0.5em 0;
-}
-
-.y-tick { line-height: 1em; }
-
-.plot-area { position: relative; flex: 1; }
-
-.gridlines {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
-.gridlines .gridline { border-top: 1px solid var(--rule-soft); }
-
-.bars {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-around;
-  gap: 0.5em;
-}
-
-.bar-column {
-  flex: 1;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  align-items: center;
-  position: relative;
-  color: inherit;
-}
-
-a.bar-column { cursor: pointer; }
-a.bar-column:hover { text-decoration: none; }
-a.bar-column:hover .bar-fill { filter: brightness(0.92); }
-
-.chart-legend a { color: inherit; }
-.chart-legend a:hover { text-decoration: underline; }
-
-/* A bar is a solid block with a rounded head, not an outlined box: the
-   outline was carrying a second colour at every bar for no information. */
-.bar-fill {
-  width: 60%;
-  min-height: 2px;
-  border: 0;
-  border-radius: 6px 6px 0 0;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-}
-
-/* How long tests took is a quantity, not a verdict, so it is painted in the
-   data blue and never in a result colour. */
-.bar-fill.duration-fill { background: var(--data-soft); border-bottom: 3px solid var(--data); }
-
-.bar-value {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--title);
-  margin-top: -1.4em;
-}
-
-.bar-label {
-  position: absolute;
-  top: 100%;
-  padding-top: 0.35em;
-  font-size: 0.72rem;
-  color: var(--muted);
-  white-space: nowrap;
-}
-
-/* Slanted labels hang BELOW the axis and rise towards their own column: the
-   anchor is the label's right end, sitting under the bar it names, so the
-   text runs down-left into empty space instead of up-right across the bars. */
-.bar-label.slanted {
-  left: 50%;
-  font-size: 0.65em;
-  text-align: right;
-  transform-origin: 100% 0;
-  transform: translateX(-100%) rotate(-35deg);
-}
-
-/* The two panels the reference puts side by side under the charts. */
-.summary-columns {
-  display: flex;
-  gap: 2.5em;
-  align-items: flex-start;
-  flex-wrap: wrap;
-}
-
-.summary-columns > .coverage-panel { flex: 2 1 420px; min-width: 420px; }
-.summary-columns > .statistics-panel { flex: 1 1 320px; min-width: 320px; }
-
-/* ── Tables ─────────────────────────────────────────────────────────── */
-
-table.table {
-  border-collapse: collapse;
   width: 100%;
-  margin: 0.5em 0;
-  font-size: 0.92rem;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-primary);
 }
+.chart-legend li, .chart-legend li a { display: flex; align-items: center; gap: 8px; }
+.chart-legend li a { color: inherit; width: 100%; }
+.chart-legend li a:hover { text-decoration: none; color: var(--brand); }
+.chart-legend li.empty { color: var(--text-muted); }
+.chart-legend .swatch { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.chart-legend li.empty .swatch { opacity: 0.4; }
+.chart-legend .legend-count { margin-left: auto; font-family: var(--font-mono); font-size: 12px; }
 
-/* Column names are labels, not headings: small caps in the muted ink, so the
-   eye lands on the data under them. */
+/* The two panels under the charts: what the run covered on the left, what it
+   cost on the right. */
+.summary-columns { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; }
+
+/* ============================================================
+   7. TABLES
+   ============================================================ */
+table.table { border-collapse: collapse; width: 100%; font-size: 13px; }
+
+/* Column names are labels, not headings. */
 table.table th {
   text-align: left;
-  padding: 0.6em 0.75em;
-  border-bottom: 1px solid var(--rule);
-  font-size: 0.72rem;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--text-secondary);
+  white-space: nowrap;
 }
+table.table td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+table.table tbody tr:last-child td { border-bottom: 0; }
 
-table.table td {
-  padding: 0.62em 0.75em;
-  border-bottom: 1px solid var(--rule-soft);
+/* No zebra striping. One hairline per row and a tint under the pointer. */
+table.table tbody tr:hover > td { background: var(--neutral-soft); }
+
+/* Key statistics read as label / value pairs, the value in the mono face. */
+.key-statistics td:nth-child(2n) {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-primary);
+  white-space: nowrap;
 }
-
-/* No zebra striping. Fifty rows of alternating grey is a pattern the reader
-   has to see past; one hairline per row and a tint under the pointer says
-   the same thing quietly, and says where the pointer is besides. */
-table.table tbody tr:hover { background: var(--hover); }
-
-.key-statistics td:nth-child(2n) { color: var(--title); font-weight: 600; }
+.key-statistics td:nth-child(2n + 1) { color: var(--text-secondary); }
+.key-statistics tbody tr:hover > td { background: transparent; }
 
 /* ── Feature search ─────────────────────────────────────────────────── */
-
-.feature-search {
-  display: flex;
-  align-items: baseline;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
-}
-
-.feature-search input {
-  background: var(--card);
-  border: 1px solid var(--rule);
-  border-radius: 8px;
-  padding: 0.4em 0.7em;
+.feature-search { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.feature-search input,
+.table-controls select,
+.table-controls input {
+  height: 32px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0 10px;
   font: inherit;
-  font-size: 0.9rem;
-  color: var(--ink);
-  min-width: 16em;
+  font-size: 13px;
+  color: var(--text-primary);
 }
+.feature-search input { min-width: 16em; }
+.filter-count { color: var(--text-secondary); font-size: 13px; }
 
-.feature-search input:focus { outline: 2px solid var(--data); outline-offset: 1px; }
-.filter-count { color: var(--muted); font-size: 0.85rem; }
-
-/* The caret that folds an epic in the coverage panel. Same control as the
-   step tree's, so a reader learns it once. */
-.requirement-row .caret {
-  color: var(--muted);
-  font-size: 0.85em;
-  transform: rotate(0deg);
-  transition: transform 0.12s ease;
-}
-
+.requirement-row .caret { color: var(--text-muted); transition: transform 150ms ease; }
 .requirement-row .caret.open { transform: rotate(90deg); }
 
 /* ── Severity ───────────────────────────────────────────────────────── */
-
-/* Not a verdict, so it borrows none of the verdict colours: what a failure
-   *would* cost is a different question from what happened, and painting it
-   red would have the table shouting about a scenario that passed. Weight
-   carries it instead — the two levels somebody acts on are set solid in the
-   title navy, the rest recede. */
+/* Not a verdict, so it borrows the *stakes* tones rather than the outcome
+   ones: what a failure would cost is a different question from what
+   happened. The two levels somebody acts on wear a tint, the rest recede. */
 .severity {
-  font-size: 0.72rem;
-  font-weight: 500;
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--muted);
+  background: var(--neutral-soft);
+  color: var(--neutral);
 }
-
-.severity.blocker, .severity.critical { color: var(--title); font-weight: 700; }
-.severity.none { letter-spacing: 0; }
+.severity.blocker { background: var(--danger-soft); color: var(--danger); }
+.severity.critical { background: var(--warning-soft); color: var(--warning); }
+.severity.none { background: transparent; color: var(--text-muted); letter-spacing: 0; }
 
 /* ── Result markers ─────────────────────────────────────────────────── */
-
 .result-icon {
   display: inline-block;
-  width: 1.4em;
-  height: 1.4em;
-  line-height: 1.4em;
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
   border-radius: 50%;
   color: #fff;
   text-align: center;
-  font-weight: bold;
-  font-size: 0.85em;
-  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.12);
+  font-weight: 700;
+  font-size: 13px;
 }
 
 /* ── The scenario table's controls ──────────────────────────────────── */
-
-.test-count { color: var(--muted); font-weight: 500; }
+.test-count { color: var(--text-secondary); font-weight: 500; }
 
 .table-controls {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 1em;
-  margin: 0.5em 0 0.75em 0;
-  font-size: 0.85rem;
-  color: var(--muted);
+  gap: 12px;
+  font-size: 13px;
+  color: var(--text-secondary);
 }
-
-.table-controls select, .table-controls input {
-  background: var(--card);
-  border: 1px solid var(--rule);
-  border-radius: 8px;
-  padding: 0.4em 0.6em;
-  font: inherit;
-  font-size: 0.9rem;
-  color: var(--ink);
-}
-
-.table-controls select:focus, .table-controls input:focus {
-  outline: 2px solid var(--data);
-  outline-offset: 1px;
-}
-
 .table-controls input { min-width: 14em; }
 
-th.sortable { cursor: pointer; user-select: none; white-space: nowrap; }
-th.sortable::after { content: " ⇅"; color: #b6c0cf; font-size: 0.85em; }
-th.sortable.asc::after { content: " ↑"; color: var(--link); }
-th.sortable.desc::after { content: " ↓"; color: var(--link); }
+th.sortable { cursor: pointer; user-select: none; }
+th.sortable:hover { color: var(--text-primary); }
+th.sortable::after { content: " ⇅"; color: var(--text-muted); }
+th.sortable.asc::after { content: " ↑"; color: var(--brand); }
+th.sortable.desc::after { content: " ↓"; color: var(--brand); }
 
 .table-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 0.9em;
-  font-size: 0.85rem;
-  color: var(--muted);
+  font-size: 13px;
+  color: var(--text-secondary);
 }
 
-.pagination { display: flex; gap: 0.25em; }
-
+.pagination { display: flex; gap: 4px; }
 .pagination button {
-  background: var(--card);
-  border: 1px solid var(--rule);
-  border-radius: 8px;
-  color: var(--link);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-secondary);
   cursor: pointer;
-  font: inherit;
-  font-size: 0.85rem;
-  min-width: 2.1em;
-  padding: 0.3em 0.6em;
+  font-size: 12px;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 8px;
 }
+.pagination button:hover:not(:disabled):not(.active) { background: var(--neutral-soft); }
+.pagination button.active { background: var(--brand); border-color: var(--brand); color: #fff; cursor: default; }
+.pagination button:disabled { color: var(--text-muted); cursor: default; }
 
-.pagination button:hover:not(:disabled):not(.active) { background: var(--hover); }
-
-.pagination button.active {
-  background: var(--title);
-  border-color: var(--title);
-  color: #fff;
-  cursor: default;
-}
-
-.pagination button:disabled { color: #c3cbd8; cursor: default; }
-
-.empty-note { color: var(--muted); font-size: 0.9rem; }
+.empty-note { color: var(--text-secondary); font-size: 13px; }
 
 .active-filter {
-  background: #eef3fb;
-  border: 1px solid #d3e0f2;
-  border-radius: 8px;
-  color: #2c5480;
-  font-size: 0.85rem;
-  margin: 0.5em 0;
-  padding: 0.45em 0.85em;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  background: var(--brand-soft);
+  border-radius: var(--radius-sm);
+  color: var(--brand);
+  font-size: 13px;
+  padding: 6px 12px;
 }
+.clear-filter { background: none; border: none; color: var(--brand); cursor: pointer; text-decoration: underline; }
 
-.clear-filter {
-  background: none;
-  border: none;
-  color: var(--link);
-  cursor: pointer;
-  font: inherit;
-  text-decoration: underline;
-}
-
-.key-statistics td:nth-child(2), .key-statistics td:nth-child(4) {
-  white-space: nowrap;
-}
-
-/* ── Tag cloud ──────────────────────────────────────────────────────── */
-
-.tag-cloud { display: flex; flex-wrap: wrap; gap: 0.4em; margin-top: 0.5em; }
+/* ── Tags ───────────────────────────────────────────────────────────── */
+.tag-cloud { display: flex; flex-wrap: wrap; gap: 8px; }
 
 /* Tags are neutral by design: a tag is a label someone put on a test, not a
-   verdict about it, so it borrows none of the verdict colours. */
-.tag-badge.cloud {
-  background: #eef2f8;
-  border-color: #dbe3ef;
-  color: #33507a;
-  font-size: 0.8rem;
-  padding: 0.28em 0.75em;
-}
-
-.tag-count {
-  background: var(--card);
+   verdict about it. */
+.tag-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 28px;
+  padding: 0 10px;
   border-radius: 999px;
-  color: var(--muted);
-  font-size: 0.9em;
-  margin-left: 0.5em;
-  padding: 0 0.45em;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  transition: box-shadow 150ms ease;
+}
+.tag-badge.cloud { padding-right: 4px; }
+.tag-badge.cloud:hover { text-decoration: none; box-shadow: var(--shadow-hover); }
+.tag-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--brand-soft);
+  color: var(--brand);
+  font: 600 11px var(--font-mono);
 }
 
-/* A table wider than the window scrolls here, not on <body>: the banner,
-   the charts and the menus stay where they are. */
+/* A table wider than the window scrolls here, not on <body>. */
 .table-scroll { overflow-x: auto; }
 .table-scroll > table { min-width: 44em; }
 
-.version { color: var(--muted); font-size: 0.85rem; }
-.footer { margin: 1.5em auto; padding: 0 2rem; }
+.footer {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 16px 32px 24px;
+  border-top: 1px solid var(--border);
+}
+.version { color: var(--text-muted); font-size: 12px; }
 
 /* ── Narrow screens ─────────────────────────────────────────────────── */
-
-/* Two breakpoints, and both are about the same thing: panels that sit side by
-   side on a desktop have nothing to gain from sharing a phone's width, so
-   they stack, and the type and padding come down with them. */
-@media (max-width: 900px) {
-  .topbanner {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.6em;
-  }
-
-  .projectname { text-align: left; }
-  .projecttitle { font-size: 1.15rem; }
-  .wordmark-text { font-size: 1.35rem; }
-
-  .dashboard-charts { gap: 1.5em; }
-  .chart-block, .chart-block.wide { flex: 1 1 100%; min-width: 0; }
-
-  .summary-columns > .coverage-panel,
-  .summary-columns > .statistics-panel {
-    flex: 1 1 100%;
-    min-width: 0;
-  }
-
+@media (max-width: 1024px) {
+  .kpi-row { grid-template-columns: repeat(2, 1fr); }
+  .dashboard-charts { grid-template-columns: 1fr 1fr; }
+  .dashboard-charts .chart-block.wide { grid-column: 1 / -1; }
+  .summary-columns { grid-template-columns: 1fr; }
   .story-header-row { flex-direction: column; align-items: flex-start; }
   .tags { text-align: left; }
+}
 
-  .date-and-time { float: none; display: block; }
-
+@media (max-width: 640px) {
+  .topbanner, .middlecontent, .footer { padding-left: 16px; padding-right: 16px; }
+  .wordmark-name, .date-and-time { display: none; }
+  .kpi-row { grid-template-columns: 1fr; }
+  .dashboard-charts { grid-template-columns: 1fr; }
   .table-controls { flex-direction: column; align-items: stretch; }
   .table-controls input { min-width: 0; width: 100%; }
-
-  h2 { font-size: 1.4em; }
-  h3 { font-size: 1.2em; }
-}
-
-@media (max-width: 600px) {
-  body { font-size: 15px; }
-
-  .middlecontent, .topbanner, .footer { padding-left: 1rem; }
-  .middlecontent, .topbanner, .footer { padding-right: 1rem; }
-
-  .card { padding: 1em 0.75em; }
-
-  .nav-tabs { flex-wrap: wrap; }
-
-  /* The two-column statistics table folds to one pair per line — the four
-     cells of a row flow into two — rather than hiding half of itself. */
-  .key-statistics tr {
-    display: grid;
-    grid-template-columns: 1fr auto;
-  }
-
+  .nav-tabs { flex-wrap: wrap; gap: 16px; }
+  /* The two-column statistics table folds to one pair per line. */
+  .key-statistics tr { display: grid; grid-template-columns: 1fr auto; }
   .key-statistics td:empty { display: none; }
-
-  .donut { width: 180px; height: 180px; }
-  .chart-legend { grid-template-columns: 1fr; }
-
-  /* Eight duration buckets do not fit a phone. The chart scrolls inside its
-     own block rather than losing its last columns off the edge. */
-  .chart-block { overflow-x: auto; }
-  .plot { min-width: 340px; }
-  .bar-label { font-size: 0.62em; }
 }
 
-/* ── Test detail page ───────────────────────────────────────────────── */
+/* ============================================================
+   8. TEST DETAIL PAGE
+   ============================================================ */
+.titlebar { display: flex; flex-direction: column; gap: 12px; }
 
-.titlebar { margin: 1em 0 0.5em 0; }
-
-.story-header-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 1em;
-}
-
-.story-header-title {
-  font-weight: 600;
-  font-size: 1.25rem;
-  letter-spacing: -0.01em;
-  color: var(--title);
-  margin: 0;
-}
-
-.tags { text-align: right; }
-
-.tag-badge {
-  display: inline-block;
-  background: #eef2f8;
-  border: 1px solid #dbe3ef;
-  border-radius: 999px;
-  color: #33507a;
-  font-size: 0.75rem;
-  padding: 0.25em 0.75em;
-  margin: 0.15em 0;
-}
+.story-header-row { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; }
+.story-header-title { font-weight: 600; font-size: 20px; color: var(--text-primary); }
+.tags { text-align: right; display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
 
 /* The verdict is said three ways at once — the icon, the word, and the tint
    this bar carries — because colour alone is not something every reader
-   gets. The tint is the verdict at a tenth of its strength: enough to say
-   "this one passed" from across the room, light enough to read text on. */
+   gets. */
 .test-title-bar {
-  background: var(--card);
-  border: 1px solid var(--rule);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-left-width: 4px;
-  border-radius: 0 12px 12px 0;
-  padding: 0.85em 1.1em;
-  margin-top: 0.5em;
+  border-radius: 0 var(--radius) var(--radius) 0;
+  padding: 14px 18px;
 }
+.test-case-title { font-size: 18px; font-weight: 600; color: var(--text-primary); margin-left: 0.4em; }
 
-.test-case-title {
-  font-size: 1.15rem;
-  font-weight: 600;
-  color: var(--title);
-  margin-left: 0.4em;
-}
-
-/* The verdict spelled out. These are the `solid` tones, which is what makes
-   the word readable: the colours they replaced sat under 2:1 on white. */
+/* The verdict spelled out, at reading strength. */
 .success-color { color: var(--pass); }
 .failure-color { color: var(--fail); }
 .error-color { color: var(--broken); }
-.skipped-color { color: #6b7a8d; }
+.skipped-color { color: var(--skip); }
 .undefined-color { color: var(--undefined); }
 
-.test-title-bar.test-SUCCESS { border-left-color: var(--pass); background: #eef8f2; }
-.test-title-bar.test-FAILURE { border-left-color: var(--fail); background: #fdeff1; }
-.test-title-bar.test-ERROR { border-left-color: var(--broken); background: #fdf5eb; }
-.test-title-bar.test-SKIPPED { border-left-color: var(--skip); background: #f2f5f8; }
-.test-title-bar.test-UNDEFINED { border-left-color: var(--undefined); background: #f4f1fc; }
+.test-title-bar.test-SUCCESS { border-left-color: var(--pass); background: var(--pass-tint); }
+.test-title-bar.test-FAILURE { border-left-color: var(--fail); background: var(--fail-tint); }
+.test-title-bar.test-ERROR { border-left-color: var(--broken); background: var(--broken-tint); }
+.test-title-bar.test-SKIPPED { border-left-color: var(--skip); background: var(--skip-tint); }
+.test-title-bar.test-UNDEFINED { border-left-color: var(--undefined); background: var(--undefined-tint); }
 
-/* A scenario row wearing its verdict, in the tone its slice has on the chart
-   — the same five colours and the same five tints the test pages already use,
-   so the doughnut, the row and the page a reader lands on all agree.
-
-   A stripe down the left edge and a wash behind the row: the stripe is what
-   the eye catches scanning a long table, the wash is what keeps it caught
-   once the row is read. Both are the verdict's own hue, so no legend is
-   needed to know which is which.
-
-   Passing rows get NEITHER, deliberately. They are the majority and the
-   baseline, and tinting them green would drown the four rows somebody opened
-   the report to find — a table where everything is coloured says as little as
-   one where nothing is. Green stays on the icon, where it confirms; the
-   background is reserved for what needs attention. */
+/* A scenario row wearing its verdict: a stripe down the left edge and a wash
+   behind the row, both the verdict's own tone. Passing rows get NEITHER,
+   deliberately — they are the majority and the baseline, and tinting them
+   would drown the rows somebody opened the report to find. */
 .table tr[data-result] > td { border-left: 0 solid transparent; }
 
 .table tr[data-result="FAILURE"] > td:first-child,
@@ -1089,323 +976,177 @@ th.sortable.desc::after { content: " ↓"; color: var(--link); }
 .table tr[data-result="UNDEFINED"] > td:first-child { border-left-width: 3px; }
 
 .table tr[data-result="FAILURE"] > td {
-  background: #fdeff1;
+  background: var(--fail-tint);
   border-left-color: var(--fail);
 }
-
 .table tr[data-result="ERROR"] > td {
-  background: #fdf5eb;
+  background: var(--broken-tint);
   border-left-color: var(--broken);
 }
-
 .table tr[data-result="SKIPPED"] > td {
-  background: #f2f5f8;
+  background: var(--skip-tint);
   border-left-color: var(--skip);
 }
-
 .table tr[data-result="UNDEFINED"] > td {
-  background: #f4f1fc;
+  background: var(--undefined-tint);
   border-left-color: var(--undefined);
 }
 
-/* Hover still has to read as hover on a row that is already tinted, so it
-   deepens the row's own colour rather than replacing it with the neutral
-   one. */
-.table tr[data-result="FAILURE"]:hover > td { background: #fbe2e6; }
-.table tr[data-result="ERROR"]:hover > td { background: #fbecd9; }
-.table tr[data-result="SKIPPED"]:hover > td { background: #e8edf3; }
-.table tr[data-result="UNDEFINED"]:hover > td { background: #ebe5f9; }
-
-.test-description { color: var(--muted); font-style: italic; margin-top: 0.4em; }
+.test-description { color: var(--text-secondary); font-style: italic; }
 
 /* ── Step table ─────────────────────────────────────────────────────── */
-
-/* Fixed layout, so a nested table's columns land on the same grid as its
-   parent's instead of being sized independently by their own contents. */
-table.step-table {
-  border-collapse: collapse;
-  width: 100%;
-  table-layout: fixed;
-}
-
+table.step-table { border-collapse: collapse; width: 100%; table-layout: fixed; font-size: 13px; }
 table.step-table th {
   text-align: left;
-  padding: 0.55em 0.75em;
-  border-bottom: 1px solid var(--rule);
-  font-size: 0.72rem;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--text-secondary);
 }
-
-table.step-table td {
-  padding: 0.4em 0.75em;
-  border-bottom: 1px solid var(--rule-soft);
-  vertical-align: middle;
-}
+table.step-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
 
 /* A group's children live in a nested table inside a spanning cell. The left
-   rule is the hierarchy made visible: it runs the height of everything that
-   belongs to the step above it. */
+   rule is the hierarchy made visible. */
 .step-section > td { padding: 0 0 0 1.6em; }
-.step-section > td > table { border-left: 2px solid var(--rule); }
-
+.step-section > td > table { border-left: 2px solid var(--border); }
 table.step-table.nested { margin: 0; }
-table.step-table.nested td { border-bottom: 1px solid var(--rule-soft); }
 
-.step-table tr.test-FAILURE > td { background: #fdeff1; }
-.step-table tr.test-ERROR > td { background: #fdf5eb; }
+.step-table tr.test-FAILURE > td { background: var(--fail-tint); }
+.step-table tr.test-ERROR > td { background: var(--broken-tint); }
 
 .step-description-column { width: auto; }
 .shot-column { width: 150px; }
-.outcome-column {
-  width: 130px;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-}
-.duration-column { width: 100px; color: var(--muted); font-size: 0.85rem; }
+.outcome-column { width: 130px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+.duration-column { width: 100px; color: var(--text-secondary); font-family: var(--font-mono); font-size: 12px; }
 
-.step-description {
-  line-height: 1.5;
-  display: flex;
-  align-items: baseline;
-  gap: 0.4em;
-}
+.step-description { line-height: 1.5; display: flex; align-items: baseline; gap: 0.4em; }
 
 /* Depth reads as weight: a business step is plain, what happens inside it is
-   lighter and italic, the way the reference distinguishes them. */
-.step-row.level-0 .step-text { color: var(--ink); }
-.step-row.level-1 .step-text { color: #46536b; font-style: italic; }
+   lighter and italic. */
+.step-row.level-0 .step-text { color: var(--text-primary); }
+.step-row.level-1 .step-text { color: var(--text-secondary); font-style: italic; }
 .step-row.level-2 .step-text,
-.step-row.level-3 .step-text { color: var(--muted); font-style: italic; }
-
-.step-icon {
-  width: 1.05em;
-  height: 1.05em;
-  line-height: 1.05em;
-  font-size: 0.8em;
-  flex: none;
-}
-
-.caret-spacer { display: inline-block; width: 1em; flex: none; }
-
-/* Two toolbars, one look: the step tree's and the epic tree's. They do the
-   same thing to two different trees, so a reader who has used one knows the
-   other on sight. */
-.step-tools,
-.tree-tools { display: flex; gap: 0.5em; margin-bottom: 0.5em; }
-
-.step-tools button,
-.tree-tools button {
-  background: var(--card);
-  border: 1px solid var(--rule);
-  border-radius: 8px;
-  color: var(--link);
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.8rem;
-  padding: 0.3em 0.8em;
-}
-
-.step-tools button:hover,
-.tree-tools button:hover { background: var(--hover); }
-
-/* The tree page keeps its filter and its two buttons on one line, and lets
-   them wrap rather than shrink when the page is narrow. */
-.tree-tools { align-items: center; flex-wrap: wrap; }
-
-.caret {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 1em;
-  line-height: 1;
-  padding: 0;
-  width: 1em;
-  flex: none;
-}
-
-.caret.open { transform: rotate(90deg); display: inline-block; }
-
-/* A business step is the header of what it contains, so it carries the
-   weight; everything nested under it reads as detail. */
+.step-row.level-3 .step-text { color: var(--text-muted); font-style: italic; }
 .step-row.level-0 > td:first-child { font-weight: 500; }
 
-.screenshot {
-  border: 1px solid var(--rule);
+.step-icon { width: 18px; height: 18px; line-height: 18px; font-size: 11px; flex: none; }
+.caret-spacer { display: inline-block; width: 1em; flex: none; }
+
+.step-tools, .tree-tools { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.step-tools button, .tree-tools button {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: 6px;
-  object-fit: cover;
-  background: var(--card);
-}
-
-.evidence, .stacktrace { margin-top: 0.5em; }
-.evidence summary, .stacktrace summary {
-  color: var(--link);
+  color: var(--text-secondary);
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: 12px;
+  padding: 4px 10px;
 }
+.step-tools button:hover, .tree-tools button:hover { background: var(--neutral-soft); color: var(--text-primary); }
 
+.caret { background: none; border: none; cursor: pointer; font-size: 1em; line-height: 1; padding: 0; width: 1em; flex: none; color: var(--text-muted); }
+.caret.open { transform: rotate(90deg); display: inline-block; }
+
+.screenshot { border: 1px solid var(--border); border-radius: 6px; object-fit: cover; background: var(--bg-card); }
+
+.evidence, .stacktrace { margin-top: 8px; }
+.evidence summary, .stacktrace summary { color: var(--brand); cursor: pointer; font-size: 13px; }
 .evidence pre, .stacktrace pre, .error-message pre {
-  background: var(--page);
-  border: 1px solid var(--rule);
-  border-radius: 8px;
-  padding: 0.75em;
-  margin-top: 0.4em;
+  background: var(--bg-page);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  margin-top: 8px;
   overflow-x: auto;
-  font-size: 0.8em;
+  font-family: var(--font-mono);
+  font-size: 12px;
   line-height: 1.5;
   white-space: pre-wrap;
 }
 
 /* Width and style only: the colour comes from the `test-<RESULT>` class the
-   block also carries, and a `border-left` shorthand here would reset it. */
-.failure-block {
-  margin-top: 1.5em;
-  border-left-width: 5px;
-  border-left-style: solid;
-  padding-left: 1em;
-}
+   block also carries. */
+.failure-block { margin-top: 24px; border-left-width: 4px; border-left-style: solid; padding-left: 16px; }
 
-/* ── Screenshots gallery ────────────────────────────────────────────── */
-
+/* ============================================================
+   9. SCREENSHOTS · FEATURES · CAROUSEL · VIEWER
+   ============================================================ */
 .screenshot-failure {
-  background: var(--card);
-  border: 1px solid var(--rule);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-left-width: 4px;
-  border-radius: 0 12px 12px 0;
-  margin: 0.75em 0;
-  padding: 0.75em 1em;
+  border-radius: 0 var(--radius) var(--radius) 0;
+  margin: 12px 0;
+  padding: 12px 16px;
 }
-
-.screenshot-failure pre {
-  font-size: 0.85rem;
-  white-space: pre-wrap;
-  color: var(--ink);
-}
-
-.gallery-link { margin-bottom: 0.75em; font-size: 0.9em; }
-
-/* ── Features ───────────────────────────────────────────────────────── */
+.screenshot-failure pre { font-family: var(--font-mono); font-size: 12px; white-space: pre-wrap; color: var(--text-primary); }
+.gallery-link { font-size: 13px; }
 
 .requirements-table .requirement-name-column { width: 45%; }
-.requirements-table .requirement-type {
-  color: var(--muted);
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
+.requirements-table .requirement-type { color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+.requirements-table td:nth-child(2), .requirements-table td:nth-child(3) { font-family: var(--font-mono); font-size: 12px; text-align: right; }
+.requirements-table th:nth-child(2), .requirements-table th:nth-child(3) { text-align: right; }
 .requirement-row.level-0 > td { font-weight: 600; }
 .requirement-row.level-1 > td { font-weight: 400; }
 
 .coverage-column { width: 200px; }
-
-.progress {
-  display: flex;
-  height: 9px;
-  background: var(--rule-soft);
-  border-radius: 999px;
-  overflow: hidden;
-}
-
+.progress { display: flex; height: 6px; background: var(--neutral-soft); border-radius: 999px; overflow: hidden; min-width: 120px; }
 .progress-bar { height: 100%; }
-
-.feature-coverage { margin-bottom: 1em; }
-
-.requirement-narrative {
-  color: var(--muted);
-  font-style: italic;
-  margin-bottom: 0.75em;
-}
-
-.scenario-narrative { color: var(--muted); font-size: 0.85rem; }
+.feature-coverage { margin-bottom: 16px; }
+.requirement-narrative { color: var(--text-secondary); font-style: italic; margin-bottom: 12px; }
+.scenario-narrative { color: var(--text-secondary); font-size: 13px; }
 
 .carousel { max-width: 800px; margin: 0 auto; }
-
 .slides {
   display: flex;
   align-items: center;
   justify-content: center;
   min-height: 320px;
-  background: var(--page);
-  border: 1px solid var(--rule);
-  border-radius: 12px;
+  background: var(--bg-page);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
 }
-
-.slide { text-align: center; padding: 1em; width: 100%; }
+.slide { text-align: center; padding: 16px; width: 100%; }
 .slide[hidden] { display: none; }
+.slide img { max-width: 100%; max-height: 60vh; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-card); }
+.slide figcaption { margin-top: 12px; color: var(--text-secondary); font-size: 13px; }
 
-.slide img {
-  max-width: 100%;
-  max-height: 60vh;
-  border: 1px solid var(--rule);
-  border-radius: 8px;
-  background: var(--card);
-}
-
-.slide figcaption {
-  margin-top: 0.75em;
-  color: var(--muted);
-  font-size: 0.9rem;
-}
-
-.carousel-controls {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1em;
-  margin-top: 1em;
-}
-
+.carousel-controls { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 16px; }
 .carousel-prev, .carousel-next {
-  background: var(--card);
-  border: 1px solid var(--rule);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: 50%;
-  color: var(--link);
+  color: var(--brand);
   cursor: pointer;
   font-size: 1.4em;
   line-height: 1;
   width: 2em;
   height: 2em;
 }
+.carousel-prev:hover, .carousel-next:hover { background: var(--neutral-soft); }
+.carousel-prev:disabled, .carousel-next:disabled { color: var(--text-muted); cursor: default; background: var(--bg-card); }
 
-.carousel-prev:hover, .carousel-next:hover { background: var(--hover); }
-.carousel-prev:disabled, .carousel-next:disabled {
-  color: #c3cbd8;
-  cursor: default;
-  background: var(--card);
-}
-
-.bullets { display: flex; flex-wrap: wrap; gap: 0.35em; }
-
+.bullets { display: flex; flex-wrap: wrap; gap: 6px; }
 .bullet {
-  background: #dde3ec;
+  background: var(--neutral-soft);
   border: none;
   border-radius: 50%;
-  color: var(--ink);
+  color: var(--text-primary);
   cursor: pointer;
-  font-size: 0.75em;
+  font-size: 11px;
   width: 20px;
   height: 20px;
   line-height: 20px;
   padding: 0;
   text-align: center;
 }
+.bullet.active { background: var(--brand); color: #fff; }
 
-.bullet.active { background: var(--link); color: #fff; }
-
-/* ── Screenshot viewer ──────────────────────────────────────────────── */
-
-/* A screenshot in the carousel is capped at 60vh so the caption and the
-   controls stay on screen, which is right for walking through a run and
-   wrong for reading an error message in the app. Clicking one opens it over
-   the page at its own size.
-   
-   It is a dialog, so it closes the three ways a dialog closes: the button,
-   Escape, and clicking the darkness around it. The button exists because the
-   other two are conventions somebody has to already know. */
+/* The screenshot viewer: a dialog, so it closes the three ways a dialog
+   closes — the button, Escape, and clicking the darkness around it. */
 .slides img { cursor: zoom-in; }
 
 .lightbox {
@@ -1418,32 +1159,14 @@ table.step-table.nested td { border-bottom: 1px solid var(--rule-soft); }
   justify-content: center;
   gap: 1rem;
   /* The sides clear the arrows, so a wide capture stops beside them instead
-     of running underneath — see .lightbox-prev. */
+     of running underneath. */
   padding: 3.5rem 4.75rem 2rem 4.75rem;
-  background: rgba(11, 37, 69, 0.9);
+  background: rgba(15, 23, 42, 0.9);
 }
-
 .lightbox[hidden] { display: none; }
-
-.lightbox-image {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-  border-radius: 8px;
-  background: var(--card);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
-}
-
-.lightbox-caption {
-  color: #e8edf5;
-  font-size: 0.9rem;
-  text-align: center;
-  max-width: 60rem;
-}
-
-.lightbox-close,
-.lightbox-prev,
-.lightbox-next {
+.lightbox-image { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: var(--radius-sm); background: var(--bg-card); box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45); }
+.lightbox-caption { color: #E2E8F0; font-size: 13px; text-align: center; max-width: 60rem; }
+.lightbox-close, .lightbox-prev, .lightbox-next {
   position: absolute;
   width: 2.4rem;
   height: 2.4rem;
@@ -1455,47 +1178,64 @@ table.step-table.nested td { border-bottom: 1px solid var(--rule-soft); }
   font-size: 1.5rem;
   line-height: 1;
 }
-
 .lightbox-close { top: 1rem; right: 1.25rem; }
-
-/* Beside the picture rather than over it: a capture of a form has content
-   at both edges, and an arrow sitting on top of it hides the thing somebody
-   opened the image to read. */
 .lightbox-prev { left: 1.25rem; top: 50%; transform: translateY(-50%); }
 .lightbox-next { right: 1.25rem; top: 50%; transform: translateY(-50%); }
+.lightbox-close:hover, .lightbox-prev:hover, .lightbox-next:hover { background: rgba(255, 255, 255, 0.24); }
+.lightbox-close:focus-visible, .lightbox-prev:focus-visible, .lightbox-next:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+body.viewing-shot { overflow: hidden; }
 
-.lightbox-close:hover,
-.lightbox-prev:hover,
-.lightbox-next:hover { background: rgba(255, 255, 255, 0.24); }
-
-.lightbox-close:focus-visible,
-.lightbox-prev:focus-visible,
-.lightbox-next:focus-visible {
-  outline: 2px solid #fff;
-  outline-offset: 2px;
+/* ============================================================
+   10. PRINT · MOTION
+   ============================================================ */
+@media print {
+  :root { --bg-page: #fff; --bg-card: #fff; --shadow: none; --shadow-hover: none; }
+  .topheader, .nav-tabs, .segmented, .table-controls, .table-footer, .tree-tools, .step-tools, .theme-toggle { display: none !important; }
+  .middlecontent { padding: 0; gap: 16px; }
+  .kpi, .card { box-shadow: none; break-inside: avoid; }
+  .dashboard-charts { grid-template-columns: 1fr 1fr 1fr; }
+  .tab-pane { display: flex !important; }
 }
 
-.lightbox-close:hover { background: rgba(255, 255, 255, 0.24); }
-.lightbox-close:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
-
-/* Nothing scrolls behind the viewer. */
-body.viewing-shot { overflow: hidden; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 ''';
 
-/// The site's only script: the dashboard's tab switch and the detail page's
-/// step-group carets, both written here. Nothing else on any page runs code.
+/// The site's only script: the dashboard's tab switch, the theme switch, the
+/// detail page's step-group carets, the scenario table and the screenshot
+/// viewer, all written here. Nothing else on any page runs code.
 const String siteJs = '''
 document.querySelectorAll("[data-tab]").forEach(function (tab) {
   tab.addEventListener("click", function (event) {
     event.preventDefault();
     document.querySelectorAll("[data-tab]").forEach(function (t) {
-      t.parentElement.classList.toggle("active", t === tab);
+      var on = t === tab;
+      t.classList.toggle("active", on);
+      t.setAttribute("aria-selected", on ? "true" : "false");
+      t.parentElement.classList.toggle("active", on);
     });
     document.querySelectorAll(".tab-pane").forEach(function (pane) {
       pane.classList.toggle("active", pane.id === tab.dataset.tab);
     });
   });
 });
+
+// Dark mode is a choice, remembered per browser. The attribute goes on the
+// root so every token flips at once; storage can be absent (a file opened
+// from a sandbox), so both reads and writes are guarded.
+(function () {
+  var root = document.documentElement;
+  try {
+    var saved = localStorage.getItem("e2e-reporter-theme");
+    if (saved === "dark" || saved === "light") { root.setAttribute("data-theme", saved); }
+  } catch (e) {}
+  document.querySelectorAll(".theme-toggle").forEach(function (button) {
+    button.addEventListener("click", function () {
+      var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+      root.setAttribute("data-theme", next);
+      try { localStorage.setItem("e2e-reporter-theme", next); } catch (e) {}
+    });
+  });
+})();
 
 document.querySelectorAll(".caret").forEach(function (caret) {
   caret.addEventListener("click", function () {
@@ -1514,9 +1254,7 @@ function setAllStepSections(open) {
   });
   // `[data-toggle]` and not every caret: the tree's carets and the epic-folding
   // ones share a class, so the unqualified selector would spin an epic's arrow
-  // without moving the rows under it — a control lying about what it did. No
-  // page carries both today, and this is what stops the first one that does
-  // from being where we find out.
+  // without moving the rows under it — a control lying about what it did.
   document.querySelectorAll(".caret[data-toggle]").forEach(function (caret) {
     caret.classList.toggle("open", open);
   });
@@ -1530,10 +1268,9 @@ document.querySelectorAll(".collapse-all").forEach(function (button) {
   button.addEventListener("click", function () { setAllStepSections(false); });
 });
 
-// The scenario table's filter, sort and pagination. The reference gets these
-// from a table plugin; this is the same three behaviours over the rows the
-// page already carries, so the table works with the file opened straight off
-// disk and the page still ships no libraries.
+// The scenario table's filter, sort and pagination: three behaviours over the
+// rows the page already carries, so the table works with the file opened
+// straight off disk and the page still ships no libraries.
 document.querySelectorAll(".data-table").forEach(function (wrapper) {
   var table = wrapper.querySelector("table");
   var body = table.querySelector("tbody");
@@ -1605,8 +1342,6 @@ document.querySelectorAll(".data-table").forEach(function (wrapper) {
 
   headers.forEach(function (header, index) {
     header.addEventListener("click", function () {
-      // Clicking the sorted column again reverses it; clicking another one
-      // starts that column ascending.
       ascending = sortIndex === index ? !ascending : true;
       sortIndex = index;
       headers.forEach(function (other) {
@@ -1625,9 +1360,7 @@ document.querySelectorAll(".data-table").forEach(function (wrapper) {
     pageSize.addEventListener("change", function () { page = 1; render(); });
   }
 
-  // How a chart hands its selection to the table: the chart knows the verdict
-  // it was clicked on, the table knows how to show only those rows, and this
-  // is the seam between them.
+  // How a chart hands its selection to the table.
   wrapper.showOnlyResult = function (result, label) {
     resultFilter = result || "";
     page = 1;
@@ -1656,8 +1389,11 @@ document.querySelectorAll(".data-table").forEach(function (wrapper) {
 // Clicking a segment, a bar or a legend entry opens the Test Results tab
 // showing only the tests behind it. A chart that cannot be asked "which ones
 // were those?" is a picture; this makes it a way in.
+//
+// The chart links are SVG `<a>` elements, whose tagName keeps its case, so
+// the check is case-insensitive.
 document.querySelectorAll("[data-result]").forEach(function (target) {
-  if (target.tagName !== "A") { return; }
+  if (String(target.tagName).toLowerCase() !== "a") { return; }
   target.addEventListener("click", function (event) {
     event.preventDefault();
     var result = target.dataset.result;
@@ -1677,17 +1413,10 @@ document.querySelectorAll("[data-result]").forEach(function (target) {
   });
 });
 
-// Both tables that show the epic → feature tree fold by epic: the dashboard's
-// coverage panel and the tree page. Paging them was the other option and it
-// breaks the thing it is paging — an epic ends up on one page and its features
-// on the next, each of them a row with no heading.
-//
-// Two things hide a row here, folding and filtering, and they are independent:
-// a feature can be filtered out of an open epic, and a matching feature can sit
-// inside one somebody folded. So neither writes `hidden` directly. Each records
-// its own reason and the row stays hidden while any reason stands — otherwise
-// whichever ran last would decide, and clearing a filter would reveal rows the
-// reader had folded away.
+// Both tables that show the epic → feature tree fold by epic. Two things hide
+// a row here, folding and filtering, and they are independent, so neither
+// writes `hidden` directly: each records its own reason and the row stays
+// hidden while any reason stands.
 function hideRowFor(row, reason, on) {
   if (on) { row.dataset[reason] = "1"; } else { delete row.dataset[reason]; }
   row.hidden = Boolean(row.dataset.folded) || Boolean(row.dataset.filtered);
@@ -1707,8 +1436,6 @@ document.querySelectorAll("[data-fold]").forEach(function (caret) {
   });
 });
 
-// Opening a dozen epics one caret at a time is the same tedium the step tree
-// already has a pair of buttons for, so it gets the same pair.
 function setAllEpics(open) {
   document.querySelectorAll("[data-fold]").forEach(function (caret) {
     foldEpic(caret, open);
@@ -1750,8 +1477,6 @@ document.querySelectorAll(".collapse-epics").forEach(function (button) {
     epics.forEach(function (row) {
       hideRowFor(row, "filtered", Boolean(needle) && !keep[row.dataset.epic]);
     });
-    // A match inside a folded epic is a match nobody can see, under a count
-    // that claims otherwise. Searching opens what it finds.
     if (needle) {
       carets.forEach(function (caret) {
         if (keep[caret.dataset.fold]) { foldEpic(caret, true); }
@@ -1765,12 +1490,8 @@ document.querySelectorAll(".collapse-epics").forEach(function (button) {
 })();
 
 // The screenshot viewer: one per page, opened from anywhere that shows a
-// capture — the gallery's slides and the thumbnails on the step table.
-//
-// A screenshot is displayed small in both places for the same reason: the
-// page around it has to stay readable. This is where it is read rather than
-// glanced at, so it opens over everything at its own size, and it closes the
-// three ways a dialog closes.
+// capture. It opens over everything at its own size, and it closes the three
+// ways a dialog closes.
 var shotViewer = (function () {
   var box = document.querySelector(".lightbox");
   if (!box) { return null; }
@@ -1780,10 +1501,6 @@ var shotViewer = (function () {
   var previous = box.querySelector(".lightbox-prev");
   var next = box.querySelector(".lightbox-next");
   var opener = null;
-  // Every picture the page can open, in the order it reads. Collected once
-  // the page is built, so the viewer can walk a test's captures without
-  // anyone closing it to reach for the next thumbnail — the steps ran in an
-  // order, and the pictures are worth reading in that order too.
   var reel = [];
   var at = -1;
 
@@ -1791,8 +1508,6 @@ var shotViewer = (function () {
     var slide = image.closest(".slide");
     var figcaption = slide ? slide.querySelector("figcaption") : null;
     if (figcaption) { return figcaption.textContent; }
-    // On the step table the picture belongs to a step, and the step's own
-    // text says more than the file name ever will.
     var row = image.closest("tr");
     var step = row ? row.querySelector(".step-text") : null;
     return step ? step.textContent : image.getAttribute("alt") || "";
@@ -1809,8 +1524,6 @@ var shotViewer = (function () {
       ? " (" + (index + 1) + " of " + reel.length + ")"
       : "";
     caption.textContent = captionOf(image) + where;
-    // Hidden rather than disabled: the reel wraps, so the arrows are useless
-    // only when there is nothing to move between.
     var many = reel.length > 1;
     previous.hidden = !many;
     next.hidden = !many;
@@ -1829,22 +1542,17 @@ var shotViewer = (function () {
     close.focus();
   }
 
-  // The pictures the viewer can walk, in page order.
   function load(images) { reel = images; }
 
   function closeShot() {
     box.hidden = true;
     document.body.classList.remove("viewing-shot");
-    // Back to whatever opened it, so a keyboard reader is not returned to the
-    // top of the page each time.
     if (opener) { opener.focus({ preventScroll: true }); opener = null; }
   }
 
   close.addEventListener("click", closeShot);
   previous.addEventListener("click", function () { step(-1); });
   next.addEventListener("click", function () { step(1); });
-  // The darkness around the picture closes it; the picture itself does not,
-  // or every attempt to look closely would shut the thing.
   box.addEventListener("click", function (event) {
     if (event.target === box || event.target === caption) { closeShot(); }
   });
@@ -1863,14 +1571,7 @@ var shotViewer = (function () {
   };
 })();
 
-// Every capture on the page opens it. The gallery's slides are images inside
-// a figure; a thumbnail on the step table is an image inside a link to the
-// gallery — the link stays, so a middle click still opens the gallery and the
-// page keeps working with no script at all, but a plain click reads the
-// picture where the reader already is.
 if (shotViewer) {
-  // One reel per page, in document order: on a test page that is every step's
-  // captures top to bottom, and on the gallery every slide.
   shotViewer.load(Array.prototype.slice.call(
     document.querySelectorAll(".slides img, a.shot-link img")
   ));
@@ -1922,13 +1623,9 @@ document.querySelectorAll(".carousel").forEach(function (carousel) {
     if (event.key === "ArrowRight") { show(current + 1); }
   });
 
-  // A thumbnail links straight to its own capture: ?screenshot=N opens the
-  // gallery on that slide rather than on the first.
   var requested = new URLSearchParams(window.location.search).get("screenshot");
   show(parseInt(requested, 10) || 0);
 
-  // Walking the run inside the viewer: the arrows already moved the carousel
-  // above, so the picture on top follows it.
   document.addEventListener("keydown", function (event) {
     if (!shotViewer || !shotViewer.isOpen()) { return; }
     if (event.key === "ArrowLeft" || event.key === "ArrowRight") {

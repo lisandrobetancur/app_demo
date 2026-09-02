@@ -198,8 +198,9 @@ void main() {
       expect(featuresPage, contains('<h2>Features</h2>'));
       expect(
         featuresPage,
-        contains('<a href="index.html">Home</a> &gt; Features'),
+        contains('<a class="crumb" href="index.html">Home</a>'),
       );
+      expect(featuresPage, contains('<span class="crumb">Features</span>'));
       expect(featuresPage, contains('<li class="active"><a href="#">Features'));
       expect(
         featuresPage,
@@ -209,7 +210,10 @@ void main() {
       final String featurePage = File(
         '${results.path}/${featureReportName(featuresIn(roots).first)}',
       ).readAsStringSync();
-      expect(featurePage, contains('<a href="features.html">Features</a>'));
+      expect(
+        featurePage,
+        contains('<a class="crumb" href="features.html">Features</a>'),
+      );
       expect(featurePage, isNot(contains('Requirements')));
     });
 

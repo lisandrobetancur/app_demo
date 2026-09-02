@@ -70,14 +70,15 @@ String screenshotsPageHtml(
     ..writeln('<html lang="en">')
     ..write(pageHead(platform))
     ..writeln('<body>')
-    ..write(banner(platform))
+    ..write(banner(platform, generatedAt: generatedAt, offset: offset))
     ..writeln('<div class="middlecontent">')
     ..writeln(
-      '<span class="breadcrumbs"><a href="index.html">Home</a> &gt; '
-      '<a href="${featureReportNameOf(feature)}">'
-      '${escapeHtml(feature)}</a> &gt; '
-      '<a href="${htmlReportName(testCase)}">'
-      '${escapeHtml(testCase.name)}</a> &gt; Screenshots</span>',
+      breadcrumbs(<Crumb>[
+        (label: 'Home', href: 'index.html'),
+        (label: feature, href: featureReportNameOf(feature)),
+        (label: testCase.name, href: htmlReportName(testCase)),
+        (label: 'Screenshots', href: null),
+      ]),
     )
     ..write(menuBar(generatedAt, homeActive: false, offset: offset))
     ..writeln('<div class="titlebar">')

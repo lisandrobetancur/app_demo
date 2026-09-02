@@ -95,18 +95,26 @@ String dashboardHtml(
     ..writeln('<html lang="en">')
     ..write(pageHead(platform))
     ..writeln('<body>')
-    ..write(banner(platform))
+    ..write(banner(platform, generatedAt: generatedAt, offset: offset))
     ..writeln('<div class="middlecontent">')
-    ..writeln('<span class="breadcrumbs"><a href="index.html">Home</a></span>')
+    ..writeln('<div class="topnav">')
+    ..writeln(
+      breadcrumbs(<Crumb>[
+        (label: 'Home', href: 'index.html'),
+        (label: 'Overall Test Results', href: null),
+      ]),
+    )
     ..write(menuBar(generatedAt, homeActive: true, offset: offset))
+    ..writeln('</div>')
     ..write(_runAgeNote(rows, generatedAt, offset))
+    ..writeln('<div class="section-title">')
+    ..writeln('<span class="eyebrow">Overview · All features</span>')
     ..writeln('<h2>Test Results: All Tests</h2>')
+    ..writeln('</div>')
     ..write(_keyFigures(rows, counts, total))
     ..write(_tabBar())
-    ..writeln('<div class="card">')
     ..write(_summaryPane(rows, counts, total, run, offset))
     ..write(_testsPane(rows, run, offset))
-    ..writeln('</div>')
     ..writeln('</div>')
     ..write(pageFooter())
     ..writeln('<script>$siteJs</script>')
@@ -137,10 +145,10 @@ String _runAgeNote(List<_Row> rows, DateTime generatedAt, Duration offset) {
   if (gap.inMinutes < 10) {
     return '';
   }
-  return '<p class="run-age">Describing a run that finished '
-      '${timestampOf(finished, offset: offset)}, ${_humanGap(gap)} before '
-      'this report was '
-      'generated.</p>\n';
+  return '<p class="run-age">${icon('ic-info', small: true)}'
+      'Describing a run that finished '
+      '<span class="mono">${timestampOf(finished, offset: offset)}</span>, '
+      '${_humanGap(gap)} before this report was generated.</p>\n';
 }
 
 /// `58 minutes`, `3 hours`, `2 days` — enough to tell "just now" from "this
@@ -181,32 +189,77 @@ String _keyFigures(List<_Row> rows, Map<String, int> counts, int total) {
                 .map((_Row row) => row.startMs)
                 .reduce((int a, int b) => a < b ? a : b);
 
+  // Each tile: an icon on its tint, the label beside it, the figure, and one
+  // line under the figure saying what it is made of. The modifier decides
+  // the tint — `good` and `bad` are verdicts on the run, `calm` is the
+  // attention tile when there is nothing to attend to, `time` sets the
+  // duration in the mono face.
   String tile(
     String label,
     String value,
     String note, {
+    required String iconId,
     String modifier = '',
   }) =>
       '<div class="kpi$modifier">'
+      '<div class="kpi-head">'
+      '<span class="kpi-icon">${icon(iconId)}</span>'
       '<span class="kpi-label">${escapeHtml(label)}</span>'
+      '</div>'
       '<span class="kpi-value">${escapeHtml(value)}</span>'
       '<span class="kpi-note">${escapeHtml(note)}</span>'
       '</div>';
 
   return '<div class="kpi-row">'
-      '${tile('Scenarios', '$total', skipped == 0 ? 'all of them run' : '$skipped skipped')}'
-      '${tile('Pass rate', total == 0 ? '—' : '${(passed * 100 / total).round()}%', '$passed of $total passing', modifier: total > 0 && attention == 0 ? ' good' : '')}'
-      '${tile('Needs attention', '$attention', attention == 1 ? '1 failed or broken' : 'failed or broken', modifier: attention > 0 ? ' bad' : '')}'
-      '${tile('Duration', rows.isEmpty ? '—' : compoundDuration(wallClock), durations.isEmpty ? 'nothing ran' : 'slowest ${compoundDuration(durations.last)}')}'
+      '${tile('Scenarios', '$total', skipped == 0 ? 'all of them run' : '$skipped skipped', iconId: 'ic-list-checks')}'
+      '${tile('Pass rate', total == 0 ? '—' : '${(passed * 100 / total).round()}%', '$passed of $total passing', iconId: 'ic-circle-check', modifier: ' good')}'
+      '${tile('Needs attention', '$attention', attention == 1 ? '1 failed or broken' : 'failed or broken', iconId: 'ic-alert-triangle', modifier: attention > 0 ? ' bad' : ' calm')}'
+      '${tile('Duration', rows.isEmpty ? '—' : compoundDuration(wallClock), durations.isEmpty ? 'nothing ran' : 'slowest ${compoundDuration(durations.last)}', iconId: 'ic-timer', modifier: ' time')}'
       '</div>\n';
 }
 
+/// With three scenarios or fewer, the charts have little to say, so the run
+/// is summed up in one line above them: how many ran, what share passed, how
+/// long it took. The charts stay — a chart of one bar is still the chart a
+/// reader learned to read.
+String _summaryBand(List<_Row> rows, Map<String, int> counts, int total) {
+  if (total == 0 || total > 3) {
+    return '';
+  }
+  final int passed = counts['SUCCESS'] ?? 0;
+  final int rate = (passed * 100 / total).round();
+  final int wallClock =
+      rows
+          .map((_Row row) => row.stopMs)
+          .reduce((int a, int b) => a > b ? a : b) -
+      rows
+          .map((_Row row) => row.startMs)
+          .reduce((int a, int b) => a < b ? a : b);
+  final String seconds = (wallClock / 1000).toStringAsFixed(1);
+  return '<div class="summary-band${rate < 100 ? ' bad' : ''}">'
+      '${icon(rate < 100 ? 'ic-alert-triangle' : 'ic-circle-check')}'
+      '<span>$total escenario${total == 1 ? '' : 's'} '
+      'ejecutado${total == 1 ? '' : 's'} · $rate% aprobado · '
+      '<span class="mono">${seconds}s</span></span>'
+      '</div>\n';
+}
+
+/// The second-level tabs, as a segmented control: one surface, the active
+/// segment lifted onto it.
 String _tabBar() => '''
-<ul class="nav nav-tabs">
-  <li class="active"><a href="#" data-tab="summary">Summary</a></li>
-  <li><a href="#" data-tab="tests">Test Results</a></li>
-</ul>
+<div class="segmented" role="tablist">
+  <a class="segment active" role="tab" aria-selected="true" href="#" data-tab="summary">Summary</a>
+  <a class="segment" role="tab" aria-selected="false" href="#" data-tab="tests">Test Results</a>
+</div>
 ''';
+
+/// A chart's card head: the eyebrow with its icon, and a line under it
+/// saying what the chart shows.
+String _chartHead(String iconId, String title, String subtitle) =>
+    '<div class="card-head">'
+    '<span class="eyebrow">${icon(iconId)}$title</span>'
+    '<span class="card-sub">$subtitle</span>'
+    '</div>\n';
 
 String _summaryPane(
   List<_Row> rows,
@@ -215,31 +268,46 @@ String _summaryPane(
   ParsedRun run,
   Duration offset,
 ) {
+  final String coverage = coverageOverview(requirementsOf(run));
   final StringBuffer pane = StringBuffer()
     ..writeln('<div id="summary" class="tab-pane active">')
+    ..write(_summaryBand(rows, counts, total))
     ..writeln('<div class="dashboard-charts">')
-    ..writeln('<div class="chart-block">')
-    ..writeln('<h4>Overview</h4>')
+    ..writeln('<div class="card chart-block">')
+    ..write(
+      _chartHead('ic-pie-chart', 'Overview', 'Distribución de resultados'),
+    )
+    ..writeln('<div class="donut-wrap">')
     ..write(donutChart(counts, total))
     ..write(chartLegend(counts))
     ..writeln('</div>')
-    ..writeln('<div class="chart-block">')
-    ..writeln('<h4>Test Outcomes</h4>')
+    ..writeln('</div>')
+    ..writeln('<div class="card chart-block">')
+    ..write(
+      _chartHead('ic-bar-chart', 'Test Outcomes', 'Escenarios por estado'),
+    )
     ..write(outcomesChart(counts))
     ..writeln('</div>')
-    ..writeln('<div class="chart-block wide">')
-    ..writeln('<h4>Test Performance</h4>')
-    ..writeln('<div class="chart-caption">Number of tests per duration</div>')
+    ..writeln('<div class="card chart-block wide">')
+    ..write(
+      _chartHead(
+        'ic-gauge',
+        'Test Performance',
+        'Escenarios por rango de duración',
+      ),
+    )
     ..write(durationChart(rows.map((_Row row) => row.durationMs).toList()))
     ..writeln('</div>')
     ..writeln('</div>')
-    // Coverage and the statistics share a row, as they do in the reference:
-    // what the run covered on the left, what it cost on the right.
+    // Coverage and the statistics share a row: what the run covered on the
+    // left, what it cost on the right.
     ..writeln('<div class="summary-columns">')
-    ..writeln('<div class="coverage-panel">')
-    ..write(coverageOverview(requirementsOf(run)))
-    ..writeln('</div>')
-    ..writeln('<div class="statistics-panel">')
+    ..write(
+      coverage.isEmpty
+          ? ''
+          : '<div class="card coverage-panel">$coverage</div>\n',
+    )
+    ..writeln('<div class="card statistics-panel">')
     ..write(_keyStatistics(rows, run, offset))
     ..writeln('</div>')
     ..writeln('</div>')
@@ -335,8 +403,8 @@ String _keyStatistics(
   }
 
   return '''
-<h4>Key Statistics</h4>
-<table class="table table-striped key-statistics">
+$_keyStatisticsHead
+<table class="table key-statistics">
 <tbody>
 $body</tbody>
 </table>
@@ -356,7 +424,11 @@ String _tagCloud(List<_Row> rows) {
     return '';
   }
   final List<String> names = tally.keys.toList()..sort();
-  final StringBuffer cloud = StringBuffer('<h3>Tags</h3><p class="tag-cloud">');
+  final StringBuffer cloud = StringBuffer(
+    '<div class="card"><div class="card-head"><h4>Tags</h4>'
+    '<span class="card-sub">The vocabulary the runner filters on</span></div>'
+    '<p class="tag-cloud">',
+  );
   for (final String name in names) {
     // Each tag leads to the scenarios that carried it: the tag vocabulary is
     // what the runner filters on, so the question worth answering is which
@@ -367,7 +439,7 @@ String _tagCloud(List<_Row> rows) {
       '<span class="tag-count">${tally[name]}</span></a> ',
     );
   }
-  cloud.write('</p>');
+  cloud.write('</p></div>');
   return cloud.toString();
 }
 
@@ -396,9 +468,15 @@ String _testsPane(List<_Row> rows, ParsedRun run, Duration offset) {
 
   final StringBuffer pane = StringBuffer()
     ..writeln('<div id="tests" class="tab-pane">')
+    ..writeln('<div class="card">')
     ..write(_keyStatistics(rows, run, offset, twoColumn: true))
-    ..writeln('<h3>Automated Scenarios</h3>')
-    ..writeln('<div class="data-table">')
+    ..writeln('</div>')
+    ..writeln('<div class="card data-table">')
+    ..writeln(
+      '<div class="card-head"><h4>Automated Scenarios</h4>'
+      '<span class="card-sub">${rows.length} scenario'
+      '${rows.length == 1 ? '' : 's'}, sorted by feature</span></div>',
+    )
     ..writeln('<p class="active-filter" hidden></p>')
     ..writeln('<div class="table-controls">')
     ..writeln(
@@ -441,6 +519,11 @@ String _testsPane(List<_Row> rows, ParsedRun run, Duration offset) {
     ..writeln('</div>');
   return pane.toString();
 }
+
+/// The key-statistics card's title, above the table on both tabs.
+const String _keyStatisticsHead =
+    '<div class="card-head"><h4>Key Statistics</h4>'
+    '<span class="card-sub">The run\'s clock and its durations</span></div>';
 
 /// How much a failure of this scenario would matter, as the scenario itself
 /// declared it.

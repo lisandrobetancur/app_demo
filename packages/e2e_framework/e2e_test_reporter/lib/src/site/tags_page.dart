@@ -101,11 +101,14 @@ String tagPageHtml(
     ..writeln('<html lang="en">')
     ..write(pageHead(platform))
     ..writeln('<body>')
-    ..write(banner(platform))
+    ..write(banner(platform, generatedAt: generatedAt, offset: offset))
     ..writeln('<div class="middlecontent">')
     ..writeln(
-      '<span class="breadcrumbs"><a href="index.html">Home</a> &gt; '
-      'Tag &gt; ${escapeHtml(tag)}</span>',
+      breadcrumbs(<Crumb>[
+        (label: 'Home', href: 'index.html'),
+        (label: 'Tag', href: null),
+        (label: tag, href: null),
+      ]),
     )
     ..write(menuBar(generatedAt, homeActive: false, offset: offset))
     ..writeln('<h2>${escapeHtml(tag)}</h2>')
