@@ -76,6 +76,13 @@ jobs:
             exit 1
           fi
 
+      # The line under each card says what the suite ran ON, and it may only
+      # say what this repository actually pins. Android's API level is fixed in
+      # its workflow, so naming it is a fact. iOS names no model on purpose:
+      # `run_ios.sh` picks the newest runtime and the plainest iPhone on the
+      # image, by rule and never by name — a card reading "iPhone 16" was
+      # already wrong the day the image moved to the 17 line, and a hardcoded
+      # model here is the same bug the runner was fixed for.
       - name: Write the landing page
         run: |
           have () { [ -d "site/$1" ] && echo "$2" || echo "<span class=\"card muted\"><b>$3</b><span>no report yet</span></span>"; }
@@ -111,7 +118,7 @@ jobs:
             <h2>E2E Test Reporter</h2>
             $(have web '<a class="card" href="web/"><b>Web Test Report</b><span>Chromium, driven by Playwright</span></a>' 'Web Test Report')
             $(have android '<a class="card" href="android/"><b>Android Test Report</b><span>emulator, API 31, native instrumentation</span></a>' 'Android Test Report')
-            $(have ios '<a class="card" href="ios/"><b>iOS Test Report</b><span>simulator, iPhone 16, XCUITest</span></a>' 'iOS Test Report')
+            $(have ios '<a class="card" href="ios/"><b>iOS Test Report</b><span>simulator, newest iOS runtime, XCUITest</span></a>' 'iOS Test Report')
             <footer>
               Published by run
               <a href="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}">#${GITHUB_RUN_NUMBER}</a>
