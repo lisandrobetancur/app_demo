@@ -69,7 +69,7 @@ export 'src/site/page_chrome.dart'
 export 'src/site/screenshots_page.dart'
     show screenshotsPageHtml, screenshotsReportName, writeScreenshotPages;
 export 'src/site/site_assets.dart'
-    show platformMark, resultColors, resultGlyphs;
+    show faviconFor, faviconTiles, platformMark, resultColors, resultGlyphs;
 export 'src/site/tags_page.dart'
     show tagPageHtml, tagReportName, tagsOf, writeTagPages;
 export 'src/site/test_page.dart' show testPageHtml, writeTestPages;

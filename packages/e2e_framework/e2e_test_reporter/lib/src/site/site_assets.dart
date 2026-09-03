@@ -65,15 +65,46 @@ const Map<String, String> resultGlyphs = <String, String>{
   'UNDEFINED': '?',
 };
 
+/// The tile each platform's favicon is drawn on.
+///
+/// Three hues far enough apart to tell at sixteen pixels, all dark enough to
+/// carry the white mark. Web keeps the brand navy because it was the first
+/// report and its icon should not move; the other two step away in hue rather
+/// than in lightness, which is the difference that survives being shrunk.
+///
+/// Deliberately not the platforms' own brand colours. The report names no
+/// vendor and draws no vendor's logo, and a tile in a vendor's green would be
+/// doing quietly what [platformMark] refuses to do openly.
+const Map<String, String> faviconTiles = <String, String>{
+  'web': '#1E3A8A',
+  'android': '#0F766E',
+  'ios': '#7C3AED',
+};
+
 /// The favicon, written to `favicon.svg` beside `index.html`.
 ///
-/// The same figure as the wordmark's mark — a checked box — on the brand
-/// navy, so the tab icon and the banner read as one mark rather than two.
-/// Drawn here rather than fetched, so the site still asks the network for
-/// nothing, and as SVG so it stays sharp on any tab.
-const String siteFavicon = '''
+/// The same figure as the wordmark's mark — a checked box — so the tab icon
+/// and the banner read as one mark rather than two. Drawn here rather than
+/// fetched, so the site still asks the network for nothing, and as SVG so it
+/// stays sharp on any tab.
+///
+/// The figure is the same on every platform and only the tile changes, for
+/// the reason spelled out in [platformMark]: at the size a favicon is read,
+/// silhouette and colour are all that survive, and three variations on a
+/// checked box would be three icons nobody can tell apart. Colour is the only
+/// distinction that works at sixteen pixels.
+///
+/// It has to work, because the three reports share a domain and now share a
+/// page title as well — `E2E Test Reports`, with no platform in it. The tab
+/// icon is the only thing left that says which of the three a tab is.
+///
+/// A platform nobody named gets the brand navy: an unknown value already
+/// shows itself in the banner, where the title prints it raw, and inventing a
+/// fourth colour for a typo would only make the typo look deliberate.
+String faviconFor(String platform) =>
+    '''
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="7" fill="#1E3A8A"/>
+  <rect width="32" height="32" rx="7" fill="${faviconTiles[platform] ?? faviconTiles['web']}"/>
   <rect x="7" y="7" width="18" height="18" rx="3.5" fill="none" stroke="#ffffff" stroke-width="2.4"/>
   <path d="M12 16.2l2.8 2.8 5.4-6" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

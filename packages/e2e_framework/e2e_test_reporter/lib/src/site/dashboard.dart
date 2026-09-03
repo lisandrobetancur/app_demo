@@ -54,7 +54,7 @@ File writeDashboard(
   ).writeAsStringSync(siteCss);
   File(
     '${outputDir.path}${Platform.pathSeparator}favicon.svg',
-  ).writeAsStringSync(siteFavicon);
+  ).writeAsStringSync(faviconFor(platform));
   final File index =
       File('${outputDir.path}${Platform.pathSeparator}index.html')
         ..writeAsStringSync(

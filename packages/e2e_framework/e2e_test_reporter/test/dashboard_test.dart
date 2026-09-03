@@ -40,12 +40,54 @@ void main() {
       expect(File('${out.path}/results/favicon.svg').existsSync(), isTrue);
       expect(html, contains('<link rel="icon" href="favicon.svg"'));
       expect(
+        File('${out.path}/results/favicon.svg').readAsStringSync(),
+        contains(faviconTiles['web']),
+        reason: 'the icon written is the one for the platform generated',
+      );
+      expect(
         Directory('${out.path}/results').listSync().whereType<File>().where(
           (File f) => f.path.endsWith('.json'),
         ),
         hasLength(2),
         reason: 'the dashboard must not delete the results it describes',
       );
+    });
+  });
+
+  group('the tab icon', () {
+    test('is a different colour per platform, so three tabs can be told '
+        'apart', () {
+      final Set<String> icons = <String>{
+        faviconFor('web'),
+        faviconFor('android'),
+        faviconFor('ios'),
+      };
+      expect(
+        icons,
+        hasLength(3),
+        reason:
+            'the three reports share a domain and now share a page title; '
+            'the icon is the only thing left that separates their tabs',
+      );
+    });
+
+    test('keeps one figure and changes only the tile', () {
+      // The checked box is the wordmark's mark. If a platform ever grew its
+      // own figure the icons would stop reading as one family, and at
+      // sixteen pixels nobody could tell the figures apart anyway.
+      const String mark = '<path d="M12 16.2l2.8 2.8 5.4-6"';
+      for (final String platform in <String>['web', 'android', 'ios', 'vr']) {
+        expect(faviconFor(platform), contains(mark));
+      }
+    });
+
+    test('gives an unnamed platform the brand navy, not a fourth colour', () {
+      expect(faviconFor('macos'), faviconFor('web'));
+      expect(faviconFor(''), faviconFor('web'));
+    });
+
+    test('asks the network for nothing, like every other page', () {
+      expect(faviconFor('ios'), isNot(contains('https://')));
     });
   });
 
