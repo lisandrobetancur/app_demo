@@ -40,12 +40,54 @@ void main() {
       expect(File('${out.path}/results/favicon.svg').existsSync(), isTrue);
       expect(html, contains('<link rel="icon" href="favicon.svg"'));
       expect(
+        File('${out.path}/results/favicon.svg').readAsStringSync(),
+        contains(faviconTiles['web']),
+        reason: 'the icon written is the one for the platform generated',
+      );
+      expect(
         Directory('${out.path}/results').listSync().whereType<File>().where(
           (File f) => f.path.endsWith('.json'),
         ),
         hasLength(2),
         reason: 'the dashboard must not delete the results it describes',
       );
+    });
+  });
+
+  group('the tab icon', () {
+    test('is a different colour per platform, so three tabs can be told '
+        'apart', () {
+      final Set<String> icons = <String>{
+        faviconFor('web'),
+        faviconFor('android'),
+        faviconFor('ios'),
+      };
+      expect(
+        icons,
+        hasLength(3),
+        reason:
+            'the three reports share a domain and now share a page title; '
+            'the icon is the only thing left that separates their tabs',
+      );
+    });
+
+    test('keeps one figure and changes only the tile', () {
+      // The checked box is the wordmark's mark. If a platform ever grew its
+      // own figure the icons would stop reading as one family, and at
+      // sixteen pixels nobody could tell the figures apart anyway.
+      const String mark = '<path d="M12 16.2l2.8 2.8 5.4-6"';
+      for (final String platform in <String>['web', 'android', 'ios', 'vr']) {
+        expect(faviconFor(platform), contains(mark));
+      }
+    });
+
+    test('gives an unnamed platform the brand navy, not a fourth colour', () {
+      expect(faviconFor('macos'), faviconFor('web'));
+      expect(faviconFor(''), faviconFor('web'));
+    });
+
+    test('asks the network for nothing, like every other page', () {
+      expect(faviconFor('ios'), isNot(contains('https://')));
     });
   });
 
@@ -70,16 +112,18 @@ void main() {
       expect(platformMark('macos'), isEmpty);
     });
 
-    test('names the report E2E Test Reporter, not the design source', () {
+    test('names the report E2E Test Reports, not the design source', () {
+      // The tab carries the name alone: the platform is in the banner, and
+      // repeating it here only made the title longer than a tab can show.
+      expect(html, contains('<title>E2E Test Reports</title>'));
+      expect(html, isNot(contains('<title>E2E Test Reporter')));
       expect(
         html,
-        contains('<title>E2E Test Reporter · Web Test Report</title>'),
+        isNot(contains('<title>E2E Test Reports · ')),
+        reason: 'the platform must not come back into the title',
       );
       expect(html, contains('<span class="wordmark-lead">E2E</span>'));
-      expect(
-        html,
-        contains('<span class="wordmark-name">Test Reporter</span>'),
-      );
+      expect(html, contains('<span class="wordmark-name">Test Reports</span>'));
     });
 
     test('the wordmark links home, mark and all', () {
@@ -149,7 +193,7 @@ void main() {
     test('a short run gets a one-line summary above the charts', () {
       // Two scenarios, half passing: the band is there, and it is red.
       expect(html, contains('<div class="summary-band bad">'));
-      expect(html, contains('2 escenarios ejecutados · 50% aprobado'));
+      expect(html, contains('2 scenarios run · 50% passing'));
     });
 
     test('a run with nothing to look at is called good', () {
@@ -208,7 +252,7 @@ void main() {
 
     test('the performance chart buckets tests by how long they took', () {
       expect(html, contains('Test Performance'));
-      expect(html, contains('Escenarios por rango de duración'));
+      expect(html, contains('Scenarios by duration'));
       // Short enough to sit under their bars unrotated, and escaped: SVG
       // text is markup, so `<1s` travels as `&lt;1s`.
       expect(html, contains('>&lt;1s</text>'));
@@ -525,6 +569,57 @@ void main() {
       expect(css, contains('.lightbox-next'));
       expect(css, contains('padding: 3.5rem 4.75rem 2rem 4.75rem;'));
       expect(css, contains('.slides img { cursor: zoom-in; }'));
+    });
+
+    test('the report speaks English; only the run it describes may not', () {
+      // The line the site draws: everything the REPORT says — headings,
+      // labels, chart captions, axis titles — is the generator's own English.
+      // Everything the RUN says — a scenario's name, a step, a description —
+      // is whatever the suite wrote, in whatever language that project tests
+      // in, and passes through untouched.
+      //
+      // Three chart captions and an axis title shipped in Spanish once,
+      // because the design spec that asked for them was written in Spanish and
+      // the strings were copied out of it. Nothing failed: the page rendered,
+      // the tests passed, and the report simply read in two languages.
+      //
+      // Two nets, because one is not enough — and the first version of this
+      // test proved it: an accent check alone passes "Escenarios por estado",
+      // which is Spanish without a single accented letter.
+      //
+      // FIRST the strings themselves. These four are what the generator writes
+      // around its charts, and naming them is what makes the check exact.
+      expect(html, contains('How the run came out'));
+      expect(html, contains('Scenarios by verdict'));
+      expect(html, contains('Scenarios by duration'));
+      expect(html, contains('>Scenarios</text>'), reason: 'the axis title');
+
+      // SECOND a net for whatever else drifts in. This fixture's scenarios are
+      // English ASCII, so a Spanish letter or word anywhere in the output came
+      // from the generator and not from the data. It is a net, not a proof: it
+      // catches the Spanish somebody is likely to write, not every sentence.
+      final RegExp spanish = RegExp(
+        r'[áéíóúüñÁÉÍÓÚÜÑ¿¡]'
+        r'|\b(?:escenarios?|ejecutad\w*|aprobad\w*|resultados?|corrida'
+        r'|prueba\w*|duracion|por\s+(?:estado|rango))\b',
+        caseSensitive: false,
+      );
+      for (final File file
+          in Directory(
+            '${out.path}/results',
+          ).listSync().whereType<File>().where(
+            (File f) => f.path.endsWith('.html') || f.path.endsWith('.css'),
+          )) {
+        final String content = file.readAsStringSync();
+        final RegExpMatch? hit = spanish.firstMatch(content);
+        expect(
+          hit,
+          isNull,
+          reason:
+              '${file.path} carries "${hit?.group(0)}" — the report writes its '
+              'own text in English; only the run it describes may not',
+        );
+      }
     });
 
     test('nothing is pinned to a minimum width, and wide tables scroll', () {
