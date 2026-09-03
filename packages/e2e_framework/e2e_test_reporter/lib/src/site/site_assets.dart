@@ -203,7 +203,7 @@ const String shotViewer = '''
 
 /// The stylesheet, written to `e2e-test-reporter.css` beside `index.html`.
 const String siteCss = '''
-/* E2E Test Reporter — all rules authored for this generator. */
+/* E2E Test Reports — all rules authored for this generator. */
 
 /* ============================================================
    1. TOKENS

@@ -238,8 +238,8 @@ String _summaryBand(List<_Row> rows, Map<String, int> counts, int total) {
   final String seconds = (wallClock / 1000).toStringAsFixed(1);
   return '<div class="summary-band${rate < 100 ? ' bad' : ''}">'
       '${icon(rate < 100 ? 'ic-alert-triangle' : 'ic-circle-check')}'
-      '<span>$total escenario${total == 1 ? '' : 's'} '
-      'ejecutado${total == 1 ? '' : 's'} · $rate% aprobado · '
+      '<span>$total scenario${total == 1 ? '' : 's'} run · '
+      '$rate% passing · '
       '<span class="mono">${seconds}s</span></span>'
       '</div>\n';
 }
@@ -274,28 +274,18 @@ String _summaryPane(
     ..write(_summaryBand(rows, counts, total))
     ..writeln('<div class="dashboard-charts">')
     ..writeln('<div class="card chart-block">')
-    ..write(
-      _chartHead('ic-pie-chart', 'Overview', 'Distribución de resultados'),
-    )
+    ..write(_chartHead('ic-pie-chart', 'Overview', 'How the run came out'))
     ..writeln('<div class="donut-wrap">')
     ..write(donutChart(counts, total))
     ..write(chartLegend(counts))
     ..writeln('</div>')
     ..writeln('</div>')
     ..writeln('<div class="card chart-block">')
-    ..write(
-      _chartHead('ic-bar-chart', 'Test Outcomes', 'Escenarios por estado'),
-    )
+    ..write(_chartHead('ic-bar-chart', 'Test Outcomes', 'Scenarios by verdict'))
     ..write(outcomesChart(counts))
     ..writeln('</div>')
     ..writeln('<div class="card chart-block wide">')
-    ..write(
-      _chartHead(
-        'ic-gauge',
-        'Test Performance',
-        'Escenarios por rango de duración',
-      ),
-    )
+    ..write(_chartHead('ic-gauge', 'Test Performance', 'Scenarios by duration'))
     ..write(durationChart(rows.map((_Row row) => row.durationMs).toList()))
     ..writeln('</div>')
     ..writeln('</div>')

@@ -250,7 +250,7 @@ String _barChart(List<_Bar> bars, {required double width}) {
   }
   svg.write(
     '<text class="axis-title" transform="translate(12 ${_n(_padTop + plotHeight / 2)}) '
-    'rotate(-90)" text-anchor="middle">Escenarios</text>',
+    'rotate(-90)" text-anchor="middle">Scenarios</text>',
   );
 
   final double band = plotWidth / bars.length;
