@@ -5,16 +5,20 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
-  # Twice a day against main, so a regression that arrives from OUTSIDE a
-  # pull request — a dependency, a browser update on the runner image, an
-  # expired fixture — is caught within hours instead of on the next PR.
-  # Cron speaks UTC: these are 9:00 and 18:00 in America/Bogota (UTC-5,
-  # no daylight saving). GitHub treats the time as approximate (runs can
-  # start minutes late) and pauses schedules after ~60 days without repo
-  # activity, so a long-idle repo needs one manual run to resume them.
-  schedule:
-    - cron: '0 14 * * *'
-    - cron: '0 23 * * *'
+
+# The suites run on changes and on nothing else: a pull request, the merge
+# that lands it, or `workflow_dispatch` when somebody asks.
+#
+# There WAS a twice-daily schedule here, and dropping it costs something worth
+# writing down. A scheduled run is the only one that catches a regression
+# arriving from OUTSIDE this repository — a dependency that moved, a browser or
+# runner image that changed under us, a fixture that expired. Without it those
+# land silently and surface on whatever pull request happens to come next,
+# wearing the wrong author: the change that broke it is not in that diff.
+#
+# So if a suite ever fails on a pull request that plainly cannot have caused
+# it, suspect the outside first and run the suite on `main` from the Actions
+# tab before reading the diff. That manual run is now the whole safety net.
 
 permissions:
   contents: read
