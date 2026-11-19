@@ -26,4 +26,6 @@ dependencies:
   utilities: 0.1.0
 
 dev_dependencies:
+  flutter_test:
+    sdk: flutter
   lint: 0.1.0

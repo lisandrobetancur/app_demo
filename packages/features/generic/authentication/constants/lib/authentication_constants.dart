@@ -4,3 +4,4 @@ library;
 export 'authentication_keys.dart';
 export 'authentication_limits.dart';
 export 'authentication_routes.dart';
+export 'authentication_semantic_ids.dart';

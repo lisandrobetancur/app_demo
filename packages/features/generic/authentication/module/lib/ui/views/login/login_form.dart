@@ -14,6 +14,7 @@ class _LoginForm extends ConsumerWidget {
         children: <Widget>[
           AppTextField(
             key: LoginKeys.emailInput,
+            semanticsId: LoginSemanticIds.emailInput,
             label: 'authentication.login.email_label'.tr(),
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.next,
@@ -24,6 +25,7 @@ class _LoginForm extends ConsumerWidget {
           AppSpacing.formGap,
           AppTextField(
             key: LoginKeys.passwordInput,
+            semanticsId: LoginSemanticIds.passwordInput,
             label: 'authentication.login.password_label'.tr(),
             obscureText: state.obscurePassword,
             textInputAction: TextInputAction.done,
@@ -31,6 +33,7 @@ class _LoginForm extends ConsumerWidget {
             onChanged: viewModel.setPassword,
             onSubmitted: (String _) => viewModel.submit(),
             suffix: Semantics(
+              identifier: LoginSemanticIds.togglePasswordVisibilityButton,
               label: state.obscurePassword
                   ? 'authentication.login.show_password'.tr()
                   : 'authentication.login.hide_password'.tr(),
@@ -49,15 +52,19 @@ class _LoginForm extends ConsumerWidget {
           if (state.errorKey != null)
             Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.md),
-              child: Text(
-                state.errorKey!.tr(),
-                style: AppTypography.body.copyWith(
-                  color: Theme.of(context).colorScheme.error,
+              child: Semantics(
+                identifier: LoginSemanticIds.errorText,
+                child: Text(
+                  state.errorKey!.tr(),
+                  style: AppTypography.body.copyWith(
+                    color: Theme.of(context).colorScheme.error,
+                  ),
                 ),
               ),
             ),
           AppButton(
             key: LoginKeys.submitButton,
+            semanticsId: LoginSemanticIds.submitButton,
             label: 'authentication.login.submit_button'.tr(),
             isLoading: state.isSubmitting,
             onPressed: state.canSubmit ? viewModel.submit : null,
@@ -66,6 +73,7 @@ class _LoginForm extends ConsumerWidget {
           const SizedBox(height: AppSpacing.md),
           AppButton(
             key: LoginKeys.goToRegisterButton,
+            semanticsId: LoginSemanticIds.goToRegisterButton,
             label: 'authentication.login.go_to_register'.tr(),
             variant: AppButtonVariant.secondary,
             onPressed: () => ref
@@ -76,6 +84,7 @@ class _LoginForm extends ConsumerWidget {
           ),
           AppButton(
             key: LoginKeys.goToRecoverPasswordButton,
+            semanticsId: LoginSemanticIds.goToRecoverPasswordButton,
             label: 'authentication.login.go_to_recover'.tr(),
             variant: AppButtonVariant.text,
             onPressed: () => ref
