@@ -37,24 +37,39 @@ class _ReviewFormViewState extends ConsumerState<ReviewFormView> {
     final ReviewFormState state = ref.watch(reviewFormViewModelProvider);
     return AppScaffold(
       key: ReviewFormKeys.view,
+      semanticsId: ReviewFormSemanticIds.view,
+      titleSemanticsId: ReviewFormSemanticIds.titleText,
       title: 'catalog.review_form.title'.tr(),
       scrollable: false,
       padding: EdgeInsets.zero,
       body: switch (state.status) {
-        ViewStatus.loading => const Center(child: CircularProgressIndicator()),
-        ViewStatus.data => const _ReviewFormBody(),
-        ViewStatus.empty => EmptyState(
-          icon: AppIcons.starOutline,
-          title: 'catalog.review_form.cannot_title'.tr(),
-          message: 'catalog.review_form.cannot_message'.tr(),
+        ViewStatus.loading => SemanticRegion(
+          identifier: ReviewFormSemanticIds.state('loading'),
+          child: const Center(child: CircularProgressIndicator()),
         ),
-        ViewStatus.error => EmptyState(
-          icon: AppIcons.error,
-          title: 'catalog.review_form.error_title'.tr(),
-          actionLabel: 'catalog.review_form.retry_button'.tr(),
-          onAction: () => ref
-              .read(reviewFormViewModelProvider.notifier)
-              .start(state.productId),
+        ViewStatus.data => SemanticRegion(
+          identifier: ReviewFormSemanticIds.state('data'),
+          child: const _ReviewFormBody(),
+        ),
+        ViewStatus.empty => SemanticRegion(
+          identifier: ReviewFormSemanticIds.state('empty'),
+          child: EmptyState(
+            icon: AppIcons.starOutline,
+            title: 'catalog.review_form.cannot_title'.tr(),
+            message: 'catalog.review_form.cannot_message'.tr(),
+          ),
+        ),
+        ViewStatus.error => SemanticRegion(
+          identifier: ReviewFormSemanticIds.state('error'),
+          child: EmptyState(
+            icon: AppIcons.error,
+            title: 'catalog.review_form.error_title'.tr(),
+            actionLabel: 'catalog.review_form.retry_button'.tr(),
+            actionSemanticsId: ReviewFormSemanticIds.retryButton,
+            onAction: () => ref
+                .read(reviewFormViewModelProvider.notifier)
+                .start(state.productId),
+          ),
         ),
       },
     );

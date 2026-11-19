@@ -222,3 +222,26 @@ class FavoritesSemanticIds {
   static String moveToCartButton(String id) =>
       'favorites_move_to_cart_button_$id';
 }
+
+/// Semantics identifiers of the review form.
+class ReviewFormSemanticIds {
+  const ReviewFormSemanticIds._();
+
+  static const String view = 'review_form_view';
+  static const String titleText = 'review_form_title_text';
+  static const String productNameText = 'review_form_product_name_text';
+  static const String commentInput = 'review_form_comment_input';
+  static const String errorText = 'review_form_error_text';
+  static const String submitButton = 'review_form_submit_button';
+  static const String retryButton = 'review_form_retry_button';
+
+  /// `review_form_state_<loading|data|empty|error>`.
+  static String state(String state) => 'review_form_state_$state';
+
+  /// `review_form_rating_star_<1..5>`: the star that sets that rating.
+  static String ratingStar(int rating) => 'review_form_rating_star_$rating';
+
+  /// The five stars in order, for `RatingStars.starSemanticsIds`.
+  static List<String> get ratingStars =>
+      List<String>.generate(5, (int index) => ratingStar(index + 1));
+}
