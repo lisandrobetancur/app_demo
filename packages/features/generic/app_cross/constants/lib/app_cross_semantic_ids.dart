@@ -47,3 +47,39 @@ class NotificationsSemanticIds {
   /// `notifications_item_<id>`.
   static String item(String id) => 'notifications_item_$id';
 }
+
+/// Semantics identifiers of the settings view.
+class SettingsSemanticIds {
+  const SettingsSemanticIds._();
+
+  static const String view = 'settings_view';
+  static const String titleText = 'settings_title_text';
+  static const String languageSelector = 'settings_language_selector';
+  static const String themeSelector = 'settings_theme_selector';
+  static const String currencySelector = 'settings_currency_selector';
+  static const String errorText = 'settings_error_text';
+  static const String seeOnboardingAgainButton =
+      'settings_see_onboarding_again_button';
+  static const String resetDemoDataButton = 'settings_reset_demo_data_button';
+  static const String resetDemoDataDialog = 'settings_reset_demo_data_dialog';
+  static const String resetDemoDataConfirmButton =
+      'settings_reset_demo_data_dialog_confirm_button';
+  static const String resetDemoDataCancelButton =
+      'settings_reset_demo_data_dialog_cancel_button';
+  static const String wipeDataButton = 'settings_wipe_data_button';
+  static const String wipeDataDialog = 'settings_wipe_data_dialog';
+  static const String wipeDataConfirmButton =
+      'settings_wipe_data_dialog_confirm_button';
+  static const String wipeDataCancelButton =
+      'settings_wipe_data_dialog_cancel_button';
+  static const String goToAboutButton = 'settings_go_to_about_button';
+
+  /// `settings_language_option_<es|en>`. Carries the selected state.
+  static String languageOption(String code) => 'settings_language_option_$code';
+
+  /// `settings_theme_option_<system|light|dark>`.
+  static String themeOption(String mode) => 'settings_theme_option_$mode';
+
+  /// `settings_currency_option_<code>`.
+  static String currencyOption(String code) => 'settings_currency_option_$code';
+}

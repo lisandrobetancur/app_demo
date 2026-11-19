@@ -8,6 +8,9 @@ class _SettingsActionsSection extends ConsumerWidget {
     final bool confirmed = await AppDialog.confirm(
       context,
       dialogKey: AppCrossKeys.resetDemoDataDialog,
+      dialogSemanticsId: SettingsSemanticIds.resetDemoDataDialog,
+      confirmSemanticsId: SettingsSemanticIds.resetDemoDataConfirmButton,
+      cancelSemanticsId: SettingsSemanticIds.resetDemoDataCancelButton,
       title: 'app_cross.settings.reset_demo_data'.tr(),
       message: 'app_cross.settings.reset_demo_data_message'.tr(),
       confirmLabel: 'app_cross.settings.confirm'.tr(),
@@ -23,6 +26,9 @@ class _SettingsActionsSection extends ConsumerWidget {
     final bool confirmed = await AppDialog.confirm(
       context,
       dialogKey: AppCrossKeys.wipeDataDialog,
+      dialogSemanticsId: SettingsSemanticIds.wipeDataDialog,
+      confirmSemanticsId: SettingsSemanticIds.wipeDataConfirmButton,
+      cancelSemanticsId: SettingsSemanticIds.wipeDataCancelButton,
       title: 'app_cross.settings.wipe_data'.tr(),
       message: 'app_cross.settings.wipe_data_message'.tr(),
       confirmLabel: 'app_cross.settings.confirm'.tr(),
@@ -42,43 +48,55 @@ class _SettingsActionsSection extends ConsumerWidget {
     );
     return Column(
       children: <Widget>[
-        ListTile(
-          key: AppCrossKeys.seeOnboardingAgainButton,
-          leading: const Icon(AppIcons.play),
-          title: Text('app_cross.settings.see_onboarding_again'.tr()),
-          trailing: const Icon(AppIcons.chevronRight),
-          contentPadding: EdgeInsets.zero,
-          onTap: viewModel.seeOnboardingAgain,
-        ),
-        ListTile(
-          key: AppCrossKeys.resetDemoDataButton,
-          leading: const Icon(AppIcons.refresh),
-          title: Text('app_cross.settings.reset_demo_data'.tr()),
-          contentPadding: EdgeInsets.zero,
-          enabled: !state.isBusy,
-          onTap: () => _confirmReset(context, ref),
-        ),
-        ListTile(
-          key: AppCrossKeys.wipeDataButton,
-          leading: Icon(
-            AppIcons.delete,
-            color: Theme.of(context).colorScheme.error,
+        Semantics(
+          identifier: SettingsSemanticIds.seeOnboardingAgainButton,
+          child: ListTile(
+            key: AppCrossKeys.seeOnboardingAgainButton,
+            leading: const Icon(AppIcons.play),
+            title: Text('app_cross.settings.see_onboarding_again'.tr()),
+            trailing: const Icon(AppIcons.chevronRight),
+            contentPadding: EdgeInsets.zero,
+            onTap: viewModel.seeOnboardingAgain,
           ),
-          title: Text(
-            'app_cross.settings.wipe_data'.tr(),
-            style: TextStyle(color: Theme.of(context).colorScheme.error),
-          ),
-          contentPadding: EdgeInsets.zero,
-          enabled: !state.isBusy,
-          onTap: () => _confirmWipe(context, ref),
         ),
-        ListTile(
-          key: AppCrossKeys.goToAboutButton,
-          leading: const Icon(AppIcons.about),
-          title: Text('app_cross.settings.about'.tr()),
-          trailing: const Icon(AppIcons.chevronRight),
-          contentPadding: EdgeInsets.zero,
-          onTap: ref.read(appCrossNavigator.notifier).goToAbout,
+        Semantics(
+          identifier: SettingsSemanticIds.resetDemoDataButton,
+          child: ListTile(
+            key: AppCrossKeys.resetDemoDataButton,
+            leading: const Icon(AppIcons.refresh),
+            title: Text('app_cross.settings.reset_demo_data'.tr()),
+            contentPadding: EdgeInsets.zero,
+            enabled: !state.isBusy,
+            onTap: () => _confirmReset(context, ref),
+          ),
+        ),
+        Semantics(
+          identifier: SettingsSemanticIds.wipeDataButton,
+          child: ListTile(
+            key: AppCrossKeys.wipeDataButton,
+            leading: Icon(
+              AppIcons.delete,
+              color: Theme.of(context).colorScheme.error,
+            ),
+            title: Text(
+              'app_cross.settings.wipe_data'.tr(),
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+            contentPadding: EdgeInsets.zero,
+            enabled: !state.isBusy,
+            onTap: () => _confirmWipe(context, ref),
+          ),
+        ),
+        Semantics(
+          identifier: SettingsSemanticIds.goToAboutButton,
+          child: ListTile(
+            key: AppCrossKeys.goToAboutButton,
+            leading: const Icon(AppIcons.about),
+            title: Text('app_cross.settings.about'.tr()),
+            trailing: const Icon(AppIcons.chevronRight),
+            contentPadding: EdgeInsets.zero,
+            onTap: ref.read(appCrossNavigator.notifier).goToAbout,
+          ),
         ),
       ],
     );
