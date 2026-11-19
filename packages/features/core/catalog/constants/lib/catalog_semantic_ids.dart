@@ -192,3 +192,33 @@ class MyProductsSemanticIds {
   /// `my_products_delete_button_<product id>`.
   static String deleteButton(String id) => 'my_products_delete_button_$id';
 }
+
+/// Semantics identifiers of the favorites view.
+class FavoritesSemanticIds {
+  const FavoritesSemanticIds._();
+
+  static const String view = 'favorites_view';
+  static const String titleText = 'favorites_title_text';
+  static const String moveAllToCartButton = 'favorites_move_all_to_cart_button';
+
+  /// The snackbar confirming a move to the cart.
+  static const String messageText = 'favorites_message_text';
+  static const String retryButton = 'favorites_retry_button';
+
+  /// `favorites_state_<loading|data|empty|error>`.
+  static String state(String state) => 'favorites_state_$state';
+
+  /// `favorites_item_<product id>`: the card and its move-to-cart button.
+  static String item(String id) => 'favorites_item_$id';
+
+  /// `favorites_product_card_<product id>`: the card itself, whose text holds
+  /// the product and any notice (out of stock, removed by its owner).
+  static String productCard(String id) => 'favorites_product_card_$id';
+
+  /// `favorites_toggle_button_<product id>`.
+  static String toggleButton(String id) => 'favorites_toggle_button_$id';
+
+  /// `favorites_move_to_cart_button_<product id>`.
+  static String moveToCartButton(String id) =>
+      'favorites_move_to_cart_button_$id';
+}
