@@ -5,11 +5,15 @@ class _HomeError extends ConsumerWidget {
   const _HomeError();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) => EmptyState(
-    key: DashboardKeys.state('error'),
-    icon: AppIcons.error,
-    title: 'dashboard.home.error_title'.tr(),
-    actionLabel: 'dashboard.home.retry_button'.tr(),
-    onAction: ref.read(homeViewModelProvider.notifier).load,
+  Widget build(BuildContext context, WidgetRef ref) => SemanticRegion(
+    identifier: DashboardSemanticIds.state('error'),
+    child: EmptyState(
+      actionSemanticsId: DashboardSemanticIds.retryButton,
+      key: DashboardKeys.state('error'),
+      icon: AppIcons.error,
+      title: 'dashboard.home.error_title'.tr(),
+      actionLabel: 'dashboard.home.retry_button'.tr(),
+      onAction: ref.read(homeViewModelProvider.notifier).load,
+    ),
   );
 }

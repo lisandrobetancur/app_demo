@@ -15,138 +15,158 @@ class _HomeData extends ConsumerWidget {
     final String locale = context.locale.toString();
     return RefreshIndicator(
       onRefresh: viewModel.load,
-      child: ListView(
-        key: DashboardKeys.state('data'),
-        padding: AppSpacing.pagePadding,
-        physics: const AlwaysScrollableScrollPhysics(),
-        children: <Widget>[
-          Wrap(
-            spacing: AppSpacing.md,
-            runSpacing: AppSpacing.md,
-            children: <Widget>[
-              _SummaryCard(
-                cardKey: DashboardKeys.summaryCard('active_products'),
-                icon: AppIcons.catalog,
-                label: 'dashboard.home.summary_active_products'.tr(),
-                value: '${state.summary.activePublications}',
-              ),
-              _SummaryCard(
-                cardKey: DashboardKeys.summaryCard('cart_items'),
-                icon: AppIcons.cart,
-                label: 'dashboard.home.summary_cart_items'.tr(),
-                value: '${state.summary.cartItemCount}',
-              ),
-              _SummaryCard(
-                cardKey: DashboardKeys.summaryCard('cart_total'),
-                icon: AppIcons.payment,
-                label: 'dashboard.home.summary_cart_total'.tr(),
-                value: Formatters.formatPrice(
-                  currency.display(state.summary.cartSubtotal),
-                  locale: locale,
-                  currencyCode: currency.code,
+      child: SemanticRegion(
+        identifier: DashboardSemanticIds.state('data'),
+        child: ListView(
+          key: DashboardKeys.state('data'),
+          padding: AppSpacing.pagePadding,
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: <Widget>[
+            Wrap(
+              spacing: AppSpacing.md,
+              runSpacing: AppSpacing.md,
+              children: <Widget>[
+                _SummaryCard(
+                  cardKey: DashboardKeys.summaryCard('active_products'),
+                  semanticsId: DashboardSemanticIds.summaryCard(
+                    'active_products',
+                  ),
+                  icon: AppIcons.catalog,
+                  label: 'dashboard.home.summary_active_products'.tr(),
+                  value: '${state.summary.activePublications}',
+                ),
+                _SummaryCard(
+                  cardKey: DashboardKeys.summaryCard('cart_items'),
+                  semanticsId: DashboardSemanticIds.summaryCard('cart_items'),
+                  icon: AppIcons.cart,
+                  label: 'dashboard.home.summary_cart_items'.tr(),
+                  value: '${state.summary.cartItemCount}',
+                ),
+                _SummaryCard(
+                  cardKey: DashboardKeys.summaryCard('cart_total'),
+                  semanticsId: DashboardSemanticIds.summaryCard('cart_total'),
+                  icon: AppIcons.payment,
+                  label: 'dashboard.home.summary_cart_total'.tr(),
+                  value: Formatters.formatPrice(
+                    currency.display(state.summary.cartSubtotal),
+                    locale: locale,
+                    currencyCode: currency.code,
+                  ),
+                ),
+                _SummaryCard(
+                  cardKey: DashboardKeys.summaryCard('month_orders'),
+                  semanticsId: DashboardSemanticIds.summaryCard('month_orders'),
+                  icon: AppIcons.orders,
+                  label: 'dashboard.home.summary_month_orders'.tr(),
+                  value: '${state.summary.ordersThisMonth}',
+                ),
+              ],
+            ),
+            AppSpacing.sectionGap,
+            Text(
+              'dashboard.home.categories_title'.tr(),
+              style: AppTypography.sectionTitle,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            SizedBox(
+              height: 96,
+              child: SemanticRegion(
+                identifier: DashboardSemanticIds.categoryCarousel,
+                child: ListView(
+                  key: DashboardKeys.categoryCarousel,
+                  scrollDirection: Axis.horizontal,
+                  children: <Widget>[
+                    for (final Category category in state.categories)
+                      _CategoryChip(
+                        key: DashboardKeys.categoryItem(category.id),
+                        category: category,
+                        onTap: navigatorNotifier.goToCatalog,
+                      ),
+                  ],
                 ),
               ),
-              _SummaryCard(
-                cardKey: DashboardKeys.summaryCard('month_orders'),
-                icon: AppIcons.orders,
-                label: 'dashboard.home.summary_month_orders'.tr(),
-                value: '${state.summary.ordersThisMonth}',
+            ),
+            AppSpacing.sectionGap,
+            Text(
+              'dashboard.home.recent_title'.tr(),
+              style: AppTypography.sectionTitle,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            SizedBox(
+              height: 168,
+              child: SemanticRegion(
+                identifier: DashboardSemanticIds.recentProductsCarousel,
+                child: ListView(
+                  key: DashboardKeys.recentProductsCarousel,
+                  scrollDirection: Axis.horizontal,
+                  children: <Widget>[
+                    for (final Product product in state.recentProducts)
+                      _RecentProductCard(
+                        key: DashboardKeys.recentItem(product.id),
+                        product: product,
+                        locale: locale,
+                        currency: currency,
+                        onTap: () =>
+                            navigatorNotifier.goToProductDetail(product.id),
+                      ),
+                  ],
+                ),
               ),
-            ],
-          ),
-          AppSpacing.sectionGap,
-          Text(
-            'dashboard.home.categories_title'.tr(),
-            style: AppTypography.sectionTitle,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          SizedBox(
-            height: 96,
-            child: ListView(
-              key: DashboardKeys.categoryCarousel,
-              scrollDirection: Axis.horizontal,
+            ),
+            AppSpacing.sectionGap,
+            Text(
+              'dashboard.home.quick_actions_title'.tr(),
+              style: AppTypography.sectionTitle,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Wrap(
+              spacing: AppSpacing.md,
+              runSpacing: AppSpacing.sm,
               children: <Widget>[
-                for (final Category category in state.categories)
-                  _CategoryChip(
-                    key: DashboardKeys.categoryItem(category.id),
-                    category: category,
-                    onTap: navigatorNotifier.goToCatalog,
-                  ),
+                AppButton(
+                  key: DashboardKeys.goToCatalogButton,
+                  semanticsId: DashboardSemanticIds.goToCatalogButton,
+                  label: 'dashboard.home.go_to_catalog'.tr(),
+                  icon: AppIcons.catalog,
+                  variant: AppButtonVariant.secondary,
+                  onPressed: navigatorNotifier.goToCatalog,
+                ),
+                AppButton(
+                  key: DashboardKeys.goToCreateProductButton,
+                  semanticsId: DashboardSemanticIds.goToCreateProductButton,
+                  label: 'dashboard.home.go_to_create_product'.tr(),
+                  icon: AppIcons.add,
+                  variant: AppButtonVariant.secondary,
+                  onPressed: navigatorNotifier.goToCreateProduct,
+                ),
+                AppButton(
+                  key: DashboardKeys.goToCartButton,
+                  semanticsId: DashboardSemanticIds.goToCartButton,
+                  label: 'dashboard.home.go_to_cart'.tr(),
+                  icon: AppIcons.cart,
+                  variant: AppButtonVariant.secondary,
+                  onPressed: navigatorNotifier.goToCart,
+                ),
+                AppButton(
+                  key: DashboardKeys.goToFavoritesButton,
+                  semanticsId: DashboardSemanticIds.goToFavoritesButton,
+                  label: 'dashboard.home.go_to_favorites'.tr(),
+                  icon: AppIcons.favoriteOutline,
+                  variant: AppButtonVariant.secondary,
+                  onPressed: navigatorNotifier.goToFavorites,
+                ),
+                AppButton(
+                  key: DashboardKeys.goToMyProductsButton,
+                  semanticsId: DashboardSemanticIds.goToMyProductsButton,
+                  label: 'dashboard.home.go_to_my_products'.tr(),
+                  icon: AppIcons.edit,
+                  variant: AppButtonVariant.secondary,
+                  onPressed: navigatorNotifier.goToMyProducts,
+                ),
               ],
             ),
-          ),
-          AppSpacing.sectionGap,
-          Text(
-            'dashboard.home.recent_title'.tr(),
-            style: AppTypography.sectionTitle,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          SizedBox(
-            height: 168,
-            child: ListView(
-              key: DashboardKeys.recentProductsCarousel,
-              scrollDirection: Axis.horizontal,
-              children: <Widget>[
-                for (final Product product in state.recentProducts)
-                  _RecentProductCard(
-                    key: DashboardKeys.recentItem(product.id),
-                    product: product,
-                    locale: locale,
-                    currency: currency,
-                    onTap: () =>
-                        navigatorNotifier.goToProductDetail(product.id),
-                  ),
-              ],
-            ),
-          ),
-          AppSpacing.sectionGap,
-          Text(
-            'dashboard.home.quick_actions_title'.tr(),
-            style: AppTypography.sectionTitle,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Wrap(
-            spacing: AppSpacing.md,
-            runSpacing: AppSpacing.sm,
-            children: <Widget>[
-              AppButton(
-                key: DashboardKeys.goToCatalogButton,
-                label: 'dashboard.home.go_to_catalog'.tr(),
-                icon: AppIcons.catalog,
-                variant: AppButtonVariant.secondary,
-                onPressed: navigatorNotifier.goToCatalog,
-              ),
-              AppButton(
-                key: DashboardKeys.goToCreateProductButton,
-                label: 'dashboard.home.go_to_create_product'.tr(),
-                icon: AppIcons.add,
-                variant: AppButtonVariant.secondary,
-                onPressed: navigatorNotifier.goToCreateProduct,
-              ),
-              AppButton(
-                key: DashboardKeys.goToCartButton,
-                label: 'dashboard.home.go_to_cart'.tr(),
-                icon: AppIcons.cart,
-                variant: AppButtonVariant.secondary,
-                onPressed: navigatorNotifier.goToCart,
-              ),
-              AppButton(
-                key: DashboardKeys.goToFavoritesButton,
-                label: 'dashboard.home.go_to_favorites'.tr(),
-                icon: AppIcons.favoriteOutline,
-                variant: AppButtonVariant.secondary,
-                onPressed: navigatorNotifier.goToFavorites,
-              ),
-              AppButton(
-                key: DashboardKeys.goToMyProductsButton,
-                label: 'dashboard.home.go_to_my_products'.tr(),
-                icon: AppIcons.edit,
-                variant: AppButtonVariant.secondary,
-                onPressed: navigatorNotifier.goToMyProducts,
-              ),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -159,12 +179,14 @@ class _SummaryCard extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.value,
+    required this.semanticsId,
   });
 
   final Key cardKey;
   final IconData icon;
   final String label;
   final String value;
+  final String semanticsId;
 
   @override
   Widget build(BuildContext context) {
@@ -173,6 +195,7 @@ class _SummaryCard extends StatelessWidget {
       width: 168,
       child: AppCard(
         key: cardKey,
+        semanticsId: semanticsId,
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -213,20 +236,24 @@ class _CategoryChip extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: AppRadius.card,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            CircleAvatar(
-              radius: 28,
-              backgroundColor: scheme.primaryContainer,
-              child: Icon(
-                AppIcons.forCategoryCode(category.code),
-                color: scheme.onPrimaryContainer,
+        // Inside the InkWell, so it joins the tappable node.
+        child: Semantics(
+          identifier: DashboardSemanticIds.categoryItem(category.id),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              CircleAvatar(
+                radius: 28,
+                backgroundColor: scheme.primaryContainer,
+                child: Icon(
+                  AppIcons.forCategoryCode(category.code),
+                  color: scheme.onPrimaryContainer,
+                ),
               ),
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            Text(category.labelKey.tr(), style: AppTypography.caption),
-          ],
+              const SizedBox(height: AppSpacing.xs),
+              Text(category.labelKey.tr(), style: AppTypography.caption),
+            ],
+          ),
         ),
       ),
     );
@@ -257,6 +284,7 @@ class _RecentProductCard extends StatelessWidget {
         width: 168,
         child: AppCard(
           onTap: onTap,
+          semanticsId: DashboardSemanticIds.recentItem(product.id),
           padding: const EdgeInsets.all(AppSpacing.md),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
