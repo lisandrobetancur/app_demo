@@ -522,9 +522,12 @@ En web, la semántica solo existe en un build con `--dart-define=ENABLE_SEMANTIC
 - **Botones, chips, pestañas y tarjetas tocables:** el identifier está en el nodo
   que recibe el tap y expone su estado (`enabled`, `selected`, `checked`). En web:
   `aria-disabled`, `aria-selected`, `aria-checked`.
-- **Textos:** el texto es el contenido del nodo.
+- **Textos:** el texto es el contenido del nodo (`toHaveText`).
 - **Tarjetas (`*_item_<id>`):** un solo nodo cuyo texto reúne lo que muestra la
-  tarjeta. Los botones que tiene adentro conservan su propio identifier.
+  tarjeta. Los botones que tiene adentro conservan su propio identifier. Cuando la
+  tarjeta tiene controles adentro, Flutter web pone ese texto en el `aria-label`
+  (su nombre accesible), no en el contenido: se lee con `toHaveAccessibleName` o
+  se filtra con `getByRole('group', { name })`.
 - **Montos (`*_total_text`, `*_subtotal_text`…):** solo el monto, sin su etiqueta.
 - **Regiones** (listas, secciones, estados, diálogos, hojas): un nodo propio que
   contiene a sus hijos. Se buscan los elementos *dentro* de ellas.
@@ -535,8 +538,10 @@ En web, la semántica solo existe en un build con `--dart-define=ENABLE_SEMANTIC
   campo y no tienen identifier propio.
 - **"Deshacer" del snackbar del carrito:** `SnackBarAction` recibe su texto como
   `String`, así que no hay dónde poner el identifier sin reemplazar el widget.
-- **Flecha atrás del AppBar** (`BackButton`, en recuperar contraseña y checkout):
-  sin identifier por la misma razón.
+- **Flecha atrás del AppBar** (el `BackButton` explícito de recuperar contraseña y
+  checkout, y el automático de las pantallas que se abren encima, como el detalle
+  de producto): no tiene identifier por la misma razón. En web se usa el "atrás"
+  del navegador (`page.goBack()`).
 - **Botones con `Semantics(label, button)` previo:** el toggle de contraseña del
   login, la campana de notificaciones, favorito y compartir del detalle, y la
   tarjeta de producto del catálogo. El identifier está en ese `Semantics` (como pide
