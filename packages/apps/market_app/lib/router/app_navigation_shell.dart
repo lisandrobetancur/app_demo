@@ -106,7 +106,14 @@ class AppNavigationShell extends ConsumerWidget {
             ),
           ),
           const VerticalDivider(width: 1),
-          Expanded(child: navigationShell),
+          // A semantics boundary around the branch navigator. Each page in it
+          // has a modal barrier whose BlockSemantics drops everything painted
+          // before it in the same semantics container — which, without this
+          // boundary, is the rail: it vanished from the accessibility tree
+          // (screen readers, and every black-box tool on the web) while still
+          // on screen. The bottom bar never had the problem: it is painted
+          // after the body.
+          Expanded(child: Semantics(container: true, child: navigationShell)),
         ],
       ),
     );
