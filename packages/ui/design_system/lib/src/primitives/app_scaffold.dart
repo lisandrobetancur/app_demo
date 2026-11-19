@@ -21,6 +21,7 @@ class AppScaffold extends StatelessWidget {
     this.bottomBar,
     this.onRefresh,
     this.semanticsId,
+    this.titleSemanticsId,
   });
 
   final Widget body;
@@ -39,6 +40,9 @@ class AppScaffold extends StatelessWidget {
   /// Identifier of the whole view for black-box automation — the element a
   /// test waits for to know the screen is up. See [AppButton.semanticsId].
   final String? semanticsId;
+
+  /// Identifier of the app bar's [title] text. See [AppButton.semanticsId].
+  final String? titleSemanticsId;
 
   @override
   Widget build(BuildContext context) {
@@ -75,7 +79,7 @@ class AppScaffold extends StatelessWidget {
     return Scaffold(
       appBar: hasAppBar
           ? AppBar(
-              title: titleWidget ?? (title == null ? null : Text(title!)),
+              title: titleWidget ?? (title == null ? null : _titleText()),
               actions: actions,
               leading: leading,
             )
@@ -93,5 +97,13 @@ class AppScaffold extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget _titleText() {
+    final Widget text = Text(title!);
+    if (titleSemanticsId == null) {
+      return text;
+    }
+    return Semantics(identifier: titleSemanticsId, child: text);
   }
 }
