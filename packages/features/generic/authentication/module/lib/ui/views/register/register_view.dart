@@ -10,6 +10,8 @@ class RegisterView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) => AppScaffold(
     key: RegisterKeys.view,
+    semanticsId: RegisterSemanticIds.view,
+    titleSemanticsId: RegisterSemanticIds.titleText,
     title: 'authentication.register.title'.tr(),
     body: const _RegisterForm(),
   );

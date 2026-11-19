@@ -27,3 +27,24 @@ class LoginSemanticIds {
   static const String goToRecoverPasswordButton =
       'login_go_to_recover_password_button';
 }
+
+/// Semantics identifiers of the register view.
+class RegisterSemanticIds {
+  const RegisterSemanticIds._();
+
+  static const String view = 'register_view';
+  static const String titleText = 'register_title_text';
+  static const String fullNameInput = 'register_full_name_input';
+  static const String emailInput = 'register_email_input';
+  static const String phoneInput = 'register_phone_input';
+  static const String passwordInput = 'register_password_input';
+  static const String togglePasswordVisibilityButton =
+      'register_toggle_password_visibility_button';
+  static const String confirmPasswordInput = 'register_confirm_password_input';
+
+  /// Carries the checked state: `checked` on Android, `aria-checked` on web.
+  static const String termsCheckbox = 'register_terms_checkbox';
+  static const String errorText = 'register_error_text';
+  static const String submitButton = 'register_submit_button';
+  static const String goToLoginButton = 'register_go_to_login_button';
+}

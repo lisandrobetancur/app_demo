@@ -15,6 +15,7 @@ class _RegisterForm extends ConsumerWidget {
       children: <Widget>[
         AppTextField(
           key: RegisterKeys.fullNameInput,
+          semanticsId: RegisterSemanticIds.fullNameInput,
           label: 'authentication.register.full_name_label'.tr(),
           textInputAction: TextInputAction.next,
           errorText: state.fullNameErrorKey?.tr(),
@@ -23,6 +24,7 @@ class _RegisterForm extends ConsumerWidget {
         AppSpacing.formGap,
         AppTextField(
           key: RegisterKeys.emailInput,
+          semanticsId: RegisterSemanticIds.emailInput,
           label: 'authentication.register.email_label'.tr(),
           keyboardType: TextInputType.emailAddress,
           textInputAction: TextInputAction.next,
@@ -32,6 +34,7 @@ class _RegisterForm extends ConsumerWidget {
         AppSpacing.formGap,
         AppTextField(
           key: RegisterKeys.phoneInput,
+          semanticsId: RegisterSemanticIds.phoneInput,
           label: 'authentication.register.phone_label'.tr(),
           keyboardType: TextInputType.phone,
           textInputAction: TextInputAction.next,
@@ -40,16 +43,21 @@ class _RegisterForm extends ConsumerWidget {
         AppSpacing.formGap,
         AppTextField(
           key: RegisterKeys.passwordInput,
+          semanticsId: RegisterSemanticIds.passwordInput,
           label: 'authentication.register.password_label'.tr(),
           obscureText: state.obscurePassword,
           textInputAction: TextInputAction.next,
           errorText: state.passwordErrorKey?.tr(),
           onChanged: viewModel.setPassword,
           suffix: IconButton(
-            icon: Icon(
-              state.obscurePassword
-                  ? AppIcons.visibility
-                  : AppIcons.visibilityOff,
+            // On the icon, so it merges into the IconButton's own node.
+            icon: Semantics(
+              identifier: RegisterSemanticIds.togglePasswordVisibilityButton,
+              child: Icon(
+                state.obscurePassword
+                    ? AppIcons.visibility
+                    : AppIcons.visibilityOff,
+              ),
             ),
             onPressed: viewModel.toggleObscurePassword,
           ),
@@ -57,6 +65,7 @@ class _RegisterForm extends ConsumerWidget {
         AppSpacing.formGap,
         AppTextField(
           key: RegisterKeys.confirmPasswordInput,
+          semanticsId: RegisterSemanticIds.confirmPasswordInput,
           label: 'authentication.register.confirm_password_label'.tr(),
           obscureText: state.obscurePassword,
           textInputAction: TextInputAction.done,
@@ -68,22 +77,31 @@ class _RegisterForm extends ConsumerWidget {
           value: state.termsAccepted,
           contentPadding: EdgeInsets.zero,
           controlAffinity: ListTileControlAffinity.leading,
-          title: Text('authentication.register.terms_label'.tr()),
+          // On the title: around the tile it would land on an empty parent,
+          // here it joins the tile's node with the checked state and the tap.
+          title: Semantics(
+            identifier: RegisterSemanticIds.termsCheckbox,
+            child: Text('authentication.register.terms_label'.tr()),
+          ),
           onChanged: (bool? value) =>
               viewModel.setTermsAccepted(value ?? false),
         ),
         if (state.errorKey != null)
           Padding(
             padding: const EdgeInsets.only(bottom: AppSpacing.md),
-            child: Text(
-              state.errorKey!.tr(),
-              style: AppTypography.body.copyWith(
-                color: Theme.of(context).colorScheme.error,
+            child: Semantics(
+              identifier: RegisterSemanticIds.errorText,
+              child: Text(
+                state.errorKey!.tr(),
+                style: AppTypography.body.copyWith(
+                  color: Theme.of(context).colorScheme.error,
+                ),
               ),
             ),
           ),
         AppButton(
           key: RegisterKeys.submitButton,
+          semanticsId: RegisterSemanticIds.submitButton,
           label: 'authentication.register.submit_button'.tr(),
           isLoading: state.isSubmitting,
           onPressed: state.canSubmit ? viewModel.submit : null,
@@ -92,6 +110,7 @@ class _RegisterForm extends ConsumerWidget {
         const SizedBox(height: AppSpacing.md),
         AppButton(
           key: RegisterKeys.goToLoginButton,
+          semanticsId: RegisterSemanticIds.goToLoginButton,
           label: 'authentication.register.go_to_login'.tr(),
           variant: AppButtonVariant.text,
           onPressed: viewModel.goToLogin,
