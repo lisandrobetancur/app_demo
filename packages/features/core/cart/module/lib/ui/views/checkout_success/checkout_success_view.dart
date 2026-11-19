@@ -17,25 +17,32 @@ class CheckoutSuccessView extends ConsumerWidget {
         : orderId.substring(0, 8).toUpperCase();
     return AppScaffold(
       key: CheckoutKeys.successView,
+      semanticsId: CheckoutSuccessSemanticIds.view,
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           const Icon(AppIcons.checkFilled, size: 96, color: AppColors.success),
           const SizedBox(height: AppSpacing.xl),
-          Text(
-            'cart.success.headline'.tr(),
-            style: AppTypography.displayTitle,
-            textAlign: TextAlign.center,
+          Semantics(
+            identifier: CheckoutSuccessSemanticIds.headlineText,
+            child: Text(
+              'cart.success.headline'.tr(),
+              style: AppTypography.displayTitle,
+              textAlign: TextAlign.center,
+            ),
           ),
           const SizedBox(height: AppSpacing.sm),
-          Text(
-            'cart.success.order_number'.tr(
-              namedArgs: <String, String>{'number': orderNumber},
+          Semantics(
+            identifier: CheckoutSuccessSemanticIds.orderNumberText,
+            child: Text(
+              'cart.success.order_number'.tr(
+                namedArgs: <String, String>{'number': orderNumber},
+              ),
+              key: CheckoutKeys.orderNumberText,
+              style: AppTypography.sectionTitle,
+              textAlign: TextAlign.center,
             ),
-            key: CheckoutKeys.orderNumberText,
-            style: AppTypography.sectionTitle,
-            textAlign: TextAlign.center,
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
@@ -46,6 +53,7 @@ class CheckoutSuccessView extends ConsumerWidget {
           AppSpacing.sectionGap,
           AppButton(
             key: CheckoutKeys.goToOrderButton,
+            semanticsId: CheckoutSuccessSemanticIds.goToOrderButton,
             label: 'cart.success.go_to_order_button'.tr(),
             onPressed: () => navigatorNotifier.goToOrderDetail(orderId),
             expand: true,
@@ -53,6 +61,7 @@ class CheckoutSuccessView extends ConsumerWidget {
           const SizedBox(height: AppSpacing.md),
           AppButton(
             key: CheckoutKeys.goToHomeButton,
+            semanticsId: CheckoutSuccessSemanticIds.goToHomeButton,
             label: 'cart.success.go_to_home_button'.tr(),
             variant: AppButtonVariant.secondary,
             onPressed: navigatorNotifier.goToDashboard,

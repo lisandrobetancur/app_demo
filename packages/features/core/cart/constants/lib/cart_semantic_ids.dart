@@ -129,3 +129,14 @@ class CheckoutSemanticIds {
   /// line total.
   static String summaryItem(String id) => 'checkout_summary_item_$id';
 }
+
+/// Semantics identifiers of the order confirmation shown after checkout.
+class CheckoutSuccessSemanticIds {
+  const CheckoutSuccessSemanticIds._();
+
+  static const String view = 'checkout_success_view';
+  static const String headlineText = 'checkout_success_headline_text';
+  static const String orderNumberText = 'checkout_success_order_number_text';
+  static const String goToOrderButton = 'checkout_success_go_to_order_button';
+  static const String goToHomeButton = 'checkout_success_go_to_home_button';
+}
