@@ -13,11 +13,14 @@ class _CheckoutStepDelivery extends ConsumerWidget {
     return ListView(
       padding: AppSpacing.pagePadding,
       children: <Widget>[
-        Text(
-          state.addresses.isEmpty
-              ? 'cart.checkout.no_addresses'.tr()
-              : 'cart.checkout.choose_address'.tr(),
-          style: AppTypography.cardTitle,
+        Semantics(
+          identifier: CheckoutSemanticIds.addressPromptText,
+          child: Text(
+            state.addresses.isEmpty
+                ? 'cart.checkout.no_addresses'.tr()
+                : 'cart.checkout.choose_address'.tr(),
+            style: AppTypography.cardTitle,
+          ),
         ),
         const SizedBox(height: AppSpacing.md),
         for (final Address address in state.addresses)
@@ -25,6 +28,7 @@ class _CheckoutStepDelivery extends ConsumerWidget {
             padding: const EdgeInsets.only(bottom: AppSpacing.sm),
             child: AppCard(
               key: CheckoutKeys.addressOption(address.id),
+              semanticsId: CheckoutSemanticIds.addressOption(address.id),
               onTap: () => viewModel.selectAddress(address.id),
               padding: const EdgeInsets.all(AppSpacing.md),
               child: Row(
@@ -54,11 +58,13 @@ class _CheckoutStepDelivery extends ConsumerWidget {
         const SizedBox(height: AppSpacing.sm),
         AppButton(
           key: CheckoutKeys.addAddressButton,
+          semanticsId: CheckoutSemanticIds.addAddressButton,
           label: 'cart.checkout.add_address_button'.tr(),
           icon: AppIcons.add,
           variant: AppButtonVariant.secondary,
           onPressed: () => AppBottomSheet.show<void>(
             context,
+            sheetSemanticsId: CheckoutSemanticIds.addressFormSheet,
             child: const _CheckoutAddressForm(),
           ),
         ),

@@ -69,3 +69,63 @@ class CartSemanticIds {
   /// `cart_remove_item_button_<line id>`.
   static String removeItemButton(String id) => 'cart_remove_item_button_$id';
 }
+
+/// Semantics identifiers of the checkout flow (all three steps).
+class CheckoutSemanticIds {
+  const CheckoutSemanticIds._();
+
+  static const String view = 'checkout_view';
+  static const String titleText = 'checkout_title_text';
+  static const String stepIndicator = 'checkout_step_indicator';
+  static const String retryButton = 'checkout_retry_button';
+
+  // Step 1 · delivery.
+  /// "Choose an address", or "no addresses yet" when there are none.
+  static const String addressPromptText = 'checkout_address_prompt_text';
+  static const String addAddressButton = 'checkout_add_address_button';
+  static const String addressFormSheet = 'checkout_address_form_sheet';
+  static const String addressLabelInput = 'checkout_address_label_input';
+  static const String addressLine1Input = 'checkout_address_line1_input';
+  static const String addressCityInput = 'checkout_address_city_input';
+
+  /// Department, state or region, depending on the country.
+  static const String addressRegionInput = 'checkout_address_region_input';
+  static const String addressNotesInput = 'checkout_address_notes_input';
+  static const String addressSaveButton = 'checkout_address_save_button';
+
+  // Step 2 · payment.
+  static const String cardNumberInput = 'checkout_card_number_input';
+  static const String cardHolderInput = 'checkout_card_holder_input';
+  static const String cardExpiryInput = 'checkout_card_expiry_input';
+  static const String cardCvvInput = 'checkout_card_cvv_input';
+
+  // Step 3 · summary.
+  static const String errorText = 'checkout_error_text';
+  static const String summaryAddressText = 'checkout_summary_address_text';
+  static const String summaryPaymentText = 'checkout_summary_payment_text';
+
+  /// The money values alone, without their labels.
+  static const String subtotalText = 'checkout_subtotal_text';
+  static const String discountText = 'checkout_discount_text';
+  static const String taxText = 'checkout_tax_text';
+  static const String totalText = 'checkout_total_text';
+
+  // Navigation.
+  static const String backButton = 'checkout_back_button';
+  static const String nextButton = 'checkout_next_button';
+  static const String confirmButton = 'checkout_confirm_button';
+
+  /// `checkout_state_<loading|data|error>`.
+  static String state(String state) => 'checkout_state_$state';
+
+  /// `checkout_address_option_<address id>`.
+  static String addressOption(String id) => 'checkout_address_option_$id';
+
+  /// `checkout_payment_method_<card|cash|transfer>`. Carries the selected
+  /// state.
+  static String paymentMethod(String value) => 'checkout_payment_method_$value';
+
+  /// `checkout_summary_item_<cart line id>`: "quantity × product" and the
+  /// line total.
+  static String summaryItem(String id) => 'checkout_summary_item_$id';
+}

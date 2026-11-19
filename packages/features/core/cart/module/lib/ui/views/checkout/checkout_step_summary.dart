@@ -22,9 +22,12 @@ class _CheckoutStepSummary extends ConsumerWidget {
         if (state.errorKey != null)
           Padding(
             padding: const EdgeInsets.only(bottom: AppSpacing.md),
-            child: Text(
-              state.errorKey!.tr(),
-              style: AppTypography.body.copyWith(color: scheme.error),
+            child: Semantics(
+              identifier: CheckoutSemanticIds.errorText,
+              child: Text(
+                state.errorKey!.tr(),
+                style: AppTypography.body.copyWith(color: scheme.error),
+              ),
             ),
           ),
         Text(
@@ -35,17 +38,22 @@ class _CheckoutStepSummary extends ConsumerWidget {
         for (final CartLine line in cartState.lines)
           Padding(
             padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-            child: Row(
-              children: <Widget>[
-                Expanded(
-                  child: Text(
-                    '${line.quantity} × ${line.productName}',
-                    style: AppTypography.body,
-                    overflow: TextOverflow.ellipsis,
+            // One node holding "quantity × product" and the line total.
+            child: Semantics(
+              container: true,
+              identifier: CheckoutSemanticIds.summaryItem(line.id),
+              child: Row(
+                children: <Widget>[
+                  Expanded(
+                    child: Text(
+                      '${line.quantity} × ${line.productName}',
+                      style: AppTypography.body,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
-                ),
-                Text(money(line.lineTotal), style: AppTypography.body),
-              ],
+                  Text(money(line.lineTotal), style: AppTypography.body),
+                ],
+              ),
             ),
           ),
         AppSpacing.sectionGap,
@@ -55,10 +63,13 @@ class _CheckoutStepSummary extends ConsumerWidget {
         ),
         const SizedBox(height: AppSpacing.sm),
         if (state.selectedAddress != null)
-          Text(
-            '${state.selectedAddress!.label} · '
-            '${state.selectedAddress!.display}',
-            style: AppTypography.body,
+          Semantics(
+            identifier: CheckoutSemanticIds.summaryAddressText,
+            child: Text(
+              '${state.selectedAddress!.label} · '
+              '${state.selectedAddress!.display}',
+              style: AppTypography.body,
+            ),
           ),
         AppSpacing.sectionGap,
         Text(
@@ -66,7 +77,13 @@ class _CheckoutStepSummary extends ConsumerWidget {
           style: AppTypography.sectionTitle,
         ),
         const SizedBox(height: AppSpacing.sm),
-        Text(state.paymentMethod.labelKey.tr(), style: AppTypography.body),
+        Semantics(
+          identifier: CheckoutSemanticIds.summaryPaymentText,
+          child: Text(
+            state.paymentMethod.labelKey.tr(),
+            style: AppTypography.body,
+          ),
+        ),
         AppSpacing.sectionGap,
         Text(
           'cart.checkout.summary_totals'.tr(),
@@ -99,19 +116,23 @@ class _CartTotalsSummary extends ConsumerWidget {
       children: <Widget>[
         _SummaryRow(
           label: 'cart.home.subtotal_label'.tr(),
+          valueSemanticsId: CheckoutSemanticIds.subtotalText,
           value: money(totals.subtotal),
         ),
         _SummaryRow(
           label: 'cart.home.discount_label'.tr(),
+          valueSemanticsId: CheckoutSemanticIds.discountText,
           value: '-${money(totals.discount)}',
         ),
         _SummaryRow(
           label: 'cart.home.tax_label'.tr(),
+          valueSemanticsId: CheckoutSemanticIds.taxText,
           value: money(totals.tax),
         ),
         const Divider(),
         _SummaryRow(
           label: 'cart.home.total_label'.tr(),
+          valueSemanticsId: CheckoutSemanticIds.totalText,
           value: money(totals.total),
           emphasized: true,
         ),
@@ -125,12 +146,16 @@ class _SummaryRow extends StatelessWidget {
   const _SummaryRow({
     required this.label,
     required this.value,
+    required this.valueSemanticsId,
     this.emphasized = false,
   });
 
   final String label;
   final String value;
   final bool emphasized;
+
+  /// On the value alone, so a test reads the amount without its label.
+  final String valueSemanticsId;
 
   @override
   Widget build(BuildContext context) {
@@ -142,7 +167,12 @@ class _SummaryRow extends StatelessWidget {
       child: Row(
         children: <Widget>[
           Expanded(child: Text(label, style: style)),
-          Text(value, style: style),
+          // A node of its own, holding just the amount.
+          Semantics(
+            container: true,
+            identifier: valueSemanticsId,
+            child: Text(value, style: style),
+          ),
         ],
       ),
     );
