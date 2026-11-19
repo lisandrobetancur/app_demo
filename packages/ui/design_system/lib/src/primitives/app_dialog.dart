@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'semantic_region.dart';
+
 /// Standard confirmation dialog.
 ///
 /// Callers pass already-translated strings and stable keys; the dialog only
@@ -22,8 +24,8 @@ class AppDialog {
     bool destructive = false,
   }) async {
     // Each button's identifier goes on its child, which merges into the
-    // button's own node; the dialog's needs a node of its own (`container`),
-    // and `explicitChildNodes` keeps its title, message and buttons apart.
+    // button's own node; the dialog gets a region of its own, with its title,
+    // message and buttons kept apart inside it.
     Widget labelled(String? id, Widget child) =>
         id == null ? child : Semantics(identifier: id, child: child);
     final bool? result = await showDialog<bool>(
@@ -54,12 +56,7 @@ class AppDialog {
         if (dialogSemanticsId == null) {
           return dialog;
         }
-        return Semantics(
-          container: true,
-          explicitChildNodes: true,
-          identifier: dialogSemanticsId,
-          child: dialog,
-        );
+        return SemanticRegion(identifier: dialogSemanticsId, child: dialog);
       },
     );
     return result ?? false;

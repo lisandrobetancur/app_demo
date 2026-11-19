@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../tokens/app_spacing.dart';
+import 'semantic_region.dart';
 
 /// Standard modal bottom sheet with themed shape and consistent padding.
 class AppBottomSheet {
@@ -31,14 +32,7 @@ class AppBottomSheet {
       if (sheetSemanticsId == null) {
         return sheet;
       }
-      // A node of its own for the identifier, with the sheet's fields and
-      // buttons kept as separate nodes inside it.
-      return Semantics(
-        container: true,
-        explicitChildNodes: true,
-        identifier: sheetSemanticsId,
-        child: sheet,
-      );
+      return SemanticRegion(identifier: sheetSemanticsId, child: sheet);
     },
   );
 }

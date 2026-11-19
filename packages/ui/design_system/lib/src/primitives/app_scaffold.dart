@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../tokens/app_spacing.dart';
+import 'semantic_region.dart';
 
 /// Standard page scaffold.
 ///
@@ -50,15 +51,7 @@ class AppScaffold extends StatelessWidget {
     if (semanticsId == null) {
       return scaffold;
     }
-    // A node of its own (`container`) so the identifier has somewhere to land,
-    // and `explicitChildNodes` so the view's texts and controls keep their own
-    // nodes instead of being merged into this one.
-    return Semantics(
-      container: true,
-      explicitChildNodes: true,
-      identifier: semanticsId,
-      child: scaffold,
-    );
+    return SemanticRegion(identifier: semanticsId!, child: scaffold);
   }
 
   Widget _buildScaffold() {
