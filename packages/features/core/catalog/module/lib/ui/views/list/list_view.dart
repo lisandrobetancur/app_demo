@@ -13,16 +13,22 @@ class CatalogListView extends ConsumerWidget {
     final ListViewModel viewModel = ref.read(listViewModelProvider.notifier);
     return AppScaffold(
       key: CatalogListKeys.view,
+      semanticsId: CatalogListSemanticIds.view,
+      titleSemanticsId: CatalogListSemanticIds.titleText,
       title: 'catalog.list.title'.tr(),
       scrollable: false,
       padding: EdgeInsets.zero,
       actions: <Widget>[
         IconButton(
           key: CatalogListKeys.filterButton,
-          icon: Badge.count(
-            count: state.filters.activeCount,
-            isLabelVisible: state.filters.hasAnyFilter,
-            child: const Icon(AppIcons.filter),
+          // On the icon, so it joins the IconButton's own node.
+          icon: Semantics(
+            identifier: CatalogListSemanticIds.filterButton,
+            child: Badge.count(
+              count: state.filters.activeCount,
+              isLabelVisible: state.filters.hasAnyFilter,
+              child: const Icon(AppIcons.filter),
+            ),
           ),
           tooltip: 'catalog.list.filters_title'.tr(),
           onPressed: () => _openFilterSheet(context),
@@ -42,14 +48,17 @@ class CatalogListView extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
             child: Row(
               children: <Widget>[
-                Text(
-                  'catalog.list.results_count'.tr(
-                    namedArgs: <String, String>{
-                      'count': '${state.resultsCount}',
-                    },
+                Semantics(
+                  identifier: CatalogListSemanticIds.resultsCountText,
+                  child: Text(
+                    'catalog.list.results_count'.tr(
+                      namedArgs: <String, String>{
+                        'count': '${state.resultsCount}',
+                      },
+                    ),
+                    key: CatalogListKeys.resultsCountText,
+                    style: AppTypography.caption,
                   ),
-                  key: CatalogListKeys.resultsCountText,
-                  style: AppTypography.caption,
                 ),
                 const Spacer(),
                 const _SortMenu(),
@@ -73,6 +82,7 @@ class CatalogListView extends ConsumerWidget {
     AppBottomSheet.show<void>(
       context,
       sheetKey: CatalogListKeys.filterSheet,
+      sheetSemanticsId: CatalogListSemanticIds.filterSheet,
       child: const _ListFilterSheet(),
     );
   }
@@ -94,18 +104,25 @@ class _SortMenu extends ConsumerWidget {
           PopupMenuItem<ProductSort>(
             key: CatalogListKeys.sortOption(sort.name),
             value: sort,
-            child: Text(sort.labelKey.tr()),
+            child: Semantics(
+              identifier: CatalogListSemanticIds.sortOption(sort.name),
+              child: Text(sort.labelKey.tr()),
+            ),
           ),
       ],
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.sm),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            const Icon(AppIcons.sort, size: 18),
-            const SizedBox(width: AppSpacing.xs),
-            Text(current.labelKey.tr(), style: AppTypography.caption),
-          ],
+      // Inside the menu button, so it joins the button's tappable node.
+      child: Semantics(
+        identifier: CatalogListSemanticIds.sortDropdown,
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.sm),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              const Icon(AppIcons.sort, size: 18),
+              const SizedBox(width: AppSpacing.xs),
+              Text(current.labelKey.tr(), style: AppTypography.caption),
+            ],
+          ),
         ),
       ),
     );
@@ -126,24 +143,30 @@ class _ActiveFiltersBar extends StatelessWidget {
         if (state.filters.categoryIds.contains(category.id))
           FilterChipItem(
             chipKey: CatalogListKeys.activeFilterChip(category.id),
+            semanticsId: CatalogListSemanticIds.activeFilterChip(category.id),
             label: category.labelKey.tr(),
             onRemoved: () => viewModel.toggleCategory(category.id),
           ),
       for (final ProductCondition condition in state.filters.conditions)
         FilterChipItem(
           chipKey: CatalogListKeys.activeFilterChip(condition.dbValue),
+          semanticsId: CatalogListSemanticIds.activeFilterChip(
+            condition.dbValue,
+          ),
           label: condition.labelKey.tr(),
           onRemoved: () => viewModel.toggleCondition(condition),
         ),
       if (state.filters.hasPriceRange)
         FilterChipItem(
           chipKey: CatalogListKeys.activeFilterChip('price'),
+          semanticsId: CatalogListSemanticIds.activeFilterChip('price'),
           label: 'catalog.list.filter_price_chip'.tr(),
           onRemoved: () => viewModel.setPriceRange(null, null),
         ),
       if (state.filters.onlyInStock)
         FilterChipItem(
           chipKey: CatalogListKeys.activeFilterChip('stock'),
+          semanticsId: CatalogListSemanticIds.activeFilterChip('stock'),
           label: 'catalog.list.filter_stock_chip'.tr(),
           onRemoved: () => viewModel.setOnlyInStock(false),
         ),
@@ -157,6 +180,7 @@ class _ActiveFiltersBar extends StatelessWidget {
         chips: chips,
         clearAllLabel: 'catalog.list.clear_filters'.tr(),
         clearAllKey: CatalogListKeys.clearFiltersButton,
+        clearAllSemanticsId: CatalogListSemanticIds.clearFiltersButton,
         onClearAll: viewModel.clearFilters,
       ),
     );

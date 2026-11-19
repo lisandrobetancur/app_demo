@@ -5,11 +5,15 @@ class _ListError extends ConsumerWidget {
   const _ListError();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) => EmptyState(
-    key: CatalogListKeys.state('error'),
-    icon: AppIcons.error,
-    title: 'catalog.list.error_title'.tr(),
-    actionLabel: 'catalog.list.retry_button'.tr(),
-    onAction: ref.read(listViewModelProvider.notifier).loadProducts,
+  Widget build(BuildContext context, WidgetRef ref) => SemanticRegion(
+    identifier: CatalogListSemanticIds.state('error'),
+    child: EmptyState(
+      actionSemanticsId: CatalogListSemanticIds.retryButton,
+      key: CatalogListKeys.state('error'),
+      icon: AppIcons.error,
+      title: 'catalog.list.error_title'.tr(),
+      actionLabel: 'catalog.list.retry_button'.tr(),
+      onAction: ref.read(listViewModelProvider.notifier).loadProducts,
+    ),
   );
 }

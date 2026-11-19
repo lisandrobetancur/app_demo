@@ -13,6 +13,7 @@ class _ListSearchBar extends ConsumerWidget {
       children: <Widget>[
         AppTextField(
           key: CatalogListKeys.searchInput,
+          semanticsId: CatalogListSemanticIds.searchInput,
           label: 'catalog.list.search_hint'.tr(),
           prefixIcon: AppIcons.search,
           onChanged: viewModel.setSearchTerm,
@@ -25,7 +26,12 @@ class _ListSearchBar extends ConsumerWidget {
                 ActionChip(
                   key: CatalogListKeys.searchSuggestion(index + 1),
                   avatar: const Icon(AppIcons.search, size: 14),
-                  label: Text(state.suggestions[index]),
+                  label: Semantics(
+                    identifier: CatalogListSemanticIds.searchSuggestion(
+                      state.suggestions[index],
+                    ),
+                    child: Text(state.suggestions[index]),
+                  ),
                   onPressed: () =>
                       viewModel.applySuggestion(state.suggestions[index]),
                 ),

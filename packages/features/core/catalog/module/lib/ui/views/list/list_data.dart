@@ -10,43 +10,49 @@ class _ListData extends ConsumerWidget {
     final ListViewModel viewModel = ref.read(listViewModelProvider.notifier);
     final DisplayCurrency currency = ref.watch(displayCurrencyProvider);
     final String locale = context.locale.toString();
-    return NotificationListener<ScrollNotification>(
-      key: CatalogListKeys.state('data'),
-      onNotification: (ScrollNotification notification) {
-        if (notification.metrics.extentAfter < 300) {
-          viewModel.loadMore();
-        }
-        return false;
-      },
-      child: RefreshIndicator(
-        onRefresh: viewModel.loadProducts,
-        child: ListView.separated(
-          key: CatalogListKeys.productsList,
-          padding: AppSpacing.pagePadding,
-          physics: const AlwaysScrollableScrollPhysics(),
-          itemCount: state.products.length + (state.isLoadingMore ? 1 : 0),
-          separatorBuilder: (BuildContext context, int index) =>
-              const SizedBox(height: AppSpacing.md),
-          itemBuilder: (BuildContext context, int index) {
-            if (index >= state.products.length) {
-              return const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(AppSpacing.lg),
-                  child: CircularProgressIndicator(),
-                ),
-              );
-            }
-            final Product product = state.products[index];
-            return _CatalogProductTile(
-              key: CatalogListKeys.productItem(product.id),
-              product: product,
-              locale: locale,
-              currency: currency,
-              isFavorite: state.favoriteIds.contains(product.id),
-              onTap: () => viewModel.openDetail(product.id),
-              onFavoriteToggle: () => viewModel.toggleFavorite(product.id),
-            );
-          },
+    return SemanticRegion(
+      identifier: CatalogListSemanticIds.state('data'),
+      child: NotificationListener<ScrollNotification>(
+        key: CatalogListKeys.state('data'),
+        onNotification: (ScrollNotification notification) {
+          if (notification.metrics.extentAfter < 300) {
+            viewModel.loadMore();
+          }
+          return false;
+        },
+        child: RefreshIndicator(
+          onRefresh: viewModel.loadProducts,
+          child: SemanticRegion(
+            identifier: CatalogListSemanticIds.productsList,
+            child: ListView.separated(
+              key: CatalogListKeys.productsList,
+              padding: AppSpacing.pagePadding,
+              physics: const AlwaysScrollableScrollPhysics(),
+              itemCount: state.products.length + (state.isLoadingMore ? 1 : 0),
+              separatorBuilder: (BuildContext context, int index) =>
+                  const SizedBox(height: AppSpacing.md),
+              itemBuilder: (BuildContext context, int index) {
+                if (index >= state.products.length) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(AppSpacing.lg),
+                      child: CircularProgressIndicator(),
+                    ),
+                  );
+                }
+                final Product product = state.products[index];
+                return _CatalogProductTile(
+                  key: CatalogListKeys.productItem(product.id),
+                  product: product,
+                  locale: locale,
+                  currency: currency,
+                  isFavorite: state.favoriteIds.contains(product.id),
+                  onTap: () => viewModel.openDetail(product.id),
+                  onFavoriteToggle: () => viewModel.toggleFavorite(product.id),
+                );
+              },
+            ),
+          ),
         ),
       ),
     );
@@ -74,6 +80,7 @@ class _CatalogProductTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Semantics(
+    identifier: CatalogListSemanticIds.productItem(product.id),
     label: product.name,
     button: true,
     child: ProductCard(
@@ -96,11 +103,14 @@ class _CatalogProductTile extends StatelessWidget {
       outOfStock: product.isOutOfStock,
       onTap: onTap,
       trailing: IconButton(
-        icon: Icon(
-          isFavorite ? AppIcons.favorite : AppIcons.favoriteOutline,
-          color: isFavorite
-              ? Theme.of(context).colorScheme.error
-              : Theme.of(context).colorScheme.onSurfaceVariant,
+        icon: Semantics(
+          identifier: CatalogListSemanticIds.productFavoriteButton(product.id),
+          child: Icon(
+            isFavorite ? AppIcons.favorite : AppIcons.favoriteOutline,
+            color: isFavorite
+                ? Theme.of(context).colorScheme.error
+                : Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
         tooltip: 'catalog.detail.favorite_label'.tr(),
         onPressed: onFavoriteToggle,

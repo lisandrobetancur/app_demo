@@ -1,0 +1,68 @@
+/// Semantics identifiers of the catalog feature, grouped per view.
+///
+/// The counterpart of `catalog_keys.dart` for tools that cannot see a Flutter
+/// `Key`: Appium and Maestro on mobile, Playwright on the web. Each one reaches
+/// the platform's accessibility layer as Android's `resource-id`, iOS's
+/// `accessibilityIdentifier` and web's `flt-semantics-identifier`.
+///
+/// Contracts, like the keys: `<screen>_<element>_<type>` in English
+/// snake_case, stable across language, country, theme and platform. Items of a
+/// list carry a stable piece of their data — an id, a code — never their
+/// position.
+
+/// Semantics identifiers of the catalog list view.
+class CatalogListSemanticIds {
+  const CatalogListSemanticIds._();
+
+  static const String view = 'catalog_list_view';
+  static const String titleText = 'catalog_list_title_text';
+  static const String searchInput = 'catalog_search_input';
+  static const String filterButton = 'catalog_filter_button';
+  static const String filterSheet = 'catalog_filter_sheet';
+  static const String priceRangeSlider = 'catalog_price_range_slider';
+
+  /// Carries the toggled state.
+  static const String onlyInStockSwitch = 'catalog_only_in_stock_switch';
+  static const String sortDropdown = 'catalog_sort_dropdown';
+  static const String clearFiltersButton = 'catalog_clear_filters_button';
+  static const String resultsCountText = 'catalog_results_count_text';
+  static const String productsList = 'catalog_products_list';
+  static const String emptyClearFiltersButton =
+      'catalog_empty_clear_filters_button';
+  static const String retryButton = 'catalog_retry_button';
+
+  /// `catalog_list_state_<loading|data|empty|error>`.
+  static String state(String state) => 'catalog_list_state_$state';
+
+  /// `catalog_search_suggestion_<term>`. A suggestion is a past search, so the
+  /// term itself is the stable part: lower-cased, every run of characters
+  /// other than ASCII letters and digits turned into `_` ("Toyota Hilux" →
+  /// `catalog_search_suggestion_toyota_hilux`).
+  static String searchSuggestion(String term) =>
+      'catalog_search_suggestion_${_slug(term)}';
+
+  /// `catalog_category_filter_<category code>`. Carries the selected state.
+  static String categoryFilter(String code) => 'catalog_category_filter_$code';
+
+  /// `catalog_condition_filter_<condition>`. Carries the selected state.
+  static String conditionFilter(String value) =>
+      'catalog_condition_filter_$value';
+
+  /// `catalog_sort_option_<sort>`.
+  static String sortOption(String value) => 'catalog_sort_option_$value';
+
+  /// `catalog_active_filter_chip_<category id|condition|price|stock>`.
+  static String activeFilterChip(String id) => 'catalog_active_filter_chip_$id';
+
+  /// `catalog_product_item_<product id>`.
+  static String productItem(String id) => 'catalog_product_item_$id';
+
+  /// `catalog_product_favorite_button_<product id>`.
+  static String productFavoriteButton(String id) =>
+      'catalog_product_favorite_button_$id';
+
+  static String _slug(String text) => text
+      .toLowerCase()
+      .replaceAll(RegExp('[^a-z0-9]+'), '_')
+      .replaceAll(RegExp(r'^_+|_+$'), '');
+}
