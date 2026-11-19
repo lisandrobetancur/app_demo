@@ -27,29 +27,45 @@ class _DetailReviews extends ConsumerWidget {
                     ? ProductDetailKeys.writeReviewButton
                     : ReviewFormKeys.editOwnReviewButton,
                 onPressed: viewModel.goToReviewForm,
-                child: Text(
-                  state.myReview == null
-                      ? 'catalog.detail.write_review_button'.tr()
-                      : 'catalog.detail.edit_review_button'.tr(),
+                child: Semantics(
+                  identifier: state.myReview == null
+                      ? ProductDetailSemanticIds.writeReviewButton
+                      : ProductDetailSemanticIds.editOwnReviewButton,
+                  child: Text(
+                    state.myReview == null
+                        ? 'catalog.detail.write_review_button'.tr()
+                        : 'catalog.detail.edit_review_button'.tr(),
+                  ),
                 ),
               ),
           ],
         ),
         if (state.reviews.isEmpty)
-          Text(
-            'catalog.detail.no_reviews'.tr(),
-            style: AppTypography.body.copyWith(color: scheme.onSurfaceVariant),
+          Semantics(
+            identifier: ProductDetailSemanticIds.noReviewsText,
+            child: Text(
+              'catalog.detail.no_reviews'.tr(),
+              style: AppTypography.body.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
+            ),
           )
         else
-          Column(
-            key: ProductDetailKeys.reviewsList,
-            children: <Widget>[
-              for (final Review review in state.reviews)
-                _ReviewTile(
-                  key: ProductDetailKeys.reviewItem(review.id),
-                  review: review,
-                ),
-            ],
+          SemanticRegion(
+            identifier: ProductDetailSemanticIds.reviewsList,
+            child: Column(
+              key: ProductDetailKeys.reviewsList,
+              children: <Widget>[
+                for (final Review review in state.reviews)
+                  SemanticRegion(
+                    identifier: ProductDetailSemanticIds.reviewItem(review.id),
+                    child: _ReviewTile(
+                      key: ProductDetailKeys.reviewItem(review.id),
+                      review: review,
+                    ),
+                  ),
+              ],
+            ),
           ),
       ],
     );

@@ -6,10 +6,13 @@ class _DetailEmpty extends StatelessWidget {
   const _DetailEmpty();
 
   @override
-  Widget build(BuildContext context) => EmptyState(
-    key: ProductDetailKeys.state('empty'),
-    icon: AppIcons.emptyBox,
-    title: 'catalog.detail.not_found_title'.tr(),
-    message: 'catalog.detail.not_found_message'.tr(),
+  Widget build(BuildContext context) => SemanticRegion(
+    identifier: ProductDetailSemanticIds.state('empty'),
+    child: EmptyState(
+      key: ProductDetailKeys.state('empty'),
+      icon: AppIcons.emptyBox,
+      title: 'catalog.detail.not_found_title'.tr(),
+      message: 'catalog.detail.not_found_message'.tr(),
+    ),
   );
 }

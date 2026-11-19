@@ -38,14 +38,21 @@ class _DetailViewState extends ConsumerState<DetailView> {
     ) {
       final String? event = next.lastEventKey;
       if (event != null && previous?.lastEventKey != event) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(event.tr())));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Semantics(
+              identifier: ProductDetailSemanticIds.messageText,
+              child: Text(event.tr()),
+            ),
+          ),
+        );
         ref.read(detailViewModelProvider.notifier).consumeEvent();
       }
     });
     return AppScaffold(
       key: ProductDetailKeys.view,
+      semanticsId: ProductDetailSemanticIds.view,
+      titleSemanticsId: ProductDetailSemanticIds.titleText,
       title: state.product?.name ?? 'catalog.detail.title'.tr(),
       scrollable: false,
       padding: EdgeInsets.zero,

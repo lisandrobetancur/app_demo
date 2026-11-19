@@ -66,3 +66,45 @@ class CatalogListSemanticIds {
       .replaceAll(RegExp('[^a-z0-9]+'), '_')
       .replaceAll(RegExp(r'^_+|_+$'), '');
 }
+
+/// Semantics identifiers of the product detail view.
+class ProductDetailSemanticIds {
+  const ProductDetailSemanticIds._();
+
+  static const String view = 'product_detail_view';
+  static const String titleText = 'product_detail_title_text';
+  static const String image = 'product_detail_image';
+  static const String nameText = 'product_detail_name_text';
+  static const String favoriteToggleButton =
+      'product_detail_favorite_toggle_button';
+  static const String shareButton = 'product_detail_share_button';
+  static const String priceText = 'product_detail_price_text';
+  static const String stockText = 'product_detail_stock_text';
+  static const String descriptionText = 'product_detail_description_text';
+  static const String sellerText = 'product_detail_seller_text';
+  static const String quantityStepper = 'product_detail_quantity_stepper';
+  static const String quantityDecreaseButton =
+      'product_detail_quantity_decrease_button';
+  static const String quantityIncreaseButton =
+      'product_detail_quantity_increase_button';
+  static const String quantityText = 'product_detail_quantity_text';
+  static const String addToCartButton = 'product_detail_add_to_cart_button';
+  static const String ownProductNoticeText =
+      'product_detail_own_product_notice_text';
+  static const String editButton = 'product_detail_edit_button';
+  static const String writeReviewButton = 'product_detail_write_review_button';
+  static const String editOwnReviewButton =
+      'product_detail_edit_own_review_button';
+  static const String noReviewsText = 'product_detail_no_reviews_text';
+  static const String reviewsList = 'product_detail_reviews_list';
+
+  /// The snackbar confirming an action (added to cart, link copied, …).
+  static const String messageText = 'product_detail_message_text';
+  static const String retryButton = 'product_detail_retry_button';
+
+  /// `product_detail_state_<loading|data|empty|error>`.
+  static String state(String state) => 'product_detail_state_$state';
+
+  /// `product_detail_review_item_<review id>`.
+  static String reviewItem(String id) => 'product_detail_review_item_$id';
+}
