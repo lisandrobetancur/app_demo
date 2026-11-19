@@ -17,3 +17,17 @@ class SplashSemanticIds {
   static const String errorText = 'splash_error_text';
   static const String retryButton = 'splash_retry_button';
 }
+
+/// Semantics identifiers of the onboarding view.
+class OnboardingSemanticIds {
+  const OnboardingSemanticIds._();
+
+  static const String view = 'onboarding_view';
+  static const String skipButton = 'onboarding_skip_button';
+  static const String nextButton = 'onboarding_next_button';
+  static const String startButton = 'onboarding_start_button';
+
+  /// `onboarding_page_<n>`, n from 1: the pages are a fixed sequence, so the
+  /// number names the page rather than a position in changing data.
+  static String page(int page) => 'onboarding_page_$page';
+}

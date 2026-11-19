@@ -44,74 +44,85 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
     final OnboardingViewModel viewModel = ref.read(
       onboardingViewModelProvider.notifier,
     );
-    return Scaffold(
-      key: AppCrossKeys.onboardingView,
-      body: SafeArea(
-        child: Column(
-          children: <Widget>[
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                key: AppCrossKeys.onboardingSkipButton,
-                onPressed: viewModel.finish,
-                child: Text('app_cross.onboarding.skip_button'.tr()),
+    return SemanticRegion(
+      identifier: OnboardingSemanticIds.view,
+      child: Scaffold(
+        key: AppCrossKeys.onboardingView,
+        body: SafeArea(
+          child: Column(
+            children: <Widget>[
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  key: AppCrossKeys.onboardingSkipButton,
+                  onPressed: viewModel.finish,
+                  child: Semantics(
+                    identifier: OnboardingSemanticIds.skipButton,
+                    child: Text('app_cross.onboarding.skip_button'.tr()),
+                  ),
+                ),
               ),
-            ),
-            Expanded(
-              child: PageView(
-                controller: _pageController,
-                onPageChanged: viewModel.setPage,
+              Expanded(
+                child: PageView(
+                  controller: _pageController,
+                  onPageChanged: viewModel.setPage,
+                  children: <Widget>[
+                    for (
+                      int page = 1;
+                      page <= AppCrossLimits.onboardingPages;
+                      page++
+                    )
+                      SemanticRegion(
+                        identifier: OnboardingSemanticIds.page(page),
+                        child: _OnboardingPage(
+                          key: AppCrossKeys.onboardingPage(page),
+                          icon: _icons[page - 1],
+                          titleKey: 'app_cross.onboarding.page_${page}_title',
+                          bodyKey: 'app_cross.onboarding.page_${page}_body',
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
                   for (
-                    int page = 1;
-                    page <= AppCrossLimits.onboardingPages;
-                    page++
+                    int index = 0;
+                    index < AppCrossLimits.onboardingPages;
+                    index++
                   )
-                    _OnboardingPage(
-                      key: AppCrossKeys.onboardingPage(page),
-                      icon: _icons[page - 1],
-                      titleKey: 'app_cross.onboarding.page_${page}_title',
-                      bodyKey: 'app_cross.onboarding.page_${page}_body',
+                    Padding(
+                      padding: const EdgeInsets.all(AppSpacing.xs),
+                      child: CircleAvatar(
+                        radius: 4,
+                        backgroundColor: index == state.pageIndex
+                            ? Theme.of(context).colorScheme.primary
+                            : Theme.of(context).colorScheme.outlineVariant,
+                      ),
                     ),
                 ],
               ),
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                for (
-                  int index = 0;
-                  index < AppCrossLimits.onboardingPages;
-                  index++
-                )
-                  Padding(
-                    padding: const EdgeInsets.all(AppSpacing.xs),
-                    child: CircleAvatar(
-                      radius: 4,
-                      backgroundColor: index == state.pageIndex
-                          ? Theme.of(context).colorScheme.primary
-                          : Theme.of(context).colorScheme.outlineVariant,
-                    ),
-                  ),
-              ],
-            ),
-            Padding(
-              padding: AppSpacing.pagePadding,
-              child: state.isLastPage
-                  ? AppButton(
-                      key: AppCrossKeys.onboardingStartButton,
-                      label: 'app_cross.onboarding.start_button'.tr(),
-                      onPressed: viewModel.finish,
-                      expand: true,
-                    )
-                  : AppButton(
-                      key: AppCrossKeys.onboardingNextButton,
-                      label: 'app_cross.onboarding.next_button'.tr(),
-                      onPressed: () => _goToPage(state.pageIndex + 1),
-                      expand: true,
-                    ),
-            ),
-          ],
+              Padding(
+                padding: AppSpacing.pagePadding,
+                child: state.isLastPage
+                    ? AppButton(
+                        key: AppCrossKeys.onboardingStartButton,
+                        semanticsId: OnboardingSemanticIds.startButton,
+                        label: 'app_cross.onboarding.start_button'.tr(),
+                        onPressed: viewModel.finish,
+                        expand: true,
+                      )
+                    : AppButton(
+                        key: AppCrossKeys.onboardingNextButton,
+                        semanticsId: OnboardingSemanticIds.nextButton,
+                        label: 'app_cross.onboarding.next_button'.tr(),
+                        onPressed: () => _goToPage(state.pageIndex + 1),
+                        expand: true,
+                      ),
+              ),
+            ],
+          ),
         ),
       ),
     );
