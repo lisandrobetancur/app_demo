@@ -101,6 +101,12 @@ melos:
     buildWebQa: melos exec --scope=market_app -- flutter build web --release --dart-define=ENABLE_SEMANTICS=true
     runWebQa: melos exec --scope=market_app -- flutter run -d chrome --dart-define=ENABLE_SEMANTICS=true
 
+    # The locator inventory for QA (docs/semantic-ids.md), generated from the
+    # *SemanticIds classes and where each one is used. Pass `-- --ts <path>`
+    # to also write the TypeScript mirror the Playwright suite imports, so a
+    # rename reaches both from the same run.
+    semanticIdsInventory: dart run packages/e2e_framework/tool/semantic_ids/inventory.dart
+
     # ── Suite end-to-end ────────────────────────────────────────────────
     #
     # Each of these commands does THREE things, in this order:
