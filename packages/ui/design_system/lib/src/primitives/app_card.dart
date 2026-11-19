@@ -10,15 +10,26 @@ class AppCard extends StatelessWidget {
     super.key,
     this.onTap,
     this.padding = const EdgeInsets.all(AppSpacing.lg),
+    this.semanticsId,
   });
 
   final Widget child;
   final VoidCallback? onTap;
   final EdgeInsetsGeometry padding;
 
+  /// Identifier for black-box automation (Appium, Maestro, Playwright); see
+  /// `AppButton.semanticsId`.
+  final String? semanticsId;
+
   @override
   Widget build(BuildContext context) {
-    final Widget content = Padding(padding: padding, child: child);
+    Widget content = Padding(padding: padding, child: child);
+    if (semanticsId != null) {
+      // Inside the card: [Card] is a semantics container, so the identifier
+      // merges into the card's own node — the one with the tap, when there is
+      // one. Wrapped around the card it would land on an empty parent.
+      content = Semantics(identifier: semanticsId, child: content);
+    }
     if (onTap == null) {
       return Card(child: content);
     }

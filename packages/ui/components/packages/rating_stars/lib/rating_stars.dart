@@ -14,6 +14,7 @@ class RatingStars extends StatelessWidget {
     this.size = 16,
     this.onRatingSelected,
     this.starKeys,
+    this.starSemanticsIds,
   });
 
   /// Average (read-only mode) or selected value (interactive mode).
@@ -30,6 +31,10 @@ class RatingStars extends StatelessWidget {
   /// Stable keys for the five stars (interactive mode).
   final List<Key>? starKeys;
 
+  /// Identifiers for black-box automation of the five stars (interactive
+  /// mode), in order: the first one is the one-star rating.
+  final List<String>? starSemanticsIds;
+
   @override
   Widget build(BuildContext context) {
     final ColorScheme scheme = Theme.of(context).colorScheme;
@@ -40,6 +45,10 @@ class RatingStars extends StatelessWidget {
           _Star(
             key: starKeys != null && index < starKeys!.length
                 ? starKeys![index]
+                : null,
+            semanticsId:
+                starSemanticsIds != null && index < starSemanticsIds!.length
+                ? starSemanticsIds![index]
                 : null,
             filled: rating >= index + 0.5,
             size: size,
@@ -66,20 +75,26 @@ class _Star extends StatelessWidget {
     required this.filled,
     required this.size,
     required this.onTap,
+    required this.semanticsId,
     super.key,
   });
 
   final bool filled;
   final double size;
   final VoidCallback? onTap;
+  final String? semanticsId;
 
   @override
   Widget build(BuildContext context) {
-    final Widget icon = Icon(
+    Widget icon = Icon(
       filled ? AppIcons.star : AppIcons.starOutline,
       size: size,
       color: AppColors.secondary,
     );
+    if (semanticsId != null) {
+      // Inside the InkWell, so it merges into the star's tappable node.
+      icon = Semantics(identifier: semanticsId, child: icon);
+    }
     if (onTap == null) {
       return icon;
     }

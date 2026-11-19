@@ -7,11 +7,16 @@ class FilterChipItem {
     required this.label,
     required this.onRemoved,
     required this.chipKey,
+    this.semanticsId,
   });
 
   final String label;
   final VoidCallback onRemoved;
   final Key chipKey;
+
+  /// Identifier for black-box automation. Goes on the chip's label, which
+  /// merges into the chip's own node.
+  final String? semanticsId;
 }
 
 /// Horizontal bar of active filter chips with a trailing "clear all" action.
@@ -24,12 +29,19 @@ class FilterChipBar extends StatelessWidget {
     required this.onClearAll,
     super.key,
     this.clearAllKey,
+    this.clearAllSemanticsId,
   });
 
   final List<FilterChipItem> chips;
   final String clearAllLabel;
   final VoidCallback onClearAll;
   final Key? clearAllKey;
+
+  /// Identifier of the "clear all" button, on its own node.
+  final String? clearAllSemanticsId;
+
+  Widget _labelled(String? id, Widget child) =>
+      id == null ? child : Semantics(identifier: id, child: child);
 
   @override
   Widget build(BuildContext context) {
@@ -46,14 +58,14 @@ class FilterChipBar extends StatelessWidget {
               padding: const EdgeInsets.only(right: AppSpacing.sm),
               child: InputChip(
                 key: chip.chipKey,
-                label: Text(chip.label),
+                label: _labelled(chip.semanticsId, Text(chip.label)),
                 onDeleted: chip.onRemoved,
               ),
             ),
           TextButton(
             key: clearAllKey,
             onPressed: onClearAll,
-            child: Text(clearAllLabel),
+            child: _labelled(clearAllSemanticsId, Text(clearAllLabel)),
           ),
         ],
       ),

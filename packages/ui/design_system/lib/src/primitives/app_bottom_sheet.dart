@@ -10,20 +10,35 @@ class AppBottomSheet {
     BuildContext context, {
     required Widget child,
     Key? sheetKey,
+    String? sheetSemanticsId,
   }) => showModalBottomSheet<T>(
     context: context,
     isScrollControlled: true,
-    builder: (BuildContext sheetContext) => SafeArea(
-      child: Padding(
-        key: sheetKey,
-        padding: EdgeInsets.only(
-          left: AppSpacing.lg,
-          right: AppSpacing.lg,
-          top: AppSpacing.sm,
-          bottom: AppSpacing.lg + MediaQuery.viewInsetsOf(sheetContext).bottom,
+    builder: (BuildContext sheetContext) {
+      final Widget sheet = SafeArea(
+        child: Padding(
+          key: sheetKey,
+          padding: EdgeInsets.only(
+            left: AppSpacing.lg,
+            right: AppSpacing.lg,
+            top: AppSpacing.sm,
+            bottom:
+                AppSpacing.lg + MediaQuery.viewInsetsOf(sheetContext).bottom,
+          ),
+          child: child,
         ),
-        child: child,
-      ),
-    ),
+      );
+      if (sheetSemanticsId == null) {
+        return sheet;
+      }
+      // A node of its own for the identifier, with the sheet's fields and
+      // buttons kept as separate nodes inside it.
+      return Semantics(
+        container: true,
+        explicitChildNodes: true,
+        identifier: sheetSemanticsId,
+        child: sheet,
+      );
+    },
   );
 }
