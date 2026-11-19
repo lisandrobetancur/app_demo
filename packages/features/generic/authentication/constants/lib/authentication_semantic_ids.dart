@@ -48,3 +48,33 @@ class RegisterSemanticIds {
   static const String submitButton = 'register_submit_button';
   static const String goToLoginButton = 'register_go_to_login_button';
 }
+
+/// Semantics identifiers of the password recovery view (all three steps).
+class RecoverPasswordSemanticIds {
+  const RecoverPasswordSemanticIds._();
+
+  static const String view = 'recover_password_view';
+  static const String titleText = 'recover_password_title_text';
+  static const String stepIndicator = 'recover_step_indicator';
+  static const String errorText = 'recover_error_text';
+
+  // Step 1 · email.
+  static const String emailInput = 'recover_email_input';
+  static const String sendCodeButton = 'recover_send_code_button';
+
+  // Step 2 · code.
+  /// The demo banner whose text carries the issued code — the only place a
+  /// test can read it from.
+  static const String demoCodeText = 'recover_demo_code_text';
+  static const String codeInput = 'recover_code_input';
+  static const String validateCodeButton = 'recover_validate_code_button';
+
+  // Step 3 · new password.
+  static const String newPasswordInput = 'recover_new_password_input';
+  static const String confirmNewPasswordInput =
+      'recover_confirm_new_password_input';
+  static const String submitButton = 'recover_submit_button';
+
+  /// The snackbar shown once the password is changed, on the login screen.
+  static const String successText = 'recover_success_text';
+}

@@ -15,6 +15,7 @@ class _RecoverStepEmail extends ConsumerWidget {
       children: <Widget>[
         AppTextField(
           key: RecoverPasswordKeys.emailInput,
+          semanticsId: RecoverPasswordSemanticIds.emailInput,
           label: 'authentication.recover.email_label'.tr(),
           keyboardType: TextInputType.emailAddress,
           errorText: state.emailErrorKey?.tr(),
@@ -24,6 +25,7 @@ class _RecoverStepEmail extends ConsumerWidget {
         AppSpacing.formGap,
         AppButton(
           key: RecoverPasswordKeys.sendCodeButton,
+          semanticsId: RecoverPasswordSemanticIds.sendCodeButton,
           label: 'authentication.recover.send_code_button'.tr(),
           isLoading: state.isSubmitting,
           onPressed: state.canSendCode ? viewModel.sendCode : null,
