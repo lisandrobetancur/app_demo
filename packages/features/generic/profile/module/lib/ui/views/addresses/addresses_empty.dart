@@ -5,10 +5,13 @@ class _AddressesEmpty extends StatelessWidget {
   const _AddressesEmpty();
 
   @override
-  Widget build(BuildContext context) => EmptyState(
-    key: AddressesKeys.state('empty'),
-    icon: AppIcons.address,
-    title: 'profile.addresses.empty_title'.tr(),
-    message: 'profile.addresses.empty_message'.tr(),
+  Widget build(BuildContext context) => SemanticRegion(
+    identifier: AddressesSemanticIds.state('empty'),
+    child: EmptyState(
+      key: AddressesKeys.state('empty'),
+      icon: AppIcons.address,
+      title: 'profile.addresses.empty_title'.tr(),
+      message: 'profile.addresses.empty_message'.tr(),
+    ),
   );
 }

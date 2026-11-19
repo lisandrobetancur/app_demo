@@ -5,11 +5,15 @@ class _AddressesError extends ConsumerWidget {
   const _AddressesError();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) => EmptyState(
-    key: AddressesKeys.state('error'),
-    icon: AppIcons.error,
-    title: 'profile.addresses.error_title'.tr(),
-    actionLabel: 'profile.addresses.retry_button'.tr(),
-    onAction: ref.read(addressesViewModelProvider.notifier).load,
+  Widget build(BuildContext context, WidgetRef ref) => SemanticRegion(
+    identifier: AddressesSemanticIds.state('error'),
+    child: EmptyState(
+      actionSemanticsId: AddressesSemanticIds.retryButton,
+      key: AddressesKeys.state('error'),
+      icon: AppIcons.error,
+      title: 'profile.addresses.error_title'.tr(),
+      actionLabel: 'profile.addresses.retry_button'.tr(),
+      onAction: ref.read(addressesViewModelProvider.notifier).load,
+    ),
   );
 }
