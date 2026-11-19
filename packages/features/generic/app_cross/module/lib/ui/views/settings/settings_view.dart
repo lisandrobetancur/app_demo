@@ -17,22 +17,27 @@ class SettingsView extends ConsumerWidget {
     final DisplayCurrency currency = ref.watch(displayCurrencyProvider);
     return AppScaffold(
       key: AppCrossKeys.settingsView,
+      semanticsId: SettingsSemanticIds.view,
+      titleSemanticsId: SettingsSemanticIds.titleText,
       title: 'app_cross.settings.title'.tr(),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           _SettingsChoiceSection(
             sectionKey: AppCrossKeys.languageSelector,
+            semanticsId: SettingsSemanticIds.languageSelector,
             label: 'app_cross.settings.language_label'.tr(),
             options: <_ChoiceOption>[
               _ChoiceOption(
                 key: AppCrossKeys.languageOption('es'),
+                semanticsId: SettingsSemanticIds.languageOption('es'),
                 label: 'app_cross.settings.language_es'.tr(),
                 selected: context.locale.languageCode == 'es',
                 onSelected: () => context.setLocale(const Locale('es')),
               ),
               _ChoiceOption(
                 key: AppCrossKeys.languageOption('en'),
+                semanticsId: SettingsSemanticIds.languageOption('en'),
                 label: 'app_cross.settings.language_en'.tr(),
                 selected: context.locale.languageCode == 'en',
                 onSelected: () => context.setLocale(const Locale('en')),
@@ -41,11 +46,13 @@ class SettingsView extends ConsumerWidget {
           ),
           _SettingsChoiceSection(
             sectionKey: AppCrossKeys.themeSelector,
+            semanticsId: SettingsSemanticIds.themeSelector,
             label: 'app_cross.settings.theme_label'.tr(),
             options: <_ChoiceOption>[
               for (final ThemeMode mode in ThemeMode.values)
                 _ChoiceOption(
                   key: AppCrossKeys.themeOption(mode.name),
+                  semanticsId: SettingsSemanticIds.themeOption(mode.name),
                   label: 'app_cross.settings.theme_${mode.name}'.tr(),
                   selected: themeMode == mode,
                   onSelected: () => viewModel.setThemeMode(mode),
@@ -54,11 +61,13 @@ class SettingsView extends ConsumerWidget {
           ),
           _SettingsChoiceSection(
             sectionKey: AppCrossKeys.currencySelector,
+            semanticsId: SettingsSemanticIds.currencySelector,
             label: 'app_cross.settings.currency_label'.tr(),
             options: <_ChoiceOption>[
               for (final DisplayCurrency option in DisplayCurrency.values)
                 _ChoiceOption(
                   key: AppCrossKeys.currencyOption(option.code),
+                  semanticsId: SettingsSemanticIds.currencyOption(option.code),
                   label: option.code,
                   selected: currency == option,
                   onSelected: () => viewModel.setCurrency(option),
@@ -69,10 +78,13 @@ class SettingsView extends ConsumerWidget {
           if (state.errorKey != null)
             Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.md),
-              child: Text(
-                state.errorKey!.tr(),
-                style: AppTypography.body.copyWith(
-                  color: Theme.of(context).colorScheme.error,
+              child: Semantics(
+                identifier: SettingsSemanticIds.errorText,
+                child: Text(
+                  state.errorKey!.tr(),
+                  style: AppTypography.body.copyWith(
+                    color: Theme.of(context).colorScheme.error,
+                  ),
                 ),
               ),
             ),

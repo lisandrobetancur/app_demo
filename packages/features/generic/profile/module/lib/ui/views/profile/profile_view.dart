@@ -11,6 +11,9 @@ class ProfileView extends ConsumerWidget {
     final bool confirmed = await AppDialog.confirm(
       context,
       dialogKey: ProfileKeys.logoutConfirmDialog,
+      dialogSemanticsId: ProfileSemanticIds.logoutDialog,
+      confirmSemanticsId: ProfileSemanticIds.logoutConfirmButton,
+      cancelSemanticsId: ProfileSemanticIds.logoutCancelButton,
       title: 'profile.home.logout_title'.tr(),
       message: 'profile.home.logout_message'.tr(),
       confirmLabel: 'profile.home.confirm'.tr(),
@@ -28,6 +31,9 @@ class ProfileView extends ConsumerWidget {
     final bool first = await AppDialog.confirm(
       context,
       dialogKey: ProfileKeys.confirmDeleteAccountDialog,
+      dialogSemanticsId: ProfileSemanticIds.deleteAccountDialog,
+      confirmSemanticsId: ProfileSemanticIds.deleteAccountConfirmButton,
+      cancelSemanticsId: ProfileSemanticIds.deleteAccountCancelButton,
       title: 'profile.home.delete_account_title'.tr(),
       message: 'profile.home.delete_account_message'.tr(),
       confirmLabel: 'profile.home.confirm'.tr(),
@@ -40,6 +46,9 @@ class ProfileView extends ConsumerWidget {
     final bool second = await AppDialog.confirm(
       context,
       dialogKey: ProfileKeys.confirmDeleteAccountSecondDialog,
+      dialogSemanticsId: ProfileSemanticIds.deleteAccountSecondDialog,
+      confirmSemanticsId: ProfileSemanticIds.deleteAccountSecondConfirmButton,
+      cancelSemanticsId: ProfileSemanticIds.deleteAccountSecondCancelButton,
       title: 'profile.home.delete_account_second_title'.tr(),
       message: 'profile.home.delete_account_second_message'.tr(),
       confirmLabel: 'profile.home.confirm'.tr(),
@@ -66,14 +75,21 @@ class ProfileView extends ConsumerWidget {
     ) {
       final String? event = next.lastEventKey;
       if (event != null && previous?.lastEventKey != event) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(event.tr())));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Semantics(
+              identifier: ProfileSemanticIds.messageText,
+              child: Text(event.tr()),
+            ),
+          ),
+        );
         viewModel.consumeEvent();
       }
     });
     return AppScaffold(
       key: ProfileKeys.view,
+      semanticsId: ProfileSemanticIds.view,
+      titleSemanticsId: ProfileSemanticIds.titleText,
       title: 'profile.home.title'.tr(),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -86,6 +102,7 @@ class ProfileView extends ConsumerWidget {
           ] else
             AppButton(
               key: ProfileKeys.editProfileButton,
+              semanticsId: ProfileSemanticIds.editButton,
               label: 'profile.home.edit_button'.tr(),
               icon: AppIcons.edit,
               variant: AppButtonVariant.secondary,
@@ -96,39 +113,52 @@ class ProfileView extends ConsumerWidget {
             'profile.home.security_title'.tr(),
             style: AppTypography.sectionTitle,
           ),
-          ListTile(
-            key: ProfileKeys.changePasswordButton,
-            leading: const Icon(AppIcons.security),
-            title: Text('profile.home.change_password_button'.tr()),
-            trailing: const Icon(AppIcons.chevronRight),
-            contentPadding: EdgeInsets.zero,
-            onTap: () => AppBottomSheet.show<void>(
-              context,
-              child: const _ProfilePasswordSheet(),
+          Semantics(
+            identifier: ProfileSemanticIds.changePasswordButton,
+            child: ListTile(
+              key: ProfileKeys.changePasswordButton,
+              leading: const Icon(AppIcons.security),
+              title: Text('profile.home.change_password_button'.tr()),
+              trailing: const Icon(AppIcons.chevronRight),
+              contentPadding: EdgeInsets.zero,
+              onTap: () => AppBottomSheet.show<void>(
+                context,
+                sheetSemanticsId: ProfileSemanticIds.passwordSheet,
+                child: const _ProfilePasswordSheet(),
+              ),
             ),
           ),
-          ListTile(
-            key: ProfileKeys.goToAddressesButton,
-            leading: const Icon(AppIcons.address),
-            title: Text('profile.home.addresses_button'.tr()),
-            trailing: const Icon(AppIcons.chevronRight),
-            contentPadding: EdgeInsets.zero,
-            onTap: navigatorNotifier.goToAddresses,
+          Semantics(
+            identifier: ProfileSemanticIds.goToAddressesButton,
+            child: ListTile(
+              key: ProfileKeys.goToAddressesButton,
+              leading: const Icon(AppIcons.address),
+              title: Text('profile.home.addresses_button'.tr()),
+              trailing: const Icon(AppIcons.chevronRight),
+              contentPadding: EdgeInsets.zero,
+              onTap: navigatorNotifier.goToAddresses,
+            ),
           ),
-          ListTile(
-            key: ProfileKeys.goToSettingsButton,
-            leading: const Icon(AppIcons.settings),
-            title: Text('profile.home.settings_button'.tr()),
-            trailing: const Icon(AppIcons.chevronRight),
-            contentPadding: EdgeInsets.zero,
-            onTap: navigatorNotifier.goToSettings,
+          Semantics(
+            identifier: ProfileSemanticIds.goToSettingsButton,
+            child: ListTile(
+              key: ProfileKeys.goToSettingsButton,
+              leading: const Icon(AppIcons.settings),
+              title: Text('profile.home.settings_button'.tr()),
+              trailing: const Icon(AppIcons.chevronRight),
+              contentPadding: EdgeInsets.zero,
+              onTap: navigatorNotifier.goToSettings,
+            ),
           ),
-          ListTile(
-            key: ProfileKeys.logoutButton,
-            leading: const Icon(AppIcons.logout),
-            title: Text('profile.home.logout_button'.tr()),
-            contentPadding: EdgeInsets.zero,
-            onTap: () => _confirmLogout(context, ref),
+          Semantics(
+            identifier: ProfileSemanticIds.logoutButton,
+            child: ListTile(
+              key: ProfileKeys.logoutButton,
+              leading: const Icon(AppIcons.logout),
+              title: Text('profile.home.logout_button'.tr()),
+              contentPadding: EdgeInsets.zero,
+              onTap: () => _confirmLogout(context, ref),
+            ),
           ),
           const Divider(),
           Text(
@@ -141,15 +171,19 @@ class ProfileView extends ConsumerWidget {
           if (state.errorKey != null)
             Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-              child: Text(
-                state.errorKey!.tr(),
-                style: AppTypography.body.copyWith(
-                  color: Theme.of(context).colorScheme.error,
+              child: Semantics(
+                identifier: ProfileSemanticIds.errorText,
+                child: Text(
+                  state.errorKey!.tr(),
+                  style: AppTypography.body.copyWith(
+                    color: Theme.of(context).colorScheme.error,
+                  ),
                 ),
               ),
             ),
           AppButton(
             key: ProfileKeys.deleteAccountButton,
+            semanticsId: ProfileSemanticIds.deleteAccountButton,
             label: 'profile.home.delete_account_button'.tr(),
             variant: AppButtonVariant.danger,
             isLoading: state.isDeleting,

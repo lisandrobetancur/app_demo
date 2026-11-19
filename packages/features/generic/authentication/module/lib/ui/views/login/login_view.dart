@@ -10,6 +10,7 @@ class LoginView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) => AppScaffold(
     key: LoginKeys.view,
+    semanticsId: LoginSemanticIds.view,
     body: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
@@ -20,10 +21,13 @@ class LoginView extends ConsumerWidget {
           color: Theme.of(context).colorScheme.primary,
         ),
         const SizedBox(height: AppSpacing.lg),
-        Text(
-          'authentication.login.title'.tr(),
-          style: AppTypography.displayTitle,
-          textAlign: TextAlign.center,
+        Semantics(
+          identifier: LoginSemanticIds.titleText,
+          child: Text(
+            'authentication.login.title'.tr(),
+            style: AppTypography.displayTitle,
+            textAlign: TextAlign.center,
+          ),
         ),
         const SizedBox(height: AppSpacing.xs),
         Text(

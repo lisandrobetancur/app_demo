@@ -68,6 +68,7 @@ class _AddressFormSheetState extends ConsumerState<_AddressFormSheet> {
         AppSpacing.formGap,
         AppTextField(
           key: AddressesKeys.labelInput,
+          semanticsId: AddressesSemanticIds.labelInput,
           label: 'profile.addresses.label_label'.tr(),
           controller: TextEditingController(text: _label),
           onChanged: (String value) => setState(() => _label = value),
@@ -75,6 +76,7 @@ class _AddressFormSheetState extends ConsumerState<_AddressFormSheet> {
         AppSpacing.formGap,
         AppTextField(
           key: AddressesKeys.line1Input,
+          semanticsId: AddressesSemanticIds.line1Input,
           label: 'profile.addresses.line1_label'.tr(),
           controller: TextEditingController(text: _line1),
           onChanged: (String value) => setState(() => _line1 = value),
@@ -82,6 +84,7 @@ class _AddressFormSheetState extends ConsumerState<_AddressFormSheet> {
         AppSpacing.formGap,
         AppTextField(
           key: AddressesKeys.cityInput,
+          semanticsId: AddressesSemanticIds.cityInput,
           label: 'profile.addresses.city_label'.tr(),
           controller: TextEditingController(text: _city),
           onChanged: (String value) => setState(() => _city = value),
@@ -89,6 +92,7 @@ class _AddressFormSheetState extends ConsumerState<_AddressFormSheet> {
         AppSpacing.formGap,
         AppTextField(
           key: AddressesKeys.stateInput,
+          semanticsId: AddressesSemanticIds.regionInput,
           label: 'profile.addresses.state_label'.tr(),
           controller: TextEditingController(text: _state),
           onChanged: (String value) => setState(() => _state = value),
@@ -96,6 +100,7 @@ class _AddressFormSheetState extends ConsumerState<_AddressFormSheet> {
         AppSpacing.formGap,
         AppTextField(
           key: AddressesKeys.notesInput,
+          semanticsId: AddressesSemanticIds.notesInput,
           label: 'profile.addresses.notes_label'.tr(),
           controller: TextEditingController(text: _notes),
           onChanged: (String value) => setState(() => _notes = value),
@@ -103,6 +108,7 @@ class _AddressFormSheetState extends ConsumerState<_AddressFormSheet> {
         AppSpacing.formGap,
         AppButton(
           key: AddressesKeys.saveButton,
+          semanticsId: AddressesSemanticIds.saveButton,
           label: 'profile.addresses.save_button'.tr(),
           isLoading: _saving,
           onPressed: _isValid && !_saving ? _save : null,

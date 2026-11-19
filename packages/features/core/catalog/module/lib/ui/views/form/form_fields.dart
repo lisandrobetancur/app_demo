@@ -57,6 +57,7 @@ class _FormFieldsState extends ConsumerState<_FormFields> {
       children: <Widget>[
         AppTextField(
           key: ProductFormKeys.nameInput,
+          semanticsId: ProductFormSemanticIds.nameInput,
           label: 'catalog.form.name_label'.tr(),
           controller: _nameController,
           maxLength: CatalogLimits.nameMaxLength,
@@ -66,6 +67,7 @@ class _FormFieldsState extends ConsumerState<_FormFields> {
         AppSpacing.formGap,
         AppTextField(
           key: ProductFormKeys.descriptionInput,
+          semanticsId: ProductFormSemanticIds.descriptionInput,
           label: 'catalog.form.description_label'.tr(),
           controller: _descriptionController,
           maxLength: CatalogLimits.descriptionMaxLength,
@@ -80,6 +82,7 @@ class _FormFieldsState extends ConsumerState<_FormFields> {
             Expanded(
               child: AppTextField(
                 key: ProductFormKeys.priceInput,
+                semanticsId: ProductFormSemanticIds.priceInput,
                 label: 'catalog.form.price_label'.tr(),
                 controller: _priceController,
                 keyboardType: const TextInputType.numberWithOptions(
@@ -93,6 +96,7 @@ class _FormFieldsState extends ConsumerState<_FormFields> {
             Expanded(
               child: AppTextField(
                 key: ProductFormKeys.stockInput,
+                semanticsId: ProductFormSemanticIds.stockInput,
                 label: 'catalog.form.stock_label'.tr(),
                 controller: _stockController,
                 keyboardType: TextInputType.number,
@@ -107,7 +111,11 @@ class _FormFieldsState extends ConsumerState<_FormFields> {
           key: ProductFormKeys.categoryDropdown,
           initialSelection: state.categoryId,
           expandedInsets: EdgeInsets.zero,
-          label: Text('catalog.form.category_label'.tr()),
+          // On the label, which joins the dropdown's text field node.
+          label: Semantics(
+            identifier: ProductFormSemanticIds.categoryDropdown,
+            child: Text('catalog.form.category_label'.tr()),
+          ),
           onSelected: (String? value) {
             if (value != null) {
               viewModel.setCategoryId(value);
@@ -118,6 +126,14 @@ class _FormFieldsState extends ConsumerState<_FormFields> {
               DropdownMenuEntry<String>(
                 value: category.id,
                 label: category.labelKey.tr(),
+                // Rendered in place of `label` inside the entry's button, so
+                // the identifier joins that button's node.
+                labelWidget: Semantics(
+                  identifier: ProductFormSemanticIds.categoryOption(
+                    category.id,
+                  ),
+                  child: Text(category.labelKey.tr()),
+                ),
               ),
           ],
         ),
@@ -127,18 +143,26 @@ class _FormFieldsState extends ConsumerState<_FormFields> {
           style: AppTypography.cardTitle,
         ),
         const SizedBox(height: AppSpacing.sm),
-        Wrap(
-          key: ProductFormKeys.conditionSelector,
-          spacing: AppSpacing.sm,
-          children: <Widget>[
-            for (final ProductCondition condition in ProductCondition.values)
-              ChoiceChip(
-                key: ProductFormKeys.conditionOption(condition.dbValue),
-                label: Text(condition.labelKey.tr()),
-                selected: state.condition == condition,
-                onSelected: (bool _) => viewModel.setCondition(condition),
-              ),
-          ],
+        SemanticRegion(
+          identifier: ProductFormSemanticIds.conditionSelector,
+          child: Wrap(
+            key: ProductFormKeys.conditionSelector,
+            spacing: AppSpacing.sm,
+            children: <Widget>[
+              for (final ProductCondition condition in ProductCondition.values)
+                ChoiceChip(
+                  key: ProductFormKeys.conditionOption(condition.dbValue),
+                  label: Semantics(
+                    identifier: ProductFormSemanticIds.conditionOption(
+                      condition.dbValue,
+                    ),
+                    child: Text(condition.labelKey.tr()),
+                  ),
+                  selected: state.condition == condition,
+                  onSelected: (bool _) => viewModel.setCondition(condition),
+                ),
+            ],
+          ),
         ),
         AppSpacing.formGap,
         Text('catalog.form.image_label'.tr(), style: AppTypography.cardTitle),
@@ -146,18 +170,22 @@ class _FormFieldsState extends ConsumerState<_FormFields> {
         if (state.imageBytes != null)
           Padding(
             padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-            child: ClipRRect(
-              key: ProductFormKeys.imagePreview,
-              borderRadius: AppRadius.card,
-              child: Image.memory(
-                state.imageBytes!,
-                height: 160,
-                fit: BoxFit.cover,
+            child: SemanticRegion(
+              identifier: ProductFormSemanticIds.imagePreview,
+              child: ClipRRect(
+                key: ProductFormKeys.imagePreview,
+                borderRadius: AppRadius.card,
+                child: Image.memory(
+                  state.imageBytes!,
+                  height: 160,
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
           ),
         AppButton(
           key: ProductFormKeys.imagePickerButton,
+          semanticsId: ProductFormSemanticIds.imagePickerButton,
           label: 'catalog.form.pick_image_button'.tr(),
           icon: AppIcons.image,
           variant: AppButtonVariant.secondary,

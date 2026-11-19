@@ -23,6 +23,7 @@ class AppTextField extends StatelessWidget {
     this.onChanged,
     this.onSubmitted,
     this.autofillHints,
+    this.semanticsId,
   });
 
   final String label;
@@ -43,8 +44,24 @@ class AppTextField extends StatelessWidget {
   final ValueChanged<String>? onSubmitted;
   final Iterable<String>? autofillHints;
 
+  /// Identifier for black-box automation: Android's `resource-id`, iOS's
+  /// `accessibilityIdentifier` and web's `flt-semantics-identifier`. Lands on
+  /// the editable node itself, the one that takes text input.
+  final String? semanticsId;
+
   @override
-  Widget build(BuildContext context) => TextField(
+  Widget build(BuildContext context) {
+    final Widget field = _buildField();
+    if (semanticsId == null) {
+      return field;
+    }
+    // Around the field is right here, unlike AppButton: TextField's own
+    // semantics node is the nearest one below, so the identifier merges into
+    // the editable node (the one flagged as a text field), not a parent.
+    return Semantics(identifier: semanticsId, child: field);
+  }
+
+  Widget _buildField() => TextField(
     controller: controller,
     enabled: enabled,
     obscureText: obscureText,

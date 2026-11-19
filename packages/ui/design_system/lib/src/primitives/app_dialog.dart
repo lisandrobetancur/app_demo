@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'semantic_region.dart';
+
 /// Standard confirmation dialog.
 ///
 /// Callers pass already-translated strings and stable keys; the dialog only
@@ -16,32 +18,46 @@ class AppDialog {
     Key? dialogKey,
     Key? confirmKey,
     Key? cancelKey,
+    String? dialogSemanticsId,
+    String? confirmSemanticsId,
+    String? cancelSemanticsId,
     bool destructive = false,
   }) async {
+    // Each button's identifier goes on its child, which merges into the
+    // button's own node; the dialog gets a region of its own, with its title,
+    // message and buttons kept apart inside it.
+    Widget labelled(String? id, Widget child) =>
+        id == null ? child : Semantics(identifier: id, child: child);
     final bool? result = await showDialog<bool>(
       context: context,
-      builder: (BuildContext dialogContext) => AlertDialog(
-        key: dialogKey,
-        title: Text(title),
-        content: Text(message),
-        actions: <Widget>[
-          TextButton(
-            key: cancelKey,
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: Text(cancelLabel),
-          ),
-          TextButton(
-            key: confirmKey,
-            style: destructive
-                ? TextButton.styleFrom(
-                    foregroundColor: Theme.of(context).colorScheme.error,
-                  )
-                : null,
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: Text(confirmLabel),
-          ),
-        ],
-      ),
+      builder: (BuildContext dialogContext) {
+        final Widget dialog = AlertDialog(
+          key: dialogKey,
+          title: Text(title),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              key: cancelKey,
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: labelled(cancelSemanticsId, Text(cancelLabel)),
+            ),
+            TextButton(
+              key: confirmKey,
+              style: destructive
+                  ? TextButton.styleFrom(
+                      foregroundColor: Theme.of(context).colorScheme.error,
+                    )
+                  : null,
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: labelled(confirmSemanticsId, Text(confirmLabel)),
+            ),
+          ],
+        );
+        if (dialogSemanticsId == null) {
+          return dialog;
+        }
+        return SemanticRegion(identifier: dialogSemanticsId, child: dialog);
+      },
     );
     return result ?? false;
   }

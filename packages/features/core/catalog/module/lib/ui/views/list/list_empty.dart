@@ -10,15 +10,19 @@ class _ListEmpty extends ConsumerWidget {
         .watch(listViewModelProvider)
         .filters
         .hasAnyFilter;
-    return EmptyState(
-      key: CatalogListKeys.state('empty'),
-      icon: AppIcons.catalog,
-      title: 'catalog.list.empty_title'.tr(),
-      message: 'catalog.list.empty_message'.tr(),
-      actionLabel: hasFilters ? 'catalog.list.clear_filters'.tr() : null,
-      onAction: hasFilters
-          ? ref.read(listViewModelProvider.notifier).clearFilters
-          : null,
+    return SemanticRegion(
+      identifier: CatalogListSemanticIds.state('empty'),
+      child: EmptyState(
+        key: CatalogListKeys.state('empty'),
+        actionSemanticsId: CatalogListSemanticIds.emptyClearFiltersButton,
+        icon: AppIcons.catalog,
+        title: 'catalog.list.empty_title'.tr(),
+        message: 'catalog.list.empty_message'.tr(),
+        actionLabel: hasFilters ? 'catalog.list.clear_filters'.tr() : null,
+        onAction: hasFilters
+            ? ref.read(listViewModelProvider.notifier).clearFilters
+            : null,
+      ),
     );
   }
 }

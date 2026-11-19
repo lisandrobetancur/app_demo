@@ -5,12 +5,16 @@ class _MyProductsEmpty extends ConsumerWidget {
   const _MyProductsEmpty();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) => EmptyState(
-    key: MyProductsKeys.state('empty'),
-    icon: AppIcons.catalog,
-    title: 'catalog.my_products.empty_title'.tr(),
-    message: 'catalog.my_products.empty_message'.tr(),
-    actionLabel: 'catalog.my_products.publish_button'.tr(),
-    onAction: ref.read(myProductsViewModelProvider.notifier).goToCreate,
+  Widget build(BuildContext context, WidgetRef ref) => SemanticRegion(
+    identifier: MyProductsSemanticIds.state('empty'),
+    child: EmptyState(
+      actionSemanticsId: MyProductsSemanticIds.emptyCreateButton,
+      key: MyProductsKeys.state('empty'),
+      icon: AppIcons.catalog,
+      title: 'catalog.my_products.empty_title'.tr(),
+      message: 'catalog.my_products.empty_message'.tr(),
+      actionLabel: 'catalog.my_products.publish_button'.tr(),
+      onAction: ref.read(myProductsViewModelProvider.notifier).goToCreate,
+    ),
   );
 }

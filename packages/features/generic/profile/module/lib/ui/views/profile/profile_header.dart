@@ -12,40 +12,52 @@ class _ProfileHeader extends ConsumerWidget {
     final Uint8List? avatar = state.pendingAvatarBytes ?? state.avatarBytes;
     return Row(
       children: <Widget>[
-        CircleAvatar(
-          radius: 36,
-          backgroundColor: scheme.primaryContainer,
-          backgroundImage: avatar == null ? null : MemoryImage(avatar),
-          child: avatar == null
-              ? Icon(
-                  AppIcons.profile,
-                  size: 36,
-                  color: scheme.onPrimaryContainer,
-                )
-              : null,
+        SemanticRegion(
+          identifier: ProfileSemanticIds.avatarImage,
+          child: CircleAvatar(
+            radius: 36,
+            backgroundColor: scheme.primaryContainer,
+            backgroundImage: avatar == null ? null : MemoryImage(avatar),
+            child: avatar == null
+                ? Icon(
+                    AppIcons.profile,
+                    size: 36,
+                    color: scheme.onPrimaryContainer,
+                  )
+                : null,
+          ),
         ),
         const SizedBox(width: AppSpacing.lg),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Text(
-                user?.fullName ?? '',
-                style: AppTypography.sectionTitle,
-                overflow: TextOverflow.ellipsis,
-              ),
-              Text(
-                user?.email ?? '',
-                style: AppTypography.caption.copyWith(
-                  color: scheme.onSurfaceVariant,
+              Semantics(
+                identifier: ProfileSemanticIds.nameText,
+                child: Text(
+                  user?.fullName ?? '',
+                  style: AppTypography.sectionTitle,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                overflow: TextOverflow.ellipsis,
               ),
-              if (user?.phone != null)
-                Text(
-                  user!.phone!,
+              Semantics(
+                identifier: ProfileSemanticIds.emailText,
+                child: Text(
+                  user?.email ?? '',
                   style: AppTypography.caption.copyWith(
                     color: scheme.onSurfaceVariant,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (user?.phone != null)
+                Semantics(
+                  identifier: ProfileSemanticIds.phoneText,
+                  child: Text(
+                    user!.phone!,
+                    style: AppTypography.caption.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
             ],

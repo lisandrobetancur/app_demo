@@ -15,6 +15,8 @@ class OrdersListView extends ConsumerWidget {
     );
     return AppScaffold(
       key: OrdersListKeys.view,
+      semanticsId: OrdersListSemanticIds.view,
+      titleSemanticsId: OrdersListSemanticIds.titleText,
       title: 'orders.list.title'.tr(),
       scrollable: false,
       padding: EdgeInsets.zero,
@@ -27,6 +29,7 @@ class OrdersListView extends ConsumerWidget {
             ),
             child: AppTextField(
               key: OrdersListKeys.searchInput,
+              semanticsId: OrdersListSemanticIds.searchInput,
               label: 'orders.list.search_hint'.tr(),
               prefixIcon: AppIcons.search,
               onChanged: viewModel.setQuery,
@@ -34,30 +37,42 @@ class OrdersListView extends ConsumerWidget {
           ),
           SizedBox(
             height: 44,
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-              scrollDirection: Axis.horizontal,
-              children: <Widget>[
-                Padding(
-                  padding: const EdgeInsets.only(right: AppSpacing.sm),
-                  child: ChoiceChip(
-                    key: OrdersListKeys.statusFilter('ALL'),
-                    label: Text('orders.list.filter_all'.tr()),
-                    selected: state.statusFilter == null,
-                    onSelected: (bool _) => viewModel.setStatusFilter(null),
-                  ),
-                ),
-                for (final OrderStatus status in OrderStatus.values)
+            child: SemanticRegion(
+              identifier: OrdersListSemanticIds.statusFilters,
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                scrollDirection: Axis.horizontal,
+                children: <Widget>[
                   Padding(
                     padding: const EdgeInsets.only(right: AppSpacing.sm),
                     child: ChoiceChip(
-                      key: OrdersListKeys.statusFilter(status.dbValue),
-                      label: Text(status.labelKey.tr()),
-                      selected: state.statusFilter == status,
-                      onSelected: (bool _) => viewModel.setStatusFilter(status),
+                      key: OrdersListKeys.statusFilter('ALL'),
+                      label: Semantics(
+                        identifier: OrdersListSemanticIds.statusFilter('all'),
+                        child: Text('orders.list.filter_all'.tr()),
+                      ),
+                      selected: state.statusFilter == null,
+                      onSelected: (bool _) => viewModel.setStatusFilter(null),
                     ),
                   ),
-              ],
+                  for (final OrderStatus status in OrderStatus.values)
+                    Padding(
+                      padding: const EdgeInsets.only(right: AppSpacing.sm),
+                      child: ChoiceChip(
+                        key: OrdersListKeys.statusFilter(status.dbValue),
+                        label: Semantics(
+                          identifier: OrdersListSemanticIds.statusFilter(
+                            status.dbValue,
+                          ),
+                          child: Text(status.labelKey.tr()),
+                        ),
+                        selected: state.statusFilter == status,
+                        onSelected: (bool _) =>
+                            viewModel.setStatusFilter(status),
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
           Expanded(

@@ -21,7 +21,10 @@ class CartView extends ConsumerWidget {
           ..hideCurrentSnackBar()
           ..showSnackBar(
             SnackBar(
-              content: Text('cart.home.item_removed'.tr()),
+              content: Semantics(
+                identifier: CartSemanticIds.itemRemovedText,
+                child: Text('cart.home.item_removed'.tr()),
+              ),
               duration: AppDurations.snackBar,
               action: SnackBarAction(
                 key: CartKeys.undoRemoveButton,
@@ -34,6 +37,8 @@ class CartView extends ConsumerWidget {
     });
     return AppScaffold(
       key: CartKeys.view,
+      semanticsId: CartSemanticIds.view,
+      titleSemanticsId: CartSemanticIds.titleText,
       title: 'cart.home.title'.tr(),
       scrollable: false,
       padding: EdgeInsets.zero,
@@ -41,7 +46,10 @@ class CartView extends ConsumerWidget {
         if (state.status.isData)
           IconButton(
             key: CartKeys.clearCartButton,
-            icon: const Icon(AppIcons.delete),
+            icon: Semantics(
+              identifier: CartSemanticIds.clearButton,
+              child: const Icon(AppIcons.delete),
+            ),
             tooltip: 'cart.home.clear_cart_button'.tr(),
             onPressed: () => _confirmClear(context, ref),
           ),
@@ -59,6 +67,9 @@ class CartView extends ConsumerWidget {
     final bool confirmed = await AppDialog.confirm(
       context,
       dialogKey: CartKeys.clearCartDialog,
+      dialogSemanticsId: CartSemanticIds.clearDialog,
+      confirmSemanticsId: CartSemanticIds.clearConfirmButton,
+      cancelSemanticsId: CartSemanticIds.clearCancelButton,
       title: 'cart.home.clear_cart_title'.tr(),
       message: 'cart.home.clear_cart_message'.tr(),
       confirmLabel: 'cart.home.confirm'.tr(),

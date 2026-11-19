@@ -36,7 +36,10 @@ class _ReviewFormBodyState extends ConsumerState<_ReviewFormBody> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          Text(state.productName, style: AppTypography.sectionTitle),
+          Semantics(
+            identifier: ReviewFormSemanticIds.productNameText,
+            child: Text(state.productName, style: AppTypography.sectionTitle),
+          ),
           AppSpacing.sectionGap,
           Text(
             'catalog.review_form.rating_label'.tr(),
@@ -48,12 +51,14 @@ class _ReviewFormBodyState extends ConsumerState<_ReviewFormBody> {
               rating: state.rating.toDouble(),
               size: 40,
               starKeys: ReviewFormKeys.ratingStars,
+              starSemanticsIds: ReviewFormSemanticIds.ratingStars,
               onRatingSelected: viewModel.setRating,
             ),
           ),
           AppSpacing.sectionGap,
           AppTextField(
             key: ReviewFormKeys.commentInput,
+            semanticsId: ReviewFormSemanticIds.commentInput,
             label: 'catalog.review_form.comment_label'.tr(),
             controller: _commentController,
             maxLength: CatalogLimits.reviewCommentMaxLength,
@@ -64,15 +69,19 @@ class _ReviewFormBodyState extends ConsumerState<_ReviewFormBody> {
           if (state.errorKey != null)
             Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.md),
-              child: Text(
-                state.errorKey!.tr(),
-                style: AppTypography.body.copyWith(
-                  color: Theme.of(context).colorScheme.error,
+              child: Semantics(
+                identifier: ReviewFormSemanticIds.errorText,
+                child: Text(
+                  state.errorKey!.tr(),
+                  style: AppTypography.body.copyWith(
+                    color: Theme.of(context).colorScheme.error,
+                  ),
                 ),
               ),
             ),
           AppButton(
             key: ReviewFormKeys.submitButton,
+            semanticsId: ReviewFormSemanticIds.submitButton,
             label: 'catalog.review_form.submit_button'.tr(),
             isLoading: state.isSubmitting,
             onPressed: state.canSubmit ? viewModel.submit : null,

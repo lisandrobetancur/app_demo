@@ -27,6 +27,7 @@ class ProductCard extends StatelessWidget {
     this.badge,
     this.trailing,
     this.onTap,
+    this.semanticsId,
   });
 
   final String name;
@@ -56,11 +57,16 @@ class ProductCard extends StatelessWidget {
 
   final VoidCallback? onTap;
 
+  /// Identifier for black-box automation, on the card's own node (the one
+  /// with the tap). See `AppCard.semanticsId`.
+  final String? semanticsId;
+
   @override
   Widget build(BuildContext context) {
     final ColorScheme scheme = Theme.of(context).colorScheme;
     return AppCard(
       onTap: onTap,
+      semanticsId: semanticsId,
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

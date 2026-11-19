@@ -18,15 +18,19 @@ class _FormBody extends ConsumerWidget {
           if (state.errorKey != null)
             Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.md),
-              child: Text(
-                state.errorKey!.tr(),
-                style: AppTypography.body.copyWith(
-                  color: Theme.of(context).colorScheme.error,
+              child: Semantics(
+                identifier: ProductFormSemanticIds.errorText,
+                child: Text(
+                  state.errorKey!.tr(),
+                  style: AppTypography.body.copyWith(
+                    color: Theme.of(context).colorScheme.error,
+                  ),
                 ),
               ),
             ),
           AppButton(
             key: ProductFormKeys.saveButton,
+            semanticsId: ProductFormSemanticIds.saveButton,
             label: 'catalog.form.save_button'.tr(),
             isLoading: state.isSaving,
             onPressed: state.canSubmit ? viewModel.save : null,

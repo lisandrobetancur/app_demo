@@ -20,7 +20,10 @@ class RecoverPasswordView extends ConsumerWidget {
       if (next.completed && previous?.completed != true) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('authentication.recover.success_message'.tr()),
+            content: Semantics(
+              identifier: RecoverPasswordSemanticIds.successText,
+              child: Text('authentication.recover.success_message'.tr()),
+            ),
           ),
         );
         viewModel.backToLogin();
@@ -28,27 +31,37 @@ class RecoverPasswordView extends ConsumerWidget {
     });
     return AppScaffold(
       key: RecoverPasswordKeys.view,
+      semanticsId: RecoverPasswordSemanticIds.view,
+      titleSemanticsId: RecoverPasswordSemanticIds.titleText,
       title: 'authentication.recover.title'.tr(),
       leading: BackButton(onPressed: viewModel.backToLogin),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          StepperHeader(
-            steps: <String>[
-              'authentication.recover.step_email'.tr(),
-              'authentication.recover.step_code'.tr(),
-              'authentication.recover.step_password'.tr(),
-            ],
-            currentIndex: state.step.index,
+          // One node holding the step labels, so a test reads them together.
+          Semantics(
+            container: true,
+            identifier: RecoverPasswordSemanticIds.stepIndicator,
+            child: StepperHeader(
+              steps: <String>[
+                'authentication.recover.step_email'.tr(),
+                'authentication.recover.step_code'.tr(),
+                'authentication.recover.step_password'.tr(),
+              ],
+              currentIndex: state.step.index,
+            ),
           ),
           const SizedBox(height: AppSpacing.xl),
           if (state.errorKey != null)
             Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.md),
-              child: Text(
-                state.errorKey!.tr(),
-                style: AppTypography.body.copyWith(
-                  color: Theme.of(context).colorScheme.error,
+              child: Semantics(
+                identifier: RecoverPasswordSemanticIds.errorText,
+                child: Text(
+                  state.errorKey!.tr(),
+                  style: AppTypography.body.copyWith(
+                    color: Theme.of(context).colorScheme.error,
+                  ),
                 ),
               ),
             ),

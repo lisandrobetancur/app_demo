@@ -11,6 +11,9 @@ class DashboardHomeView extends ConsumerWidget {
     final bool confirmed = await AppDialog.confirm(
       context,
       dialogKey: DashboardKeys.logoutConfirmDialog,
+      dialogSemanticsId: DashboardSemanticIds.logoutDialog,
+      confirmSemanticsId: DashboardSemanticIds.logoutConfirmButton,
+      cancelSemanticsId: DashboardSemanticIds.logoutCancelButton,
       title: 'dashboard.home.logout_title'.tr(),
       message: 'dashboard.home.logout_message'.tr(),
       confirmLabel: 'dashboard.home.confirm'.tr(),
@@ -29,12 +32,16 @@ class DashboardHomeView extends ConsumerWidget {
     final int unread = ref.watch(unreadNotificationsCountProvider);
     return AppScaffold(
       key: DashboardKeys.view,
-      titleWidget: Text(
-        'dashboard.home.greeting'.tr(
-          namedArgs: <String, String>{'name': user?.fullName ?? ''},
+      semanticsId: DashboardSemanticIds.view,
+      titleWidget: Semantics(
+        identifier: DashboardSemanticIds.greetingText,
+        child: Text(
+          'dashboard.home.greeting'.tr(
+            namedArgs: <String, String>{'name': user?.fullName ?? ''},
+          ),
+          key: DashboardKeys.greetingText,
+          overflow: TextOverflow.ellipsis,
         ),
-        key: DashboardKeys.greetingText,
-        overflow: TextOverflow.ellipsis,
       ),
       scrollable: false,
       padding: EdgeInsets.zero,
@@ -42,11 +49,15 @@ class DashboardHomeView extends ConsumerWidget {
         if (PlatformGuard.isWeb)
           IconButton(
             key: DashboardKeys.refreshButton,
-            icon: const Icon(AppIcons.refresh),
+            icon: Semantics(
+              identifier: DashboardSemanticIds.refreshButton,
+              child: const Icon(AppIcons.refresh),
+            ),
             tooltip: 'dashboard.home.refresh_tooltip'.tr(),
             onPressed: ref.read(homeViewModelProvider.notifier).load,
           ),
         Semantics(
+          identifier: DashboardSemanticIds.notificationsButton,
           label: 'dashboard.home.notifications_tooltip'.tr(),
           button: true,
           child: IconButton(
@@ -61,7 +72,10 @@ class DashboardHomeView extends ConsumerWidget {
         ),
         IconButton(
           key: DashboardKeys.logoutButton,
-          icon: const Icon(AppIcons.logout),
+          icon: Semantics(
+            identifier: DashboardSemanticIds.logoutButton,
+            child: const Icon(AppIcons.logout),
+          ),
           tooltip: 'dashboard.home.logout_tooltip'.tr(),
           onPressed: () => _confirmLogout(context, ref),
         ),

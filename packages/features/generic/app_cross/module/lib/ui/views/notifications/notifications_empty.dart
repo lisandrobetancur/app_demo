@@ -5,10 +5,13 @@ class _NotificationsEmpty extends StatelessWidget {
   const _NotificationsEmpty();
 
   @override
-  Widget build(BuildContext context) => EmptyState(
-    key: AppCrossKeys.notificationsState('empty'),
-    icon: AppIcons.notifications,
-    title: 'app_cross.notifications.empty_title'.tr(),
-    message: 'app_cross.notifications.empty_message'.tr(),
+  Widget build(BuildContext context) => SemanticRegion(
+    identifier: NotificationsSemanticIds.state('empty'),
+    child: EmptyState(
+      key: AppCrossKeys.notificationsState('empty'),
+      icon: AppIcons.notifications,
+      title: 'app_cross.notifications.empty_title'.tr(),
+      message: 'app_cross.notifications.empty_message'.tr(),
+    ),
   );
 }

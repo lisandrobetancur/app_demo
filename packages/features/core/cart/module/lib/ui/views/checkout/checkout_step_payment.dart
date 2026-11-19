@@ -29,7 +29,10 @@ class _CheckoutStepPayment extends ConsumerWidget {
                   PaymentMethod.cash => AppIcons.cash,
                   PaymentMethod.transfer => AppIcons.transfer,
                 }, size: 18),
-                label: Text(method.labelKey.tr()),
+                label: Semantics(
+                  identifier: CheckoutSemanticIds.paymentMethod(method.dbValue),
+                  child: Text(method.labelKey.tr()),
+                ),
                 selected: state.paymentMethod == method,
                 onSelected: (bool _) => viewModel.selectPaymentMethod(method),
               ),
@@ -39,6 +42,7 @@ class _CheckoutStepPayment extends ConsumerWidget {
           AppSpacing.sectionGap,
           AppTextField(
             key: CheckoutKeys.cardNumberInput,
+            semanticsId: CheckoutSemanticIds.cardNumberInput,
             label: 'cart.checkout.card_number_label'.tr(),
             keyboardType: TextInputType.number,
             maxLength: 16,
@@ -48,6 +52,7 @@ class _CheckoutStepPayment extends ConsumerWidget {
           AppSpacing.formGap,
           AppTextField(
             key: CheckoutKeys.cardHolderInput,
+            semanticsId: CheckoutSemanticIds.cardHolderInput,
             label: 'cart.checkout.card_holder_label'.tr(),
             onChanged: viewModel.setCardHolder,
           ),
@@ -58,6 +63,7 @@ class _CheckoutStepPayment extends ConsumerWidget {
               Expanded(
                 child: AppTextField(
                   key: CheckoutKeys.cardExpiryInput,
+                  semanticsId: CheckoutSemanticIds.cardExpiryInput,
                   label: 'cart.checkout.card_expiry_label'.tr(),
                   hint: 'MM/YY',
                   maxLength: 5,
@@ -69,6 +75,7 @@ class _CheckoutStepPayment extends ConsumerWidget {
               Expanded(
                 child: AppTextField(
                   key: CheckoutKeys.cardCvvInput,
+                  semanticsId: CheckoutSemanticIds.cardCvvInput,
                   label: 'cart.checkout.card_cvv_label'.tr(),
                   keyboardType: TextInputType.number,
                   maxLength: 4,

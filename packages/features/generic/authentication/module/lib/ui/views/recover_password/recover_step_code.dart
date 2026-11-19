@@ -23,12 +23,15 @@ class _RecoverStepCode extends ConsumerWidget {
           ),
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.md),
-            child: Text(
-              'authentication.recover.demo_code_banner'.tr(
-                namedArgs: <String, String>{'code': state.issuedCode},
-              ),
-              style: AppTypography.body.copyWith(
-                color: scheme.onTertiaryContainer,
+            child: Semantics(
+              identifier: RecoverPasswordSemanticIds.demoCodeText,
+              child: Text(
+                'authentication.recover.demo_code_banner'.tr(
+                  namedArgs: <String, String>{'code': state.issuedCode},
+                ),
+                style: AppTypography.body.copyWith(
+                  color: scheme.onTertiaryContainer,
+                ),
               ),
             ),
           ),
@@ -36,6 +39,7 @@ class _RecoverStepCode extends ConsumerWidget {
         AppSpacing.formGap,
         AppTextField(
           key: RecoverPasswordKeys.codeInput,
+          semanticsId: RecoverPasswordSemanticIds.codeInput,
           label: 'authentication.recover.code_label'.tr(),
           keyboardType: TextInputType.number,
           maxLength: AuthenticationLimits.recoveryCodeLength,
@@ -45,6 +49,7 @@ class _RecoverStepCode extends ConsumerWidget {
         AppSpacing.formGap,
         AppButton(
           key: RecoverPasswordKeys.validateCodeButton,
+          semanticsId: RecoverPasswordSemanticIds.validateCodeButton,
           label: 'authentication.recover.validate_code_button'.tr(),
           onPressed: state.canValidateCode ? viewModel.validateCode : null,
           expand: true,

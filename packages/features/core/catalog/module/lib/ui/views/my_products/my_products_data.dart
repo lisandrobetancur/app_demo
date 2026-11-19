@@ -9,21 +9,24 @@ class _MyProductsData extends ConsumerWidget {
     final MyProductsState state = ref.watch(myProductsViewModelProvider);
     return RefreshIndicator(
       onRefresh: ref.read(myProductsViewModelProvider.notifier).load,
-      child: ListView.separated(
-        key: MyProductsKeys.state('data'),
-        padding: AppSpacing.pagePadding,
-        physics: const AlwaysScrollableScrollPhysics(),
-        itemCount: state.products.length,
-        separatorBuilder: (BuildContext context, int index) =>
-            const SizedBox(height: AppSpacing.md),
-        itemBuilder: (BuildContext context, int index) {
-          final Product product = state.products[index];
-          return _MyProductTile(
-            key: MyProductsKeys.item(product.id),
-            product: product,
-            isBusy: state.busyProductId == product.id,
-          );
-        },
+      child: SemanticRegion(
+        identifier: MyProductsSemanticIds.state('data'),
+        child: ListView.separated(
+          key: MyProductsKeys.state('data'),
+          padding: AppSpacing.pagePadding,
+          physics: const AlwaysScrollableScrollPhysics(),
+          itemCount: state.products.length,
+          separatorBuilder: (BuildContext context, int index) =>
+              const SizedBox(height: AppSpacing.md),
+          itemBuilder: (BuildContext context, int index) {
+            final Product product = state.products[index];
+            return _MyProductTile(
+              key: MyProductsKeys.item(product.id),
+              product: product,
+              isBusy: state.busyProductId == product.id,
+            );
+          },
+        ),
       ),
     );
   }
@@ -44,6 +47,9 @@ class _MyProductTile extends ConsumerWidget {
     final bool confirmed = await AppDialog.confirm(
       context,
       dialogKey: MyProductsKeys.confirmDeleteDialog,
+      dialogSemanticsId: MyProductsSemanticIds.confirmDeleteDialog,
+      confirmSemanticsId: MyProductsSemanticIds.confirmDeleteConfirmButton,
+      cancelSemanticsId: MyProductsSemanticIds.confirmDeleteCancelButton,
       title: 'catalog.my_products.delete_title'.tr(),
       message: 'catalog.my_products.delete_message'.tr(),
       confirmLabel: 'catalog.my_products.confirm'.tr(),
@@ -63,7 +69,11 @@ class _MyProductTile extends ConsumerWidget {
       myProductsViewModelProvider.notifier,
     );
     final DisplayCurrency currency = ref.watch(displayCurrencyProvider);
+    // The card merges its texts into its own node, which takes the item's
+    // identifier. Nothing inside may carry one unless it has a node of its
+    // own — the IconButtons, the stock region — or the two would collide.
     return AppCard(
+      semanticsId: MyProductsSemanticIds.item(product.id),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -99,25 +109,42 @@ class _MyProductTile extends ConsumerWidget {
                 style: AppTypography.caption,
               ),
               const SizedBox(width: AppSpacing.sm),
-              QuantityStepper(
-                key: MyProductsKeys.stockQuickEdit(product.id),
-                value: product.stock,
-                min: 0,
-                max: 999,
-                enabled: !isBusy,
-                onChanged: (int stock) => viewModel.adjustStock(product, stock),
+              SemanticRegion(
+                identifier: MyProductsSemanticIds.stockInput(product.id),
+                child: QuantityStepper(
+                  key: MyProductsKeys.stockQuickEdit(product.id),
+                  value: product.stock,
+                  min: 0,
+                  max: 999,
+                  enabled: !isBusy,
+                  decreaseSemanticsId:
+                      MyProductsSemanticIds.stockDecreaseButton(product.id),
+                  increaseSemanticsId:
+                      MyProductsSemanticIds.stockIncreaseButton(product.id),
+                  valueSemanticsId: MyProductsSemanticIds.stockText(product.id),
+                  onChanged: (int stock) =>
+                      viewModel.adjustStock(product, stock),
+                ),
               ),
               const Spacer(),
               IconButton(
                 key: MyProductsKeys.editButton(product.id),
-                icon: const Icon(AppIcons.edit),
+                icon: Semantics(
+                  identifier: MyProductsSemanticIds.editButton(product.id),
+                  child: const Icon(AppIcons.edit),
+                ),
                 tooltip: 'catalog.detail.edit_button'.tr(),
                 onPressed: isBusy ? null : () => viewModel.goToEdit(product.id),
               ),
               IconButton(
                 key: MyProductsKeys.toggleStatusButton(product.id),
-                icon: Icon(
-                  product.status.isPaused ? AppIcons.play : AppIcons.pause,
+                icon: Semantics(
+                  identifier: MyProductsSemanticIds.toggleStatusButton(
+                    product.id,
+                  ),
+                  child: Icon(
+                    product.status.isPaused ? AppIcons.play : AppIcons.pause,
+                  ),
                 ),
                 tooltip: product.status.isPaused
                     ? 'catalog.my_products.activate_button'.tr()
@@ -128,9 +155,12 @@ class _MyProductTile extends ConsumerWidget {
               ),
               IconButton(
                 key: MyProductsKeys.deleteButton(product.id),
-                icon: Icon(
-                  AppIcons.delete,
-                  color: Theme.of(context).colorScheme.error,
+                icon: Semantics(
+                  identifier: MyProductsSemanticIds.deleteButton(product.id),
+                  child: Icon(
+                    AppIcons.delete,
+                    color: Theme.of(context).colorScheme.error,
+                  ),
                 ),
                 tooltip: 'catalog.my_products.delete_button'.tr(),
                 onPressed: isBusy ? null : () => _confirmDelete(context, ref),

@@ -16,10 +16,13 @@ class _SplashError extends ConsumerWidget {
           color: Theme.of(context).colorScheme.error,
         ),
         const SizedBox(height: AppSpacing.lg),
-        Text(
-          'app_cross.splash.error_title'.tr(),
-          style: AppTypography.sectionTitle,
-          textAlign: TextAlign.center,
+        Semantics(
+          identifier: SplashSemanticIds.errorText,
+          child: Text(
+            'app_cross.splash.error_title'.tr(),
+            style: AppTypography.sectionTitle,
+            textAlign: TextAlign.center,
+          ),
         ),
         const SizedBox(height: AppSpacing.sm),
         Text(
@@ -30,6 +33,7 @@ class _SplashError extends ConsumerWidget {
         const SizedBox(height: AppSpacing.xl),
         AppButton(
           key: AppCrossKeys.splashRetryButton,
+          semanticsId: SplashSemanticIds.retryButton,
           label: 'app_cross.splash.retry_button'.tr(),
           onPressed: ref.read(splashViewModelProvider.notifier).initialize,
         ),

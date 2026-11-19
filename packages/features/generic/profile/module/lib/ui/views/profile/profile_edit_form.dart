@@ -51,6 +51,7 @@ class _ProfileEditFormState extends ConsumerState<_ProfileEditForm> {
       children: <Widget>[
         AppTextField(
           key: ProfileKeys.nameInput,
+          semanticsId: ProfileSemanticIds.nameInput,
           label: 'profile.home.name_label'.tr(),
           controller: _nameController,
           onChanged: viewModel.setFullName,
@@ -58,6 +59,7 @@ class _ProfileEditFormState extends ConsumerState<_ProfileEditForm> {
         AppSpacing.formGap,
         AppTextField(
           key: ProfileKeys.phoneInput,
+          semanticsId: ProfileSemanticIds.phoneInput,
           label: 'profile.home.phone_label'.tr(),
           controller: _phoneController,
           keyboardType: TextInputType.phone,
@@ -66,6 +68,7 @@ class _ProfileEditFormState extends ConsumerState<_ProfileEditForm> {
         AppSpacing.formGap,
         AppButton(
           key: ProfileKeys.avatarPickerButton,
+          semanticsId: ProfileSemanticIds.avatarPickerButton,
           label: 'profile.home.avatar_button'.tr(),
           icon: AppIcons.camera,
           variant: AppButtonVariant.secondary,
@@ -76,6 +79,7 @@ class _ProfileEditFormState extends ConsumerState<_ProfileEditForm> {
           children: <Widget>[
             Expanded(
               child: AppButton(
+                semanticsId: ProfileSemanticIds.cancelEditButton,
                 label: 'profile.home.cancel_button'.tr(),
                 variant: AppButtonVariant.text,
                 onPressed: viewModel.cancelEditing,
@@ -85,6 +89,7 @@ class _ProfileEditFormState extends ConsumerState<_ProfileEditForm> {
             Expanded(
               child: AppButton(
                 key: ProfileKeys.saveProfileButton,
+                semanticsId: ProfileSemanticIds.saveButton,
                 label: 'profile.home.save_button'.tr(),
                 isLoading: state.isSaving,
                 onPressed: state.canSaveProfile ? viewModel.saveProfile : null,

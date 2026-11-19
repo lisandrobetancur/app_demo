@@ -15,6 +15,7 @@ class _RecoverStepPassword extends ConsumerWidget {
       children: <Widget>[
         AppTextField(
           key: RecoverPasswordKeys.newPasswordInput,
+          semanticsId: RecoverPasswordSemanticIds.newPasswordInput,
           label: 'authentication.recover.new_password_label'.tr(),
           obscureText: true,
           textInputAction: TextInputAction.next,
@@ -24,6 +25,7 @@ class _RecoverStepPassword extends ConsumerWidget {
         AppSpacing.formGap,
         AppTextField(
           key: RecoverPasswordKeys.confirmNewPasswordInput,
+          semanticsId: RecoverPasswordSemanticIds.confirmNewPasswordInput,
           label: 'authentication.recover.confirm_new_password_label'.tr(),
           obscureText: true,
           textInputAction: TextInputAction.done,
@@ -34,6 +36,7 @@ class _RecoverStepPassword extends ConsumerWidget {
         AppSpacing.formGap,
         AppButton(
           key: RecoverPasswordKeys.submitButton,
+          semanticsId: RecoverPasswordSemanticIds.submitButton,
           label: 'authentication.recover.submit_button'.tr(),
           isLoading: state.isSubmitting,
           onPressed: state.canSubmitPassword

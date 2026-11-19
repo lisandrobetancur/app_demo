@@ -59,6 +59,9 @@ class _ProductFormScaffoldState extends ConsumerState<_ProductFormScaffold> {
     final bool leave = await AppDialog.confirm(
       context,
       dialogKey: ProductFormKeys.discardChangesDialog,
+      dialogSemanticsId: ProductFormSemanticIds.discardChangesDialog,
+      confirmSemanticsId: ProductFormSemanticIds.discardChangesConfirmButton,
+      cancelSemanticsId: ProductFormSemanticIds.discardChangesCancelButton,
       title: 'catalog.form.discard_title'.tr(),
       message: 'catalog.form.discard_message'.tr(),
       confirmLabel: 'catalog.form.discard_confirm'.tr(),
@@ -79,27 +82,40 @@ class _ProductFormScaffoldState extends ConsumerState<_ProductFormScaffold> {
           _onPopRequested(didPop),
       child: AppScaffold(
         key: ProductFormKeys.view,
+        semanticsId: ProductFormSemanticIds.view,
+        titleSemanticsId: ProductFormSemanticIds.titleText,
         title: state.isEditing
             ? 'catalog.form.edit_title'.tr()
             : 'catalog.form.create_title'.tr(),
         scrollable: false,
         padding: EdgeInsets.zero,
         body: switch (state.status) {
-          ViewStatus.loading => const Center(
-            child: CircularProgressIndicator(),
+          ViewStatus.loading => SemanticRegion(
+            identifier: ProductFormSemanticIds.state('loading'),
+            child: const Center(child: CircularProgressIndicator()),
           ),
-          ViewStatus.data => const _FormBody(),
-          ViewStatus.empty => EmptyState(
-            icon: AppIcons.emptyBox,
-            title: 'catalog.form.not_found_title'.tr(),
+          ViewStatus.data => SemanticRegion(
+            identifier: ProductFormSemanticIds.state('data'),
+            child: const _FormBody(),
           ),
-          ViewStatus.error => EmptyState(
-            icon: AppIcons.error,
-            title: 'catalog.form.error_title'.tr(),
-            actionLabel: 'catalog.form.retry_button'.tr(),
-            onAction: () => ref
-                .read(formViewModelProvider.notifier)
-                .start(productId: state.productId),
+          ViewStatus.empty => SemanticRegion(
+            identifier: ProductFormSemanticIds.state('empty'),
+            child: EmptyState(
+              icon: AppIcons.emptyBox,
+              title: 'catalog.form.not_found_title'.tr(),
+            ),
+          ),
+          ViewStatus.error => SemanticRegion(
+            identifier: ProductFormSemanticIds.state('error'),
+            child: EmptyState(
+              icon: AppIcons.error,
+              title: 'catalog.form.error_title'.tr(),
+              actionLabel: 'catalog.form.retry_button'.tr(),
+              actionSemanticsId: ProductFormSemanticIds.retryButton,
+              onAction: () => ref
+                  .read(formViewModelProvider.notifier)
+                  .start(productId: state.productId),
+            ),
           ),
         },
       ),

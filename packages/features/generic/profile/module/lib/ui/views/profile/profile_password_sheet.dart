@@ -22,6 +22,7 @@ class _ProfilePasswordSheet extends ConsumerWidget {
           AppSpacing.formGap,
           AppTextField(
             key: ProfileKeys.currentPasswordInput,
+            semanticsId: ProfileSemanticIds.currentPasswordInput,
             label: 'profile.home.current_password_label'.tr(),
             obscureText: true,
             onChanged: viewModel.setCurrentPassword,
@@ -29,6 +30,7 @@ class _ProfilePasswordSheet extends ConsumerWidget {
           AppSpacing.formGap,
           AppTextField(
             key: ProfileKeys.newPasswordInput,
+            semanticsId: ProfileSemanticIds.newPasswordInput,
             label: 'profile.home.new_password_label'.tr(),
             obscureText: true,
             errorText: state.newPasswordErrorKey?.tr(),
@@ -37,6 +39,7 @@ class _ProfilePasswordSheet extends ConsumerWidget {
           AppSpacing.formGap,
           AppTextField(
             key: ProfileKeys.confirmNewPasswordInput,
+            semanticsId: ProfileSemanticIds.confirmNewPasswordInput,
             label: 'profile.home.confirm_new_password_label'.tr(),
             obscureText: true,
             errorText: state.confirmNewPasswordErrorKey?.tr(),
@@ -45,16 +48,20 @@ class _ProfilePasswordSheet extends ConsumerWidget {
           if (state.errorKey != null)
             Padding(
               padding: const EdgeInsets.only(top: AppSpacing.sm),
-              child: Text(
-                state.errorKey!.tr(),
-                style: AppTypography.body.copyWith(
-                  color: Theme.of(context).colorScheme.error,
+              child: Semantics(
+                identifier: ProfileSemanticIds.passwordErrorText,
+                child: Text(
+                  state.errorKey!.tr(),
+                  style: AppTypography.body.copyWith(
+                    color: Theme.of(context).colorScheme.error,
+                  ),
                 ),
               ),
             ),
           AppSpacing.formGap,
           AppButton(
             key: ProfileKeys.submitPasswordButton,
+            semanticsId: ProfileSemanticIds.submitPasswordButton,
             label: 'profile.home.submit_password_button'.tr(),
             isLoading: state.isChangingPassword,
             onPressed: state.canChangePassword

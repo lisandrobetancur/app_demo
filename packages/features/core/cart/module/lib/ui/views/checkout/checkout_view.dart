@@ -15,41 +15,58 @@ class CheckoutView extends ConsumerWidget {
     );
     return AppScaffold(
       key: CheckoutKeys.view,
+      semanticsId: CheckoutSemanticIds.view,
+      titleSemanticsId: CheckoutSemanticIds.titleText,
       title: 'cart.checkout.title'.tr(),
       leading: BackButton(onPressed: viewModel.previousStep),
       scrollable: false,
       padding: EdgeInsets.zero,
       body: switch (state.status) {
-        ViewStatus.loading => const Center(child: CircularProgressIndicator()),
-        ViewStatus.error => EmptyState(
-          icon: AppIcons.error,
-          title: 'cart.checkout.error_title'.tr(),
-          actionLabel: 'cart.checkout.retry_button'.tr(),
-          onAction: viewModel.loadAddresses,
+        ViewStatus.loading => SemanticRegion(
+          identifier: CheckoutSemanticIds.state('loading'),
+          child: const Center(child: CircularProgressIndicator()),
         ),
-        ViewStatus.data || ViewStatus.empty => Column(
-          children: <Widget>[
-            Padding(
-              padding: AppSpacing.pagePadding,
-              child: StepperHeader(
-                key: CheckoutKeys.stepIndicator,
-                steps: <String>[
-                  'cart.checkout.step_delivery'.tr(),
-                  'cart.checkout.step_payment'.tr(),
-                  'cart.checkout.step_summary'.tr(),
-                ],
-                currentIndex: state.step.index,
+        ViewStatus.error => SemanticRegion(
+          identifier: CheckoutSemanticIds.state('error'),
+          child: EmptyState(
+            icon: AppIcons.error,
+            title: 'cart.checkout.error_title'.tr(),
+            actionLabel: 'cart.checkout.retry_button'.tr(),
+            actionSemanticsId: CheckoutSemanticIds.retryButton,
+            onAction: viewModel.loadAddresses,
+          ),
+        ),
+        ViewStatus.data || ViewStatus.empty => SemanticRegion(
+          identifier: CheckoutSemanticIds.state('data'),
+          child: Column(
+            children: <Widget>[
+              Padding(
+                padding: AppSpacing.pagePadding,
+                // One node holding the step labels, read together.
+                child: Semantics(
+                  container: true,
+                  identifier: CheckoutSemanticIds.stepIndicator,
+                  child: StepperHeader(
+                    key: CheckoutKeys.stepIndicator,
+                    steps: <String>[
+                      'cart.checkout.step_delivery'.tr(),
+                      'cart.checkout.step_payment'.tr(),
+                      'cart.checkout.step_summary'.tr(),
+                    ],
+                    currentIndex: state.step.index,
+                  ),
+                ),
               ),
-            ),
-            Expanded(
-              child: switch (state.step) {
-                CheckoutStep.delivery => const _CheckoutStepDelivery(),
-                CheckoutStep.payment => const _CheckoutStepPayment(),
-                CheckoutStep.summary => const _CheckoutStepSummary(),
-              },
-            ),
-            const _CheckoutNavigationBar(),
-          ],
+              Expanded(
+                child: switch (state.step) {
+                  CheckoutStep.delivery => const _CheckoutStepDelivery(),
+                  CheckoutStep.payment => const _CheckoutStepPayment(),
+                  CheckoutStep.summary => const _CheckoutStepSummary(),
+                },
+              ),
+              const _CheckoutNavigationBar(),
+            ],
+          ),
         ),
       },
     );
@@ -73,6 +90,7 @@ class _CheckoutNavigationBar extends ConsumerWidget {
           Expanded(
             child: AppButton(
               key: CheckoutKeys.backButton,
+              semanticsId: CheckoutSemanticIds.backButton,
               label: 'cart.checkout.back_button'.tr(),
               variant: AppButtonVariant.secondary,
               onPressed: viewModel.previousStep,
@@ -83,12 +101,14 @@ class _CheckoutNavigationBar extends ConsumerWidget {
             child: state.step.isSummary
                 ? AppButton(
                     key: CheckoutKeys.confirmButton,
+                    semanticsId: CheckoutSemanticIds.confirmButton,
                     label: 'cart.checkout.confirm_button'.tr(),
                     isLoading: state.isConfirming,
                     onPressed: state.canGoNext ? viewModel.confirm : null,
                   )
                 : AppButton(
                     key: CheckoutKeys.nextButton,
+                    semanticsId: CheckoutSemanticIds.nextButton,
                     label: 'cart.checkout.next_button'.tr(),
                     onPressed: state.canGoNext ? viewModel.nextStep : null,
                   ),

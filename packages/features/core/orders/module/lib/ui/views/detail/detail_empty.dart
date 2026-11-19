@@ -5,10 +5,13 @@ class _OrderDetailEmpty extends StatelessWidget {
   const _OrderDetailEmpty();
 
   @override
-  Widget build(BuildContext context) => EmptyState(
-    key: OrderDetailKeys.state('empty'),
-    icon: AppIcons.emptyBox,
-    title: 'orders.detail.not_found_title'.tr(),
-    message: 'orders.detail.not_found_message'.tr(),
+  Widget build(BuildContext context) => SemanticRegion(
+    identifier: OrderDetailSemanticIds.state('empty'),
+    child: EmptyState(
+      key: OrderDetailKeys.state('empty'),
+      icon: AppIcons.emptyBox,
+      title: 'orders.detail.not_found_title'.tr(),
+      message: 'orders.detail.not_found_message'.tr(),
+    ),
   );
 }

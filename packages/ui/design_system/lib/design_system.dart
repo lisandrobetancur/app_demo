@@ -13,6 +13,7 @@ export 'src/primitives/app_dialog.dart';
 export 'src/primitives/app_scaffold.dart';
 export 'src/primitives/app_shimmer.dart';
 export 'src/primitives/app_text_field.dart';
+export 'src/primitives/semantic_region.dart';
 export 'src/theme/app_theme.dart';
 export 'src/tokens/app_colors.dart';
 export 'src/tokens/app_durations.dart';

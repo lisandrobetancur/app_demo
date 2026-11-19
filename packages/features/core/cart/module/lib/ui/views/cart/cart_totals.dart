@@ -20,22 +20,26 @@ class _CartTotals extends ConsumerWidget {
       children: <Widget>[
         _TotalsRow(
           rowKey: CartKeys.subtotalText,
+          valueSemanticsId: CartSemanticIds.subtotalText,
           label: 'cart.home.subtotal_label'.tr(),
           value: money(totals.subtotal),
         ),
         _TotalsRow(
           rowKey: CartKeys.discountText,
+          valueSemanticsId: CartSemanticIds.discountText,
           label: 'cart.home.discount_label'.tr(),
           value: '-${money(totals.discount)}',
         ),
         _TotalsRow(
           rowKey: CartKeys.taxText,
+          valueSemanticsId: CartSemanticIds.taxText,
           label: 'cart.home.tax_label'.tr(),
           value: money(totals.tax),
         ),
         const Divider(),
         _TotalsRow(
           rowKey: CartKeys.totalText,
+          valueSemanticsId: CartSemanticIds.totalText,
           label: 'cart.home.total_label'.tr(),
           value: money(totals.total),
           emphasized: true,
@@ -51,6 +55,7 @@ class _TotalsRow extends StatelessWidget {
     required this.rowKey,
     required this.label,
     required this.value,
+    required this.valueSemanticsId,
     this.emphasized = false,
   });
 
@@ -58,6 +63,9 @@ class _TotalsRow extends StatelessWidget {
   final String label;
   final String value;
   final bool emphasized;
+
+  /// On the value alone, so a test reads the amount without its label.
+  final String valueSemanticsId;
 
   @override
   Widget build(BuildContext context) {
@@ -70,7 +78,12 @@ class _TotalsRow extends StatelessWidget {
         key: rowKey,
         children: <Widget>[
           Expanded(child: Text(label, style: style)),
-          Text(value, style: style),
+          // A node of its own, holding just the amount.
+          Semantics(
+            container: true,
+            identifier: valueSemanticsId,
+            child: Text(value, style: style),
+          ),
         ],
       ),
     );

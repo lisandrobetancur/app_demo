@@ -1,6 +1,7 @@
 import 'package:design_system/design_system.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:utilities/utilities.dart';
 
@@ -16,6 +17,11 @@ Future<void> main() async {
   configureUrlStrategy();
   await EasyLocalization.ensureInitialized();
   AppDurations.fastMode = AppConfig.fastAnimations;
+  if (AppConfig.enableSemantics) {
+    // The handle is never disposed: semantics stay on for the app's whole
+    // life, which is the point of a QA build.
+    SemanticsBinding.instance.ensureSemantics();
+  }
   runApp(
     EasyLocalization(
       supportedLocales: const <Locale>[Locale('es'), Locale('en')],

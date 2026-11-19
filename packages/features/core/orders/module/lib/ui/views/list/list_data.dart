@@ -12,21 +12,24 @@ class _OrdersListData extends ConsumerWidget {
     );
     return RefreshIndicator(
       onRefresh: viewModel.load,
-      child: ListView.separated(
-        key: OrdersListKeys.state('data'),
-        padding: AppSpacing.pagePadding,
-        physics: const AlwaysScrollableScrollPhysics(),
-        itemCount: state.orders.length,
-        separatorBuilder: (BuildContext context, int index) =>
-            const SizedBox(height: AppSpacing.md),
-        itemBuilder: (BuildContext context, int index) {
-          final Order order = state.orders[index];
-          return _OrderTile(
-            key: OrdersListKeys.item(order.id),
-            order: order,
-            onTap: () => viewModel.openDetail(order.id),
-          );
-        },
+      child: SemanticRegion(
+        identifier: OrdersListSemanticIds.state('data'),
+        child: ListView.separated(
+          key: OrdersListKeys.state('data'),
+          padding: AppSpacing.pagePadding,
+          physics: const AlwaysScrollableScrollPhysics(),
+          itemCount: state.orders.length,
+          separatorBuilder: (BuildContext context, int index) =>
+              const SizedBox(height: AppSpacing.md),
+          itemBuilder: (BuildContext context, int index) {
+            final Order order = state.orders[index];
+            return _OrderTile(
+              key: OrdersListKeys.item(order.id),
+              order: order,
+              onTap: () => viewModel.openDetail(order.id),
+            );
+          },
+        ),
       ),
     );
   }
@@ -45,6 +48,7 @@ class _OrderTile extends ConsumerWidget {
     final String locale = context.locale.toString();
     return AppCard(
       onTap: onTap,
+      semanticsId: OrdersListSemanticIds.item(order.id),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[

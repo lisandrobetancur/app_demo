@@ -29,6 +29,7 @@ class AppButton extends StatelessWidget {
     this.icon,
     this.isLoading = false,
     this.expand = false,
+    this.semanticsId,
   });
 
   final String label;
@@ -38,14 +39,27 @@ class AppButton extends StatelessWidget {
   final bool isLoading;
   final bool expand;
 
+  /// Identifier for black-box automation: Android's `resource-id`, iOS's
+  /// `accessibilityIdentifier` and web's `flt-semantics-identifier`. Never
+  /// read aloud or shown to the user, so it does not interfere with the
+  /// label a screen reader announces.
+  final String? semanticsId;
+
   @override
   Widget build(BuildContext context) {
     final VoidCallback? effectiveOnPressed = isLoading ? null : onPressed;
-    final Widget child = _AppButtonContent(
+    Widget child = _AppButtonContent(
       label: label,
       icon: icon,
       isLoading: isLoading,
     );
+    if (semanticsId != null) {
+      // INSIDE the button, not around it. A Semantics without `container`
+      // merges into the nearest semantics node above it: around the button
+      // that is an empty node with no tap action. Here, it is the button's own
+      // node — the one with the label, the enabled state and the tap.
+      child = Semantics(identifier: semanticsId, child: child);
+    }
     final Widget button = switch (variant) {
       AppButtonVariant.primary => ElevatedButton(
         onPressed: effectiveOnPressed,

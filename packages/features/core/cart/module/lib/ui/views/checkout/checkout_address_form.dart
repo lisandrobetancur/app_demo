@@ -51,31 +51,37 @@ class _CheckoutAddressFormState extends ConsumerState<_CheckoutAddressForm> {
         ),
         AppSpacing.formGap,
         AppTextField(
+          semanticsId: CheckoutSemanticIds.addressLabelInput,
           label: 'cart.checkout.address_label'.tr(),
           onChanged: (String value) => setState(() => _label = value),
         ),
         AppSpacing.formGap,
         AppTextField(
+          semanticsId: CheckoutSemanticIds.addressLine1Input,
           label: 'cart.checkout.address_line1'.tr(),
           onChanged: (String value) => setState(() => _line1 = value),
         ),
         AppSpacing.formGap,
         AppTextField(
+          semanticsId: CheckoutSemanticIds.addressCityInput,
           label: 'cart.checkout.address_city'.tr(),
           onChanged: (String value) => setState(() => _city = value),
         ),
         AppSpacing.formGap,
         AppTextField(
+          semanticsId: CheckoutSemanticIds.addressRegionInput,
           label: 'cart.checkout.address_state'.tr(),
           onChanged: (String value) => setState(() => _state = value),
         ),
         AppSpacing.formGap,
         AppTextField(
+          semanticsId: CheckoutSemanticIds.addressNotesInput,
           label: 'cart.checkout.address_notes'.tr(),
           onChanged: (String value) => setState(() => _notes = value),
         ),
         AppSpacing.formGap,
         AppButton(
+          semanticsId: CheckoutSemanticIds.addressSaveButton,
           label: 'cart.checkout.address_save_button'.tr(),
           isLoading: _saving,
           onPressed: _isValid && !_saving ? _save : null,

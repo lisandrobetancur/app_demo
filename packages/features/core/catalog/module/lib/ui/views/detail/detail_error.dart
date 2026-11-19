@@ -7,13 +7,17 @@ class _DetailError extends ConsumerWidget {
   final String? productId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) => EmptyState(
-    key: ProductDetailKeys.state('error'),
-    icon: AppIcons.error,
-    title: 'catalog.detail.error_title'.tr(),
-    actionLabel: 'catalog.detail.retry_button'.tr(),
-    onAction: productId == null
-        ? null
-        : () => ref.read(detailViewModelProvider.notifier).load(productId!),
+  Widget build(BuildContext context, WidgetRef ref) => SemanticRegion(
+    identifier: ProductDetailSemanticIds.state('error'),
+    child: EmptyState(
+      actionSemanticsId: ProductDetailSemanticIds.retryButton,
+      key: ProductDetailKeys.state('error'),
+      icon: AppIcons.error,
+      title: 'catalog.detail.error_title'.tr(),
+      actionLabel: 'catalog.detail.retry_button'.tr(),
+      onAction: productId == null
+          ? null
+          : () => ref.read(detailViewModelProvider.notifier).load(productId!),
+    ),
   );
 }

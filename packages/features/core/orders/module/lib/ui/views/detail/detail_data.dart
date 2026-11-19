@@ -8,6 +8,9 @@ class _OrderDetailData extends ConsumerWidget {
     final bool confirmed = await AppDialog.confirm(
       context,
       dialogKey: OrderDetailKeys.confirmCancelDialog,
+      dialogSemanticsId: OrderDetailSemanticIds.cancelDialog,
+      confirmSemanticsId: OrderDetailSemanticIds.cancelConfirmButton,
+      cancelSemanticsId: OrderDetailSemanticIds.cancelKeepButton,
       title: 'orders.detail.cancel_title'.tr(),
       message: 'orders.detail.cancel_message'.tr(),
       confirmLabel: 'orders.detail.confirm'.tr(),
@@ -33,115 +36,146 @@ class _OrderDetailData extends ConsumerWidget {
       locale: locale,
       currencyCode: currency.code,
     );
-    return SingleChildScrollView(
-      key: OrderDetailKeys.state('data'),
-      padding: AppSpacing.pagePadding,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(
-            'orders.detail.order_number'.tr(
-              namedArgs: <String, String>{'number': order.number},
-            ),
-            style: AppTypography.displayTitle,
-          ),
-          Text(
-            Formatters.formatDateTime(order.createdAt, locale: locale),
-            style: AppTypography.caption,
-          ),
-          AppSpacing.sectionGap,
-          Text(
-            'orders.detail.timeline_title'.tr(),
-            style: AppTypography.sectionTitle,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          _OrderTimeline(status: order.status),
-          AppSpacing.sectionGap,
-          Text(
-            'orders.detail.items_title'.tr(),
-            style: AppTypography.sectionTitle,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          for (final OrderItem item in order.items)
-            Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-              child: Row(
-                children: <Widget>[
-                  Expanded(
-                    child: Text(
-                      '${item.quantity} × ${item.name}',
-                      style: AppTypography.body,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  Text(money(item.lineTotal), style: AppTypography.body),
-                ],
+    return SemanticRegion(
+      identifier: OrderDetailSemanticIds.state('data'),
+      child: SingleChildScrollView(
+        key: OrderDetailKeys.state('data'),
+        padding: AppSpacing.pagePadding,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Semantics(
+              identifier: OrderDetailSemanticIds.orderNumberText,
+              child: Text(
+                'orders.detail.order_number'.tr(
+                  namedArgs: <String, String>{'number': order.number},
+                ),
+                style: AppTypography.displayTitle,
               ),
             ),
-          AppSpacing.sectionGap,
-          if (order.addressLabel.isNotEmpty) ...<Widget>[
+            Semantics(
+              identifier: OrderDetailSemanticIds.dateText,
+              child: Text(
+                Formatters.formatDateTime(order.createdAt, locale: locale),
+                style: AppTypography.caption,
+              ),
+            ),
+            AppSpacing.sectionGap,
             Text(
-              'orders.detail.address_title'.tr(),
+              'orders.detail.timeline_title'.tr(),
               style: AppTypography.sectionTitle,
             ),
             const SizedBox(height: AppSpacing.sm),
-            Text(order.addressLabel, style: AppTypography.body),
+            // One node holding every stage's label, read together.
+            Semantics(
+              container: true,
+              identifier: OrderDetailSemanticIds.timeline,
+              child: _OrderTimeline(status: order.status),
+            ),
             AppSpacing.sectionGap,
-          ],
-          Text(
-            'orders.detail.payment_title'.tr(),
-            style: AppTypography.sectionTitle,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            PaymentMethod.parse(order.paymentMethodDbValue).labelKey.tr(),
-            style: AppTypography.body,
-          ),
-          AppSpacing.sectionGap,
-          Text(
-            'orders.detail.totals_title'.tr(),
-            style: AppTypography.sectionTitle,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          _OrderTotalsRow(
-            label: 'orders.detail.subtotal_label'.tr(),
-            value: money(order.subtotal),
-          ),
-          _OrderTotalsRow(
-            label: 'orders.detail.discount_label'.tr(),
-            value: '-${money(order.discount)}',
-          ),
-          _OrderTotalsRow(
-            label: 'orders.detail.tax_label'.tr(),
-            value: money(order.tax),
-          ),
-          const Divider(),
-          _OrderTotalsRow(
-            label: 'orders.detail.total_label'.tr(),
-            value: money(order.total),
-            emphasized: true,
-          ),
-          AppSpacing.sectionGap,
-          if (order.status.isCancellable)
+            Text(
+              'orders.detail.items_title'.tr(),
+              style: AppTypography.sectionTitle,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            for (final OrderItem item in order.items)
+              Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                // One node holding "quantity × product" and the line total.
+                child: Semantics(
+                  container: true,
+                  identifier: OrderDetailSemanticIds.item(item.id),
+                  child: Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: Text(
+                          '${item.quantity} × ${item.name}',
+                          style: AppTypography.body,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Text(money(item.lineTotal), style: AppTypography.body),
+                    ],
+                  ),
+                ),
+              ),
+            AppSpacing.sectionGap,
+            if (order.addressLabel.isNotEmpty) ...<Widget>[
+              Text(
+                'orders.detail.address_title'.tr(),
+                style: AppTypography.sectionTitle,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Semantics(
+                identifier: OrderDetailSemanticIds.addressText,
+                child: Text(order.addressLabel, style: AppTypography.body),
+              ),
+              AppSpacing.sectionGap,
+            ],
+            Text(
+              'orders.detail.payment_title'.tr(),
+              style: AppTypography.sectionTitle,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Semantics(
+              identifier: OrderDetailSemanticIds.paymentText,
+              child: Text(
+                PaymentMethod.parse(order.paymentMethodDbValue).labelKey.tr(),
+                style: AppTypography.body,
+              ),
+            ),
+            AppSpacing.sectionGap,
+            Text(
+              'orders.detail.totals_title'.tr(),
+              style: AppTypography.sectionTitle,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            _OrderTotalsRow(
+              label: 'orders.detail.subtotal_label'.tr(),
+              valueSemanticsId: OrderDetailSemanticIds.subtotalText,
+              value: money(order.subtotal),
+            ),
+            _OrderTotalsRow(
+              label: 'orders.detail.discount_label'.tr(),
+              valueSemanticsId: OrderDetailSemanticIds.discountText,
+              value: '-${money(order.discount)}',
+            ),
+            _OrderTotalsRow(
+              label: 'orders.detail.tax_label'.tr(),
+              valueSemanticsId: OrderDetailSemanticIds.taxText,
+              value: money(order.tax),
+            ),
+            const Divider(),
+            _OrderTotalsRow(
+              label: 'orders.detail.total_label'.tr(),
+              valueSemanticsId: OrderDetailSemanticIds.totalText,
+              value: money(order.total),
+              emphasized: true,
+            ),
+            AppSpacing.sectionGap,
+            if (order.status.isCancellable)
+              AppButton(
+                key: OrderDetailKeys.cancelButton,
+                semanticsId: OrderDetailSemanticIds.cancelButton,
+                label: 'orders.detail.cancel_button'.tr(),
+                variant: AppButtonVariant.danger,
+                isLoading: state.isCancelling,
+                onPressed: () => _confirmCancel(context, ref),
+                expand: true,
+              ),
+            const SizedBox(height: AppSpacing.md),
             AppButton(
-              key: OrderDetailKeys.cancelButton,
-              label: 'orders.detail.cancel_button'.tr(),
-              variant: AppButtonVariant.danger,
-              isLoading: state.isCancelling,
-              onPressed: () => _confirmCancel(context, ref),
+              key: OrderDetailKeys.reorderButton,
+              semanticsId: OrderDetailSemanticIds.reorderButton,
+              label: 'orders.detail.reorder_button'.tr(),
+              icon: AppIcons.cart,
+              variant: AppButtonVariant.secondary,
+              isLoading: state.isReordering,
+              onPressed: viewModel.reorder,
               expand: true,
             ),
-          const SizedBox(height: AppSpacing.md),
-          AppButton(
-            key: OrderDetailKeys.reorderButton,
-            label: 'orders.detail.reorder_button'.tr(),
-            icon: AppIcons.cart,
-            variant: AppButtonVariant.secondary,
-            isLoading: state.isReordering,
-            onPressed: viewModel.reorder,
-            expand: true,
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -152,12 +186,16 @@ class _OrderTotalsRow extends StatelessWidget {
   const _OrderTotalsRow({
     required this.label,
     required this.value,
+    required this.valueSemanticsId,
     this.emphasized = false,
   });
 
   final String label;
   final String value;
   final bool emphasized;
+
+  /// On the value alone, so a test reads the amount without its label.
+  final String valueSemanticsId;
 
   @override
   Widget build(BuildContext context) {
@@ -169,7 +207,12 @@ class _OrderTotalsRow extends StatelessWidget {
       child: Row(
         children: <Widget>[
           Expanded(child: Text(label, style: style)),
-          Text(value, style: style),
+          // A node of its own, holding just the amount.
+          Semantics(
+            container: true,
+            identifier: valueSemanticsId,
+            child: Text(value, style: style),
+          ),
         ],
       ),
     );

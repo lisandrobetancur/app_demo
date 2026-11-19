@@ -7,13 +7,18 @@ class _OrderDetailError extends ConsumerWidget {
   final String? orderId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) => EmptyState(
-    key: OrderDetailKeys.state('error'),
-    icon: AppIcons.error,
-    title: 'orders.detail.error_title'.tr(),
-    actionLabel: 'orders.detail.retry_button'.tr(),
-    onAction: orderId == null
-        ? null
-        : () => ref.read(orderDetailViewModelProvider.notifier).load(orderId!),
+  Widget build(BuildContext context, WidgetRef ref) => SemanticRegion(
+    identifier: OrderDetailSemanticIds.state('error'),
+    child: EmptyState(
+      actionSemanticsId: OrderDetailSemanticIds.retryButton,
+      key: OrderDetailKeys.state('error'),
+      icon: AppIcons.error,
+      title: 'orders.detail.error_title'.tr(),
+      actionLabel: 'orders.detail.retry_button'.tr(),
+      onAction: orderId == null
+          ? null
+          : () =>
+                ref.read(orderDetailViewModelProvider.notifier).load(orderId!),
+    ),
   );
 }

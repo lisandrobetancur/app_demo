@@ -5,15 +5,18 @@ class _NotificationsShimmer extends StatelessWidget {
   const _NotificationsShimmer();
 
   @override
-  Widget build(BuildContext context) => AppShimmer(
-    child: ListView.separated(
-      key: AppCrossKeys.notificationsState('loading'),
-      padding: AppSpacing.pagePadding,
-      itemCount: 6,
-      separatorBuilder: (BuildContext context, int index) =>
-          const SizedBox(height: AppSpacing.md),
-      itemBuilder: (BuildContext context, int index) =>
-          const AppShimmerBox(height: 64),
+  Widget build(BuildContext context) => SemanticRegion(
+    identifier: NotificationsSemanticIds.state('loading'),
+    child: AppShimmer(
+      child: ListView.separated(
+        key: AppCrossKeys.notificationsState('loading'),
+        padding: AppSpacing.pagePadding,
+        itemCount: 6,
+        separatorBuilder: (BuildContext context, int index) =>
+            const SizedBox(height: AppSpacing.md),
+        itemBuilder: (BuildContext context, int index) =>
+            const AppShimmerBox(height: 64),
+      ),
     ),
   );
 }

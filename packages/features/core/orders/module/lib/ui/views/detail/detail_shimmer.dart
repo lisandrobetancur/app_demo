@@ -5,20 +5,23 @@ class _OrderDetailShimmer extends StatelessWidget {
   const _OrderDetailShimmer();
 
   @override
-  Widget build(BuildContext context) => AppShimmer(
-    child: SingleChildScrollView(
-      key: OrderDetailKeys.state('loading'),
-      padding: AppSpacing.pagePadding,
-      child: const Column(
-        children: <Widget>[
-          AppShimmerBox(height: 32, width: 220),
-          SizedBox(height: AppSpacing.lg),
-          AppShimmerBox(height: 120),
-          SizedBox(height: AppSpacing.lg),
-          AppShimmerBox(height: 160),
-          SizedBox(height: AppSpacing.lg),
-          AppShimmerBox(height: 96),
-        ],
+  Widget build(BuildContext context) => SemanticRegion(
+    identifier: OrderDetailSemanticIds.state('loading'),
+    child: AppShimmer(
+      child: SingleChildScrollView(
+        key: OrderDetailKeys.state('loading'),
+        padding: AppSpacing.pagePadding,
+        child: const Column(
+          children: <Widget>[
+            AppShimmerBox(height: 32, width: 220),
+            SizedBox(height: AppSpacing.lg),
+            AppShimmerBox(height: 120),
+            SizedBox(height: AppSpacing.lg),
+            AppShimmerBox(height: 160),
+            SizedBox(height: AppSpacing.lg),
+            AppShimmerBox(height: 96),
+          ],
+        ),
       ),
     ),
   );

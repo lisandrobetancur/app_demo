@@ -12,6 +12,8 @@ class AddressesView extends ConsumerWidget {
     final AddressesState state = ref.watch(addressesViewModelProvider);
     return AppScaffold(
       key: AddressesKeys.view,
+      semanticsId: AddressesSemanticIds.view,
+      titleSemanticsId: AddressesSemanticIds.titleText,
       title: 'profile.addresses.title'.tr(),
       scrollable: false,
       padding: EdgeInsets.zero,
@@ -21,9 +23,13 @@ class AddressesView extends ConsumerWidget {
         onPressed: () => AppBottomSheet.show<void>(
           context,
           sheetKey: AddressesKeys.formSheet,
+          sheetSemanticsId: AddressesSemanticIds.formSheet,
           child: const _AddressFormSheet(),
         ),
-        child: const Icon(AppIcons.add),
+        child: Semantics(
+          identifier: AddressesSemanticIds.addButton,
+          child: const Icon(AppIcons.add),
+        ),
       ),
       body: switch (state.status) {
         ViewStatus.loading => const _AddressesShimmer(),

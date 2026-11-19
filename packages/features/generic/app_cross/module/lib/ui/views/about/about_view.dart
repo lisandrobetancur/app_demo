@@ -13,6 +13,8 @@ class AboutView extends StatelessWidget {
   @override
   Widget build(BuildContext context) => AppScaffold(
     key: AppCrossKeys.aboutView,
+    semanticsId: AboutSemanticIds.view,
+    titleSemanticsId: AboutSemanticIds.titleText,
     title: 'app_cross.about.title'.tr(),
     body: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -40,17 +42,25 @@ class AboutView extends StatelessWidget {
           ),
         ),
         AppSpacing.sectionGap,
-        ListTile(
-          leading: const Icon(AppIcons.about),
-          title: Text('app_cross.about.version_label'.tr()),
-          trailing: const Text(appVersion),
-          contentPadding: EdgeInsets.zero,
+        // A ListTile merges its texts into one node: the identifier lands on
+        // it, and its text carries both the label and the value.
+        Semantics(
+          identifier: AboutSemanticIds.versionText,
+          child: ListTile(
+            leading: const Icon(AppIcons.about),
+            title: Text('app_cross.about.version_label'.tr()),
+            trailing: const Text(appVersion),
+            contentPadding: EdgeInsets.zero,
+          ),
         ),
-        ListTile(
-          leading: const Icon(AppIcons.settings),
-          title: Text('app_cross.about.platform_label'.tr()),
-          trailing: Text(PlatformGuard.platformName),
-          contentPadding: EdgeInsets.zero,
+        Semantics(
+          identifier: AboutSemanticIds.platformText,
+          child: ListTile(
+            leading: const Icon(AppIcons.settings),
+            title: Text('app_cross.about.platform_label'.tr()),
+            trailing: Text(PlatformGuard.platformName),
+            contentPadding: EdgeInsets.zero,
+          ),
         ),
       ],
     ),

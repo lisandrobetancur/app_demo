@@ -5,11 +5,15 @@ class _NotificationsError extends ConsumerWidget {
   const _NotificationsError();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) => EmptyState(
-    key: AppCrossKeys.notificationsState('error'),
-    icon: AppIcons.error,
-    title: 'app_cross.notifications.error_title'.tr(),
-    actionLabel: 'app_cross.notifications.retry_button'.tr(),
-    onAction: ref.read(notificationsViewModelProvider.notifier).load,
+  Widget build(BuildContext context, WidgetRef ref) => SemanticRegion(
+    identifier: NotificationsSemanticIds.state('error'),
+    child: EmptyState(
+      key: AppCrossKeys.notificationsState('error'),
+      actionSemanticsId: NotificationsSemanticIds.retryButton,
+      icon: AppIcons.error,
+      title: 'app_cross.notifications.error_title'.tr(),
+      actionLabel: 'app_cross.notifications.retry_button'.tr(),
+      onAction: ref.read(notificationsViewModelProvider.notifier).load,
+    ),
   );
 }

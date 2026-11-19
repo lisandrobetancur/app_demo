@@ -14,6 +14,7 @@ class EmptyState extends StatelessWidget {
     this.actionLabel,
     this.onAction,
     this.actionKey,
+    this.actionSemanticsId,
   });
 
   final String title;
@@ -22,6 +23,9 @@ class EmptyState extends StatelessWidget {
   final String? actionLabel;
   final VoidCallback? onAction;
   final Key? actionKey;
+
+  /// Identifier of the action button for black-box automation.
+  final String? actionSemanticsId;
 
   @override
   Widget build(BuildContext context) {
@@ -53,6 +57,7 @@ class EmptyState extends StatelessWidget {
               const SizedBox(height: AppSpacing.xl),
               AppButton(
                 key: actionKey,
+                semanticsId: actionSemanticsId,
                 label: actionLabel!,
                 onPressed: onAction,
               ),

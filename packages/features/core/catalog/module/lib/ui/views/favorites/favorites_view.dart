@@ -21,8 +21,13 @@ class FavoritesView extends ConsumerWidget {
       if (event != null && previous?.lastEventKey != event) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              event.tr(namedArgs: <String, String>{'count': next.lastEventArg}),
+            content: Semantics(
+              identifier: FavoritesSemanticIds.messageText,
+              child: Text(
+                event.tr(
+                  namedArgs: <String, String>{'count': next.lastEventArg},
+                ),
+              ),
             ),
           ),
         );
@@ -31,6 +36,8 @@ class FavoritesView extends ConsumerWidget {
     });
     return AppScaffold(
       key: FavoritesKeys.view,
+      semanticsId: FavoritesSemanticIds.view,
+      titleSemanticsId: FavoritesSemanticIds.titleText,
       title: 'catalog.favorites.title'.tr(),
       scrollable: false,
       padding: EdgeInsets.zero,
@@ -40,7 +47,10 @@ class FavoritesView extends ConsumerWidget {
             key: FavoritesKeys.moveAllToCartButton,
             onPressed: state.isMovingAll ? null : viewModel.moveAllToCart,
             icon: const Icon(AppIcons.cart, size: 18),
-            label: Text('catalog.favorites.move_all_button'.tr()),
+            label: Semantics(
+              identifier: FavoritesSemanticIds.moveAllToCartButton,
+              child: Text('catalog.favorites.move_all_button'.tr()),
+            ),
           ),
       ],
       body: switch (state.status) {

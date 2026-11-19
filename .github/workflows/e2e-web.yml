@@ -28,7 +28,12 @@ permissions:
 jobs:
   web:
     name: Web suite
-    runs-on: ubuntu-latest
+    # Pinned, not `ubuntu-latest`: when that label moved to Ubuntu 26.04 the
+    # Playwright that Patrol installs stopped finding a Chromium build for it
+    # ("Playwright does not support chromium on ubuntu26.04-x64") and the job
+    # died in the install step before running a single test. Move this forward
+    # once Patrol's Playwright supports the newer image.
+    runs-on: ubuntu-24.04
     # A backstop, not a budget. The job takes seven minutes; a red run with
     # every test waiting out its own timeout took forty-four, and that one is
     # still worth finishing, because its report is the point. What this stops
