@@ -5,15 +5,18 @@ class _CartShimmer extends StatelessWidget {
   const _CartShimmer();
 
   @override
-  Widget build(BuildContext context) => AppShimmer(
-    child: ListView.separated(
-      key: CartKeys.state('loading'),
-      padding: AppSpacing.pagePadding,
-      itemCount: 4,
-      separatorBuilder: (BuildContext context, int index) =>
-          const SizedBox(height: AppSpacing.md),
-      itemBuilder: (BuildContext context, int index) =>
-          const AppShimmerBox(height: 96),
+  Widget build(BuildContext context) => SemanticRegion(
+    identifier: CartSemanticIds.state('loading'),
+    child: AppShimmer(
+      child: ListView.separated(
+        key: CartKeys.state('loading'),
+        padding: AppSpacing.pagePadding,
+        itemCount: 4,
+        separatorBuilder: (BuildContext context, int index) =>
+            const SizedBox(height: AppSpacing.md),
+        itemBuilder: (BuildContext context, int index) =>
+            const AppShimmerBox(height: 96),
+      ),
     ),
   );
 }

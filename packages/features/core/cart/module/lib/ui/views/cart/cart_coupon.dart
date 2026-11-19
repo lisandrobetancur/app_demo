@@ -19,20 +19,26 @@ class _CartCoupon extends ConsumerWidget {
           ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
-            child: Text(
-              'cart.home.coupon_applied'.tr(
-                namedArgs: <String, String>{
-                  'code': coupon.code,
-                  'pct': coupon.discountPct.toStringAsFixed(0),
-                },
+            child: Semantics(
+              identifier: CartSemanticIds.couponAppliedText,
+              child: Text(
+                'cart.home.coupon_applied'.tr(
+                  namedArgs: <String, String>{
+                    'code': coupon.code,
+                    'pct': coupon.discountPct.toStringAsFixed(0),
+                  },
+                ),
+                style: AppTypography.body,
               ),
-              style: AppTypography.body,
             ),
           ),
           TextButton(
             key: CartKeys.removeCouponButton,
             onPressed: viewModel.removeCoupon,
-            child: Text('cart.home.remove_coupon_button'.tr()),
+            child: Semantics(
+              identifier: CartSemanticIds.removeCouponButton,
+              child: Text('cart.home.remove_coupon_button'.tr()),
+            ),
           ),
         ],
       );
@@ -46,6 +52,7 @@ class _CartCoupon extends ConsumerWidget {
             Expanded(
               child: AppTextField(
                 key: CartKeys.couponInput,
+                semanticsId: CartSemanticIds.couponInput,
                 label: 'cart.home.coupon_label'.tr(),
                 prefixIcon: AppIcons.coupon,
                 onChanged: viewModel.setCouponInput,
@@ -55,6 +62,7 @@ class _CartCoupon extends ConsumerWidget {
             const SizedBox(width: AppSpacing.sm),
             AppButton(
               key: CartKeys.applyCouponButton,
+              semanticsId: CartSemanticIds.applyCouponButton,
               label: 'cart.home.apply_coupon_button'.tr(),
               variant: AppButtonVariant.secondary,
               isLoading: state.isApplyingCoupon,
@@ -67,11 +75,14 @@ class _CartCoupon extends ConsumerWidget {
         if (state.couponErrorKey != null)
           Padding(
             padding: const EdgeInsets.only(top: AppSpacing.xs),
-            child: Text(
-              state.couponErrorKey!.tr(),
-              key: CartKeys.couponErrorText,
-              style: AppTypography.caption.copyWith(
-                color: Theme.of(context).colorScheme.error,
+            child: Semantics(
+              identifier: CartSemanticIds.couponErrorText,
+              child: Text(
+                state.couponErrorKey!.tr(),
+                key: CartKeys.couponErrorText,
+                style: AppTypography.caption.copyWith(
+                  color: Theme.of(context).colorScheme.error,
+                ),
               ),
             ),
           ),

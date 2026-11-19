@@ -8,52 +8,61 @@ class _CartData extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final CartState state = ref.watch(cartViewModelProvider);
     final CartViewModel viewModel = ref.read(cartViewModelProvider.notifier);
-    return Column(
-      key: CartKeys.state('data'),
-      children: <Widget>[
-        Expanded(
-          child: ListView.separated(
-            key: CartKeys.itemsList,
-            padding: AppSpacing.pagePadding,
-            itemCount: state.lines.length,
-            separatorBuilder: (BuildContext context, int index) =>
-                const SizedBox(height: AppSpacing.md),
-            itemBuilder: (BuildContext context, int index) {
-              final CartLine line = state.lines[index];
-              return _CartLineTile(key: CartKeys.item(line.id), line: line);
-            },
-          ),
-        ),
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            border: Border(
-              top: BorderSide(
-                color: Theme.of(context).colorScheme.outlineVariant,
+    return SemanticRegion(
+      identifier: CartSemanticIds.state('data'),
+      child: Column(
+        key: CartKeys.state('data'),
+        children: <Widget>[
+          Expanded(
+            child: SemanticRegion(
+              identifier: CartSemanticIds.itemsList,
+              child: ListView.separated(
+                key: CartKeys.itemsList,
+                padding: AppSpacing.pagePadding,
+                itemCount: state.lines.length,
+                separatorBuilder: (BuildContext context, int index) =>
+                    const SizedBox(height: AppSpacing.md),
+                itemBuilder: (BuildContext context, int index) {
+                  final CartLine line = state.lines[index];
+                  return _CartLineTile(key: CartKeys.item(line.id), line: line);
+                },
               ),
             ),
           ),
-          child: Padding(
-            padding: AppSpacing.pagePadding,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                const _CartCoupon(),
-                const SizedBox(height: AppSpacing.md),
-                const _CartTotals(),
-                const SizedBox(height: AppSpacing.md),
-                AppButton(
-                  key: CartKeys.checkoutButton,
-                  label: 'cart.home.checkout_button'.tr(),
-                  onPressed: state.canCheckout ? viewModel.goToCheckout : null,
-                  expand: true,
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              border: Border(
+                top: BorderSide(
+                  color: Theme.of(context).colorScheme.outlineVariant,
                 ),
-              ],
+              ),
+            ),
+            child: Padding(
+              padding: AppSpacing.pagePadding,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  const _CartCoupon(),
+                  const SizedBox(height: AppSpacing.md),
+                  const _CartTotals(),
+                  const SizedBox(height: AppSpacing.md),
+                  AppButton(
+                    key: CartKeys.checkoutButton,
+                    semanticsId: CartSemanticIds.checkoutButton,
+                    label: 'cart.home.checkout_button'.tr(),
+                    onPressed: state.canCheckout
+                        ? viewModel.goToCheckout
+                        : null,
+                    expand: true,
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -69,7 +78,12 @@ class _CartLineTile extends ConsumerWidget {
     final CartViewModel viewModel = ref.read(cartViewModelProvider.notifier);
     final DisplayCurrency currency = ref.watch(displayCurrencyProvider);
     final ColorScheme scheme = Theme.of(context).colorScheme;
+    // The card merges its texts into its own node, which takes the line's
+    // identifier. Inside it, only elements with a node of their own carry one
+    // — the IconButtons, the stepper region, the line total's container — or
+    // they would collide with the card's.
     return AppCard(
+      semanticsId: CartSemanticIds.item(line.id),
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -118,22 +132,38 @@ class _CartLineTile extends ConsumerWidget {
                 const SizedBox(height: AppSpacing.sm),
                 Row(
                   children: <Widget>[
-                    QuantityStepper(
-                      value: line.quantity,
-                      max: line.stock,
-                      decreaseKey: CartKeys.decreaseQuantityButton(line.id),
-                      increaseKey: CartKeys.increaseQuantityButton(line.id),
-                      onChanged: (int quantity) =>
-                          viewModel.setQuantity(line, quantity),
+                    SemanticRegion(
+                      identifier: CartSemanticIds.itemQuantityStepper(line.id),
+                      child: QuantityStepper(
+                        value: line.quantity,
+                        max: line.stock,
+                        decreaseKey: CartKeys.decreaseQuantityButton(line.id),
+                        increaseKey: CartKeys.increaseQuantityButton(line.id),
+                        decreaseSemanticsId:
+                            CartSemanticIds.decreaseQuantityButton(line.id),
+                        increaseSemanticsId:
+                            CartSemanticIds.increaseQuantityButton(line.id),
+                        valueSemanticsId: CartSemanticIds.itemQuantityText(
+                          line.id,
+                        ),
+                        onChanged: (int quantity) =>
+                            viewModel.setQuantity(line, quantity),
+                      ),
                     ),
                     const Spacer(),
-                    Text(
-                      Formatters.formatPrice(
-                        currency.display(line.lineTotal),
-                        locale: context.locale.toString(),
-                        currencyCode: currency.code,
+                    // A node of its own (`container`), holding just this text,
+                    // so it neither merges into the card nor collides with it.
+                    Semantics(
+                      container: true,
+                      identifier: CartSemanticIds.itemTotalText(line.id),
+                      child: Text(
+                        Formatters.formatPrice(
+                          currency.display(line.lineTotal),
+                          locale: context.locale.toString(),
+                          currencyCode: currency.code,
+                        ),
+                        style: AppTypography.cardTitle,
                       ),
-                      style: AppTypography.cardTitle,
                     ),
                   ],
                 ),
@@ -142,7 +172,10 @@ class _CartLineTile extends ConsumerWidget {
           ),
           IconButton(
             key: CartKeys.removeItemButton(line.id),
-            icon: const Icon(AppIcons.delete),
+            icon: Semantics(
+              identifier: CartSemanticIds.removeItemButton(line.id),
+              child: const Icon(AppIcons.delete),
+            ),
             tooltip: 'cart.home.remove_item'.tr(),
             onPressed: () => viewModel.removeLine(line),
           ),
