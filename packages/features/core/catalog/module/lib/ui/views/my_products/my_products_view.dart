@@ -12,13 +12,18 @@ class MyProductsView extends ConsumerWidget {
     final MyProductsState state = ref.watch(myProductsViewModelProvider);
     return AppScaffold(
       key: MyProductsKeys.view,
+      semanticsId: MyProductsSemanticIds.view,
+      titleSemanticsId: MyProductsSemanticIds.titleText,
       title: 'catalog.my_products.title'.tr(),
       scrollable: false,
       padding: EdgeInsets.zero,
       floatingActionButton: FloatingActionButton(
         onPressed: ref.read(myProductsViewModelProvider.notifier).goToCreate,
         tooltip: 'catalog.my_products.publish_button'.tr(),
-        child: const Icon(AppIcons.add),
+        child: Semantics(
+          identifier: MyProductsSemanticIds.createButton,
+          child: const Icon(AppIcons.add),
+        ),
       ),
       body: switch (state.status) {
         ViewStatus.loading => const _MyProductsShimmer(),

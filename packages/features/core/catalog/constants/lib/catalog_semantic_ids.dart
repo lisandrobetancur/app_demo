@@ -145,3 +145,50 @@ class ProductFormSemanticIds {
   static String conditionOption(String value) =>
       'product_form_condition_option_$value';
 }
+
+/// Semantics identifiers of the "my products" view.
+class MyProductsSemanticIds {
+  const MyProductsSemanticIds._();
+
+  static const String view = 'my_products_view';
+  static const String titleText = 'my_products_title_text';
+  static const String createButton = 'my_products_create_button';
+  static const String confirmDeleteDialog = 'my_products_confirm_delete_dialog';
+  static const String confirmDeleteConfirmButton =
+      'my_products_confirm_delete_dialog_confirm_button';
+  static const String confirmDeleteCancelButton =
+      'my_products_confirm_delete_dialog_cancel_button';
+  static const String emptyCreateButton = 'my_products_empty_create_button';
+  static const String retryButton = 'my_products_retry_button';
+
+  /// `my_products_state_<loading|data|empty|error>`.
+  static String state(String state) => 'my_products_state_$state';
+
+  /// `my_products_item_<product id>`: one node whose text holds the name,
+  /// status, price and stock.
+  static String item(String id) => 'my_products_item_$id';
+
+  /// `my_products_stock_input_<product id>`: the stock quick-edit stepper.
+  static String stockInput(String id) => 'my_products_stock_input_$id';
+
+  /// `my_products_stock_text_<product id>`: the stock value in the stepper.
+  static String stockText(String id) => 'my_products_stock_text_$id';
+
+  /// `my_products_stock_decrease_button_<product id>`.
+  static String stockDecreaseButton(String id) =>
+      'my_products_stock_decrease_button_$id';
+
+  /// `my_products_stock_increase_button_<product id>`.
+  static String stockIncreaseButton(String id) =>
+      'my_products_stock_increase_button_$id';
+
+  /// `my_products_edit_button_<product id>`.
+  static String editButton(String id) => 'my_products_edit_button_$id';
+
+  /// `my_products_toggle_status_button_<product id>`.
+  static String toggleStatusButton(String id) =>
+      'my_products_toggle_status_button_$id';
+
+  /// `my_products_delete_button_<product id>`.
+  static String deleteButton(String id) => 'my_products_delete_button_$id';
+}
