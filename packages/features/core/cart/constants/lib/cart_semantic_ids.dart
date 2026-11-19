@@ -24,7 +24,7 @@ class CartSemanticIds {
   /// The snackbar shown after removing a line. Its undo action has no
   /// identifier: SnackBarAction takes its label as a plain string, so there
   /// is nowhere to put one without replacing the widget.
-  static const String itemRemovedText = 'cart_item_removed_text';
+  static const String itemRemovedText = 'cart_removed_item_text';
   static const String couponInput = 'cart_coupon_input';
   static const String applyCouponButton = 'cart_apply_coupon_button';
   static const String couponErrorText = 'cart_coupon_error_text';
@@ -48,12 +48,14 @@ class CartSemanticIds {
   /// name, unit price and any unavailable notice.
   static String item(String id) => 'cart_item_$id';
 
-  /// `cart_item_quantity_stepper_<line id>`.
-  static String itemQuantityStepper(String id) =>
-      'cart_item_quantity_stepper_$id';
+  // A line's parts stay out of the `cart_item_` prefix, so that
+  // `[flt-semantics-identifier^="cart_item_"]` counts lines and nothing else.
 
-  /// `cart_item_quantity_text_<line id>`.
-  static String itemQuantityText(String id) => 'cart_item_quantity_text_$id';
+  /// `cart_quantity_stepper_<line id>`.
+  static String itemQuantityStepper(String id) => 'cart_quantity_stepper_$id';
+
+  /// `cart_quantity_text_<line id>`.
+  static String itemQuantityText(String id) => 'cart_quantity_text_$id';
 
   /// `cart_decrease_quantity_button_<line id>`.
   static String decreaseQuantityButton(String id) =>
@@ -63,8 +65,8 @@ class CartSemanticIds {
   static String increaseQuantityButton(String id) =>
       'cart_increase_quantity_button_$id';
 
-  /// `cart_item_total_text_<line id>`: the line total, money only.
-  static String itemTotalText(String id) => 'cart_item_total_text_$id';
+  /// `cart_line_total_text_<line id>`: the line total, money only.
+  static String itemTotalText(String id) => 'cart_line_total_text_$id';
 
   /// `cart_remove_item_button_<line id>`.
   static String removeItemButton(String id) => 'cart_remove_item_button_$id';
