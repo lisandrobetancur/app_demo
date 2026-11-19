@@ -31,3 +31,19 @@ class OnboardingSemanticIds {
   /// number names the page rather than a position in changing data.
   static String page(int page) => 'onboarding_page_$page';
 }
+
+/// Semantics identifiers of the notifications tray.
+class NotificationsSemanticIds {
+  const NotificationsSemanticIds._();
+
+  static const String view = 'notifications_view';
+  static const String titleText = 'notifications_title_text';
+  static const String markAllReadButton = 'notifications_mark_all_read_button';
+  static const String retryButton = 'notifications_retry_button';
+
+  /// `notifications_state_<loading|data|empty|error>`.
+  static String state(String state) => 'notifications_state_$state';
+
+  /// `notifications_item_<id>`.
+  static String item(String id) => 'notifications_item_$id';
+}

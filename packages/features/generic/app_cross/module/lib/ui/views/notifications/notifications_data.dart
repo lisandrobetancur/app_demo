@@ -10,19 +10,25 @@ class _NotificationsData extends ConsumerWidget {
     final NotificationsViewModel viewModel = ref.read(
       notificationsViewModelProvider.notifier,
     );
-    return ListView.separated(
-      key: AppCrossKeys.notificationsState('data'),
-      itemCount: state.notifications.length,
-      separatorBuilder: (BuildContext context, int index) =>
-          const Divider(height: 1),
-      itemBuilder: (BuildContext context, int index) {
-        final AppNotification notification = state.notifications[index];
-        return _NotificationTile(
-          key: AppCrossKeys.notificationItem(notification.id),
-          notification: notification,
-          onTap: () => viewModel.open(notification),
-        );
-      },
+    return SemanticRegion(
+      identifier: NotificationsSemanticIds.state('data'),
+      child: ListView.separated(
+        key: AppCrossKeys.notificationsState('data'),
+        itemCount: state.notifications.length,
+        separatorBuilder: (BuildContext context, int index) =>
+            const Divider(height: 1),
+        itemBuilder: (BuildContext context, int index) {
+          final AppNotification notification = state.notifications[index];
+          return Semantics(
+            identifier: NotificationsSemanticIds.item(notification.id),
+            child: _NotificationTile(
+              key: AppCrossKeys.notificationItem(notification.id),
+              notification: notification,
+              onTap: () => viewModel.open(notification),
+            ),
+          );
+        },
+      ),
     );
   }
 }

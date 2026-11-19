@@ -12,13 +12,19 @@ class NotificationsView extends ConsumerWidget {
     final NotificationsState state = ref.watch(notificationsViewModelProvider);
     return AppScaffold(
       key: AppCrossKeys.notificationsView,
+      semanticsId: NotificationsSemanticIds.view,
+      titleSemanticsId: NotificationsSemanticIds.titleText,
       title: 'app_cross.notifications.title'.tr(),
       scrollable: false,
       padding: EdgeInsets.zero,
       actions: <Widget>[
         IconButton(
           key: AppCrossKeys.markAllReadButton,
-          icon: const Icon(AppIcons.checkFilled),
+          // On the icon, so it merges into the IconButton's own node.
+          icon: Semantics(
+            identifier: NotificationsSemanticIds.markAllReadButton,
+            child: const Icon(AppIcons.checkFilled),
+          ),
           tooltip: 'app_cross.notifications.mark_all_read'.tr(),
           onPressed: state.unreadCount == 0
               ? null
