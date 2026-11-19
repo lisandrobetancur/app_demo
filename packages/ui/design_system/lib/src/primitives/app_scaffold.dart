@@ -20,6 +20,7 @@ class AppScaffold extends StatelessWidget {
     this.floatingActionButton,
     this.bottomBar,
     this.onRefresh,
+    this.semanticsId,
   });
 
   final Widget body;
@@ -35,8 +36,28 @@ class AppScaffold extends StatelessWidget {
   /// When set on a scrollable body, wraps it in a [RefreshIndicator].
   final Future<void> Function()? onRefresh;
 
+  /// Identifier of the whole view for black-box automation — the element a
+  /// test waits for to know the screen is up. See [AppButton.semanticsId].
+  final String? semanticsId;
+
   @override
   Widget build(BuildContext context) {
+    final Widget scaffold = _buildScaffold();
+    if (semanticsId == null) {
+      return scaffold;
+    }
+    // A node of its own (`container`) so the identifier has somewhere to land,
+    // and `explicitChildNodes` so the view's texts and controls keep their own
+    // nodes instead of being merged into this one.
+    return Semantics(
+      container: true,
+      explicitChildNodes: true,
+      identifier: semanticsId,
+      child: scaffold,
+    );
+  }
+
+  Widget _buildScaffold() {
     Widget content = Padding(padding: padding, child: body);
     if (scrollable) {
       content = SingleChildScrollView(

@@ -86,6 +86,21 @@ melos:
     rmOverrides: melos exec -c 1 -- rm -f pubspec_overrides.yaml
     pubGet: melos exec -c 1 -- flutter pub get
 
+    # ── Web build for black-box automation ──────────────────────────────
+    #
+    # The app with its semantics tree on from boot (`ENABLE_SEMANTICS`, read in
+    # `market_app/lib/config/app_config.dart`). Flutter web paints on a canvas,
+    # and that tree is the only DOM a browser tool sees: the `flt-semantics`
+    # elements carrying each `flt-semantics-identifier`. The Playwright suite,
+    # which lives in its own repository, runs against this build and nothing
+    # else; a production build has no tree and its locators find nothing.
+    #
+    # `buildWebQa` leaves it in `packages/apps/market_app/build/web`, to serve
+    # or deploy to a QA environment; `runWebQa` opens it in Chrome to inspect
+    # the identifiers in DevTools (`[flt-semantics-identifier]`).
+    buildWebQa: melos exec --scope=market_app -- flutter build web --release --dart-define=ENABLE_SEMANTICS=true
+    runWebQa: melos exec --scope=market_app -- flutter run -d chrome --dart-define=ENABLE_SEMANTICS=true
+
     # ── Suite end-to-end ────────────────────────────────────────────────
     #
     # Each of these commands does THREE things, in this order:
