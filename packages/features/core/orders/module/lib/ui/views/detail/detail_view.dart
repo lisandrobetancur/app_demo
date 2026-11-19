@@ -40,12 +40,15 @@ class _OrderDetailViewState extends ConsumerState<OrderDetailView> {
       if (event != null && previous?.lastEventKey != event) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              event.tr(
-                namedArgs: <String, String>{
-                  'count': next.lastEventArg,
-                  'names': next.lastEventArg,
-                },
+            content: Semantics(
+              identifier: OrderDetailSemanticIds.messageText,
+              child: Text(
+                event.tr(
+                  namedArgs: <String, String>{
+                    'count': next.lastEventArg,
+                    'names': next.lastEventArg,
+                  },
+                ),
               ),
             ),
           ),
@@ -55,6 +58,8 @@ class _OrderDetailViewState extends ConsumerState<OrderDetailView> {
     });
     return AppScaffold(
       key: OrderDetailKeys.view,
+      semanticsId: OrderDetailSemanticIds.view,
+      titleSemanticsId: OrderDetailSemanticIds.titleText,
       title: 'orders.detail.title'.tr(),
       scrollable: false,
       padding: EdgeInsets.zero,
