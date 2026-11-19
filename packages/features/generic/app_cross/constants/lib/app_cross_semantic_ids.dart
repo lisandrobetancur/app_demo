@@ -83,3 +83,13 @@ class SettingsSemanticIds {
   /// `settings_currency_option_<code>`.
   static String currencyOption(String code) => 'settings_currency_option_$code';
 }
+
+/// Semantics identifiers of the about view.
+class AboutSemanticIds {
+  const AboutSemanticIds._();
+
+  static const String view = 'about_view';
+  static const String titleText = 'about_title_text';
+  static const String versionText = 'about_version_text';
+  static const String platformText = 'about_platform_text';
+}
