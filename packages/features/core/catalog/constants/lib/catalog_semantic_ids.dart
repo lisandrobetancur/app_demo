@@ -108,3 +108,40 @@ class ProductDetailSemanticIds {
   /// `product_detail_review_item_<review id>`.
   static String reviewItem(String id) => 'product_detail_review_item_$id';
 }
+
+/// Semantics identifiers of the product form (create and edit share it).
+class ProductFormSemanticIds {
+  const ProductFormSemanticIds._();
+
+  static const String view = 'product_form_view';
+  static const String titleText = 'product_form_title_text';
+  static const String nameInput = 'product_form_name_input';
+  static const String descriptionInput = 'product_form_description_input';
+  static const String priceInput = 'product_form_price_input';
+  static const String stockInput = 'product_form_stock_input';
+
+  /// The dropdown's text field: carries the selected category as its value.
+  static const String categoryDropdown = 'product_form_category_dropdown';
+  static const String conditionSelector = 'product_form_condition_selector';
+  static const String imagePreview = 'product_form_image_preview';
+  static const String imagePickerButton = 'product_form_image_picker_button';
+  static const String errorText = 'product_form_error_text';
+  static const String saveButton = 'product_form_save_button';
+  static const String discardChangesDialog =
+      'product_form_discard_changes_dialog';
+  static const String discardChangesConfirmButton =
+      'product_form_discard_changes_dialog_confirm_button';
+  static const String discardChangesCancelButton =
+      'product_form_discard_changes_dialog_cancel_button';
+  static const String retryButton = 'product_form_retry_button';
+
+  /// `product_form_state_<loading|data|empty|error>`.
+  static String state(String state) => 'product_form_state_$state';
+
+  /// `product_form_category_option_<category id>`, in the open dropdown.
+  static String categoryOption(String id) => 'product_form_category_option_$id';
+
+  /// `product_form_condition_option_<condition>`. Carries the selected state.
+  static String conditionOption(String value) =>
+      'product_form_condition_option_$value';
+}
